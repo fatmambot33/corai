@@ -1,4 +1,4 @@
-"""Enum helpers for corai."""
+"""Enum helpers for openai-sdk-helpers."""
 
 from __future__ import annotations
 

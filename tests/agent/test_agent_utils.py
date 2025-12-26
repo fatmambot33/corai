@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import patch
 
-from corai.agent import utils
+from openai_sdk_helpers.agent import utils
 
 
 async def sample_coro():

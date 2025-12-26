@@ -1,6 +1,6 @@
 <div align="center">
 
-# corai
+# openai-sdk-helpers
 
 Shared primitives for composing OpenAI agent workflows: structures, response
 handling, prompt rendering, and reusable agent factories.
@@ -9,7 +9,7 @@ handling, prompt rendering, and reusable agent factories.
 
 ## Overview
 
-`corai` packages the common building blocks required to assemble agent-driven
+`openai-sdk-helpers` packages the common building blocks required to assemble agent-driven
 applications. The library intentionally focuses on reusable primitives—data
 structures, configuration helpers, and orchestration utilities—while leaving
 application-specific prompts and tools to the consuming project.
@@ -29,7 +29,7 @@ application-specific prompts and tools to the consuming project.
 Install the package directly from PyPI to reuse it across projects:
 
 ```bash
-pip install corai
+pip install openai-sdk-helpers
 ```
 
 For local development, install with editable sources and the optional dev
@@ -48,7 +48,7 @@ preferred model configuration:
 ```python
 from pathlib import Path
 
-from corai.agent.vector_search import VectorSearch
+from openai_sdk_helpers.agent.vector_search import VectorSearch
 
 
 prompts = Path("./prompts")
@@ -64,12 +64,12 @@ the provided `prompt_dir` and naming them after the agent (for example,
 
 ### Centralized OpenAI configuration
 
-`corai` ships with a lightweight `OpenAISettings` helper so projects can share
+`openai-sdk-helpers` ships with a lightweight `OpenAISettings` helper so projects can share
 consistent authentication, routing, and model defaults when using the OpenAI
 SDK:
 
 ```python
-from corai import OpenAISettings
+from openai_sdk_helpers import OpenAISettings
 
 
 # Load from environment variables or a local .env file
@@ -105,12 +105,12 @@ pytest -q --cov=src --cov-report=term-missing --cov-fail-under=70
 
 ## Project Structure
 
-- `src/corai/agent`: Agent factories, orchestration helpers, and search
+- `src/openai_sdk_helpers/agent`: Agent factories, orchestration helpers, and search
   workflows.
-- `src/corai/prompt`: Prompt rendering utilities backed by Jinja.
-- `src/corai/response`: Response parsing and transformation helpers.
-- `src/corai/structure`: Typed data structures shared across workflows.
-- `src/corai/vector_storage`: Minimal vector store abstraction.
+- `src/openai_sdk_helpers/prompt`: Prompt rendering utilities backed by Jinja.
+- `src/openai_sdk_helpers/response`: Response parsing and transformation helpers.
+- `src/openai_sdk_helpers/structure`: Typed data structures shared across workflows.
+- `src/openai_sdk_helpers/vector_storage`: Minimal vector store abstraction.
 - `tests/`: Unit tests covering core modules and structures.
 
 ## Contributing

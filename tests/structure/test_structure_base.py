@@ -8,7 +8,7 @@ import pytest
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
-from corai.structure.base import BaseStructure, SchemaOptions, spec_field
+from openai_sdk_helpers.structure.base import BaseStructure, SchemaOptions, spec_field
 
 
 class Color(Enum):

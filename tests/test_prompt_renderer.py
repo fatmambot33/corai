@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from corai.prompt import PromptRenderer
+from openai_sdk_helpers.prompt import PromptRenderer
 
 
 def test_prompt_renderer_renders_template(tmp_path):

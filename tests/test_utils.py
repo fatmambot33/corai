@@ -8,13 +8,13 @@ from pathlib import Path
 
 import pytest
 
-# Load modules directly from src to avoid executing corai/__init__.py
+# Load modules directly from src to avoid executing openai-sdk-helpers/__init__.py
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC_CORAI = os.path.join(ROOT, "src", "corai")
+SRC_OPENAI_SDK_HELPERS = os.path.join(ROOT, "src", "openai_sdk_helpers")
 
 
 def _load_module(name: str, filename: str):
-    path = os.path.join(SRC_CORAI, filename)
+    path = os.path.join(SRC_OPENAI_SDK_HELPERS, filename)
     spec = importlib.util.spec_from_file_location(name, path)
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
@@ -26,8 +26,10 @@ def _load_module(name: str, filename: str):
     return mod
 
 
-env_mod = _load_module("corai.environment", "environment.py")
-utils_mod = _load_module("corai.utils.core", os.path.join("utils", "core.py"))
+env_mod = _load_module("openai_sdk_helpers.environment", "environment.py")
+utils_mod = _load_module(
+    "openai_sdk_helpers.utils.core", os.path.join("utils", "core.py")
+)
 
 get_data_path = env_mod.get_data_path
 JSONSerializable = utils_mod.JSONSerializable

@@ -1,4 +1,4 @@
-"""Environment helpers for corai."""
+"""Environment helpers for openai-sdk-helpers."""
 
 from __future__ import annotations
 
@@ -18,10 +18,10 @@ def get_data_path(module_name: str) -> Path:
     Returns
     -------
     Path
-        Directory path under ``~/.corai`` specific to ``module_name``. The
+        Directory path under ``~/.openai-sdk-helpers`` specific to ``module_name``. The
         directory is created if it does not already exist.
     """
-    base = Path.home() / ".corai"
+    base = Path.home() / ".openai-sdk-helpers"
     path = base / module_name
     path.mkdir(parents=True, exist_ok=True)
     return path

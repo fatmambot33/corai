@@ -6,7 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from corai.vector_storage.cleanup import _delete_all_files, _delete_all_vector_stores
+from openai_sdk_helpers.vector_storage.cleanup import (
+    _delete_all_files,
+    _delete_all_vector_stores,
+)
 
 
 class _FakeFile(SimpleNamespace):
@@ -62,7 +65,9 @@ def fake_client(monkeypatch):
     )
     orphan = _FakeFile(id="orphan")
     client = _FakeClient([store], [orphan])
-    monkeypatch.setattr("corai.vector_storage.cleanup.OpenAI", lambda: client)
+    monkeypatch.setattr(
+        "openai_sdk_helpers.vector_storage.cleanup.OpenAI", lambda: client
+    )
     return client
 
 
@@ -75,7 +80,9 @@ def test_delete_all_vector_stores_handles_files(fake_client):
 def test_delete_all_files(monkeypatch):
     files = [_FakeFile(id="keep"), _FakeFile(id="remove")]
     client = _FakeClient([], files)
-    monkeypatch.setattr("corai.vector_storage.cleanup.OpenAI", lambda: client)
+    monkeypatch.setattr(
+        "openai_sdk_helpers.vector_storage.cleanup.OpenAI", lambda: client
+    )
     _delete_all_files()
     assert client._files == []
 
@@ -102,6 +109,8 @@ def test_delete_all_vector_stores_handles_exceptions(monkeypatch):
 
     store = _FakeVectorStore(id="vs1", name="store-1", files=[_FakeFile(id="f1")])
     client = BrokenClient([store], [])
-    monkeypatch.setattr("corai.vector_storage.cleanup.OpenAI", lambda: client)
+    monkeypatch.setattr(
+        "openai_sdk_helpers.vector_storage.cleanup.OpenAI", lambda: client
+    )
 
     _delete_all_vector_stores()

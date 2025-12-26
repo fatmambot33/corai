@@ -1,7 +1,7 @@
 """Convenience wrappers for running OpenAI agents.
 
 These helpers provide a narrow surface around the lower-level functions in
-``corai.agent.base`` so that callers can execute agents with consistent
+``openai-sdk-helpers.agent.base`` so that callers can execute agents with consistent
 signatures whether they need asynchronous, synchronous, or streamed results.
 """
 

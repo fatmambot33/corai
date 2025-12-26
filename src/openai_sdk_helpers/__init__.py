@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__version__ = "0.0.1"
+
 from .structure import (
     BaseStructure,
     SchemaOptions,
@@ -16,6 +18,7 @@ from .config import OpenAISettings
 from .vector_storage import VectorStorage, VectorStorageFileInfo, VectorStorageFileStats
 
 __all__ = [
+    "__version__",
     "BaseStructure",
     "SchemaOptions",
     "spec_field",

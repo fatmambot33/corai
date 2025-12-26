@@ -1,4 +1,4 @@
-"""Core utility helpers for corai."""
+"""Core utility helpers for openai-sdk-helpers."""
 
 from __future__ import annotations
 

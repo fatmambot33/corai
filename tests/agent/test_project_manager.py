@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from corai.agent.project_manager import ProjectManager
-from corai.structure import (
+from openai_sdk_helpers.agent.project_manager import ProjectManager
+from openai_sdk_helpers.structure import (
     AgentEnum,
     AgentTaskStructure,
     PlanStructure,
@@ -49,7 +49,7 @@ def project_manager(
     mock_summarize_fn,
 ):
     """Return a ProjectManager instance."""
-    with patch("corai.agent.project_manager.ProjectManager.save"):
+    with patch("openai_sdk_helpers.agent.project_manager.ProjectManager.save"):
         yield ProjectManager(
             build_brief_fn=mock_build_brief_fn,
             build_plan_fn=mock_build_plan_fn,

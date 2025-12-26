@@ -1,11 +1,15 @@
-"""Integration tests for the corai package."""
+"""Integration tests for the openai-sdk-helpers package."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from corai.agent.project_manager import ProjectManager
-from corai.structure import AgentTaskStructure, PlanStructure, PromptStructure
+from openai_sdk_helpers.agent.project_manager import ProjectManager
+from openai_sdk_helpers.structure import (
+    AgentTaskStructure,
+    PlanStructure,
+    PromptStructure,
+)
 
 
 def test_project_manager_integration(tmp_path):
@@ -31,7 +35,7 @@ def test_project_manager_integration(tmp_path):
     def summarize_fn(results: list[str]) -> str:
         return f"Summary of {', '.join(results)}"
 
-    with patch("corai.agent.project_manager.ProjectManager.save"):
+    with patch("openai_sdk_helpers.agent.project_manager.ProjectManager.save"):
         pm = ProjectManager(
             build_brief_fn=build_brief_fn,
             build_plan_fn=build_plan_fn,

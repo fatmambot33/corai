@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from corai.vector_storage.storage import VectorStorage
+from openai_sdk_helpers.vector_storage.storage import VectorStorage
 
 
 @pytest.fixture

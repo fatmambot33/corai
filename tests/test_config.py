@@ -1,4 +1,4 @@
-from corai.config import OpenAISettings
+from openai_sdk_helpers.config import OpenAISettings
 
 
 def test_from_env_loads_dotenv(monkeypatch, tmp_path):

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from corai.response.base import ResponseBase
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 @pytest.fixture

@@ -11,7 +11,7 @@ import pytest
 from agents import RunContextWrapper
 from pydantic import BaseModel
 
-from corai.agent.base import BaseAgent
+from openai_sdk_helpers.agent.base import BaseAgent
 
 
 class MockConfig(BaseModel):
@@ -66,7 +66,7 @@ def test_base_agent_build_prompt_from_jinja(mock_config, mock_run_context_wrappe
     agent._template.render.assert_called_once_with({"key": "value"})
 
 
-@patch("corai.agent.base.Agent")
+@patch("openai_sdk_helpers.agent.base.Agent")
 def test_get_agent(mock_agent, mock_config):
     """Test getting a configured agent instance."""
     agent = BaseAgent(config=mock_config)
@@ -78,7 +78,7 @@ def test_get_agent(mock_agent, mock_config):
     )
 
 
-@patch("corai.agent.base.Runner")
+@patch("openai_sdk_helpers.agent.base.Runner")
 @patch("asyncio.run")
 def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
     """Test that _run_agent_sync creates a new event loop when none is running."""
@@ -87,7 +87,7 @@ def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
     mock_asyncio_run.assert_called_once()
 
 
-@patch("corai.agent.base._run_agent_sync")
+@patch("openai_sdk_helpers.agent.base._run_agent_sync")
 def test_run_agent_sync(mock_run_agent_sync, mock_config):
     """Test running the agent synchronously."""
     agent = BaseAgent(config=mock_config)
@@ -95,7 +95,7 @@ def test_run_agent_sync(mock_run_agent_sync, mock_config):
     mock_run_agent_sync.assert_called_once()
 
 
-@patch("corai.agent.base._run_agent_streamed")
+@patch("openai_sdk_helpers.agent.base._run_agent_streamed")
 def test_run_agent_streamed(mock_run_agent_streamed, mock_config):
     """Test running the agent with streaming."""
     agent = BaseAgent(config=mock_config)
@@ -103,8 +103,8 @@ def test_run_agent_streamed(mock_run_agent_streamed, mock_config):
     mock_run_agent_streamed.assert_called_once()
 
 
-@patch("corai.agent.base.FunctionTool")
-@patch("corai.agent.base.Agent")
+@patch("openai_sdk_helpers.agent.base.FunctionTool")
+@patch("openai_sdk_helpers.agent.base.Agent")
 def test_as_tool(mock_agent_class, mock_function_tool, mock_config):
     """Test returning the agent as a tool."""
     mock_agent_instance = mock_agent_class.return_value

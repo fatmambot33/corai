@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from corai.vector_storage.storage import VectorStorage
+from openai_sdk_helpers.vector_storage.storage import VectorStorage
 
 
 class DummyFile(SimpleNamespace):
