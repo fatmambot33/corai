@@ -76,6 +76,27 @@ def test_get_schema_force_required():
     assert "color" in schema["required"]
 
 
+class NullOptInStructure(BaseStructure):
+    """Structure that opts fields into explicit null entries."""
+
+    headline: str | None = None
+
+
+def test_get_schema_with_nullable_default():
+    """Test get_schema marks ``None`` defaults as explicitly nullable."""
+
+    schema = NullOptInStructure.get_schema()
+    properties = schema["properties"]
+    headline_schema = properties["headline"]
+
+    any_of = headline_schema.get("anyOf")
+    if isinstance(any_of, list):
+        assert {"type": "null"} in any_of
+    else:
+        assert "null" in headline_schema["type"]
+    assert "required" in schema and "headline" in schema["required"]
+
+
 def test_to_json():
     """Test the to_json method."""
     instance = DummyStructure(name="Test", age=42, color=Color.RED, tags=["a", "b"])
@@ -97,7 +118,16 @@ def test_spec_field():
     field = spec_field("test_field", description="A test field.")
     assert isinstance(field, FieldInfo)
     assert field.title == "Test Field"
-    assert field.description == "A test field."
+    assert field.description == "A test field. Return null if none apply."
+    assert field.default is None
+
+
+def test_spec_field_allow_null_false():
+    """Ensure spec_field can opt out of null defaults."""
+
+    field = spec_field("required_field", allow_null=False)
+    assert field.is_required()
+    assert field.description is None
 
 
 def test_from_raw_input(caplog):

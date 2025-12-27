@@ -180,12 +180,14 @@ class BaseStructure(BaseModel):
     def get_schema(cls, force_required: bool = False) -> dict[str, Any]:
         """Generate a JSON schema for the class.
 
-        Required fields remain driven by Pydantic's schema generation defaults.
+        All object properties are marked as required to produce fully specified
+        schemas. Fields with a default value of ``None`` are treated as nullable
+        and gain an explicit ``null`` entry in the resulting schema.
 
         Parameters
         ----------
         force_required : bool, default=False
-            When ``True``, mark all object properties as required.
+            Retained for compatibility; all schemas declare required properties.
 
         Returns
         -------
@@ -209,9 +211,49 @@ class BaseStructure(BaseModel):
 
         cleaned_schema = cast(Dict[str, Any], clean_refs(schema))
 
-        if force_required:
-            return cls.apply_required_fields(cleaned_schema)
+        def add_required_fields(target: dict[str, Any]) -> None:
+            """Ensure every object declares its required properties."""
+            properties = target.get("properties")
+            if isinstance(properties, dict) and properties:
+                target["required"] = sorted(properties.keys())
+            for value in target.values():
+                if isinstance(value, dict):
+                    add_required_fields(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            add_required_fields(item)
 
+        nullable_fields = {
+            name
+            for name, model_field in getattr(cls, "model_fields", {}).items()
+            if getattr(model_field, "default", inspect.Signature.empty) is None
+        }
+
+        properties = cleaned_schema.get("properties", {})
+        if isinstance(properties, dict) and nullable_fields:
+            for field_name in nullable_fields:
+                field_props = properties.get(field_name)
+                if not isinstance(field_props, dict):
+                    continue
+
+                field_type = field_props.get("type")
+                if isinstance(field_type, str):
+                    field_props["type"] = [field_type, "null"]
+                elif isinstance(field_type, list):
+                    if "null" not in field_type:
+                        field_type.append("null")
+                else:
+                    any_of = field_props.get("anyOf")
+                    if isinstance(any_of, list):
+                        has_null = any(
+                            isinstance(item, dict) and item.get("type") == "null"
+                            for item in any_of
+                        )
+                        if not has_null:
+                            any_of.append({"type": "null"})
+
+        add_required_fields(cleaned_schema)
         return cleaned_schema
 
     @staticmethod
@@ -552,6 +594,11 @@ class BaseStructure(BaseModel):
 class SchemaOptions:
     """Options for schema generation helpers.
 
+    Methods
+    -------
+    to_kwargs()
+        Return keyword arguments for schema helper calls.
+
     Parameters
     ----------
     force_required : bool, default=False
@@ -571,21 +618,50 @@ class SchemaOptions:
         return {"force_required": self.force_required}
 
 
-def spec_field(name: str, **overrides: Any) -> Any:
-    """Return a Pydantic ``Field`` configured with a default title.
+def spec_field(
+    name: str, *, allow_null: bool = True, description: str | None = None, **overrides: Any
+) -> Any:
+    """Return a Pydantic ``Field`` with sensible defaults for nullable specs.
 
     Parameters
     ----------
     name : str
         Name of the field to use as the default title.
+    allow_null : bool, default=True
+        When ``True``, set ``None`` as the default value to allow explicit
+        ``null`` in generated schemas.
+    description : str or None, default=None
+        Optional description to include. When ``allow_null`` is ``True``, the
+        nullable hint "Return null if none apply." is appended.
     **overrides
-        Keyword arguments forwarded to ``pydantic.Field``.
+        Additional keyword arguments forwarded to ``pydantic.Field``.
 
     Returns
     -------
     Any
-        Pydantic ``Field`` configured with a default title.
+        Pydantic ``Field`` configured with a default title and null behavior.
     """
+
     field_kwargs: Dict[str, Any] = {"title": name.replace("_", " ").title()}
     field_kwargs.update(overrides)
+
+    base_description = field_kwargs.pop("description", description)
+
+    has_default = "default" in field_kwargs
+    has_default_factory = "default_factory" in field_kwargs
+
+    if allow_null:
+        if not has_default and not has_default_factory:
+            field_kwargs["default"] = None
+        nullable_hint = "Return null if none apply."
+        if base_description:
+            field_kwargs["description"] = f"{base_description} {nullable_hint}"
+        else:
+            field_kwargs["description"] = nullable_hint
+    else:
+        if not has_default and not has_default_factory:
+            field_kwargs["default"] = ...
+        if base_description is not None:
+            field_kwargs["description"] = base_description
+
     return Field(**field_kwargs)
