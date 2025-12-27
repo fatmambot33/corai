@@ -19,6 +19,9 @@ class AgentEnum(CrosswalkJSONEnum):
     WEB_SEARCH = "WebAgentSearch"
     VECTOR_SEARCH = "VectorSearch"
     DATA_ANALYST = "DataAnalyst"
+    SUMMARIZER = "SummarizerAgent"
+    TRANSLATOR = "TranslatorAgent"
+    VALIDATOR = "ValidatorAgent"
 
     @classmethod
     def CROSSWALK(cls) -> dict[str, dict[str, Any]]:
@@ -42,6 +45,9 @@ class AgentEnum(CrosswalkJSONEnum):
             "WEB_SEARCH": {"value": "WebAgentSearch"},
             "VECTOR_SEARCH": {"value": "VectorSearch"},
             "DATA_ANALYST": {"value": "DataAnalyst"},
+            "SUMMARIZER": {"value": "SummarizerAgent"},
+            "TRANSLATOR": {"value": "TranslatorAgent"},
+            "VALIDATOR": {"value": "ValidatorAgent"},
         }
 
 
