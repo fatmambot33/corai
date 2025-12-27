@@ -619,7 +619,11 @@ class SchemaOptions:
 
 
 def spec_field(
-    name: str, *, allow_null: bool = True, description: str | None = None, **overrides: Any
+    name: str,
+    *,
+    allow_null: bool = True,
+    description: str | None = None,
+    **overrides: Any,
 ) -> Any:
     """Return a Pydantic ``Field`` with sensible defaults for nullable specs.
 
