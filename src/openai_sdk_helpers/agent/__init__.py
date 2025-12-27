@@ -6,7 +6,8 @@ from .base import BaseAgent
 from .config import AgentConfig
 from .project_manager import ProjectManager
 from .runner import run, run_streamed, run_sync
-from .text import SummarizerAgent, TranslatorAgent
+from .summarizer import SummarizerAgent
+from .translator import TranslatorAgent
 from .validation import ValidatorAgent
 from .utils import run_coro_sync
 from .vector_search import VectorSearch

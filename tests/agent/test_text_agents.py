@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.agent.text import SummarizerAgent, TranslatorAgent
+from openai_sdk_helpers.agent.summarizer import SummarizerAgent
+from openai_sdk_helpers.agent.translator import TranslatorAgent
 from openai_sdk_helpers.structure import SummaryStructure
 
 
@@ -17,7 +18,7 @@ async def test_summarizer_agent_runs_with_metadata():
     summary = SummaryStructure(text="summary")
 
     with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.text._run_agent", new_callable=AsyncMock
+        "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
     ) as mock_run:
         mock_run.return_value = summary
         result = await agent.run_agent("Input text", metadata={"source": "unit-test"})
@@ -39,7 +40,7 @@ async def test_summarizer_allows_output_override():
     fake_agent = MagicMock()
 
     with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.text._run_agent", new_callable=AsyncMock
+        "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
     ) as mock_run:
         mock_run.return_value = "summary"
         await agent.run_agent("Input text")
@@ -56,7 +57,7 @@ async def test_translator_merges_context():
     fake_agent = MagicMock()
 
     with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.text._run_agent", new_callable=AsyncMock
+        "openai_sdk_helpers.agent.translator._run_agent", new_callable=AsyncMock
     ) as mock_run:
         mock_run.return_value = "translated"
         result = await agent.run_agent(

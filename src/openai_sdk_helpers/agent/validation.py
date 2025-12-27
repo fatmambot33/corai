@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure.validation import ValidationResultStructure
 from .base import BaseAgent, _run_agent
 from .config import AgentConfig
+from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
 class ValidatorAgent(BaseAgent):
@@ -44,7 +44,7 @@ class ValidatorAgent(BaseAgent):
             description="Validate user input and agent output against guardrails.",
             output_type=ValidationResultStructure,
         )
-        prompt_directory = prompt_dir or _DEFAULT_PROMPT_DIR
+        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
             config=config, prompt_dir=prompt_directory, default_model=default_model
         )
@@ -95,5 +95,3 @@ class ValidatorAgent(BaseAgent):
 
 
 __all__ = ["ValidatorAgent"]
-
-_DEFAULT_PROMPT_DIR = Path(__file__).resolve().parent.parent / "prompt"
