@@ -17,9 +17,12 @@ async def test_summarizer_agent_runs_with_metadata():
     fake_agent = MagicMock()
     summary = SummaryStructure(text="summary")
 
-    with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
-    ) as mock_run:
+    with (
+        patch.object(agent, "get_agent", return_value=fake_agent),
+        patch(
+            "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
+        ) as mock_run,
+    ):
         mock_run.return_value = summary
         result = await agent.run_agent("Input text", metadata={"source": "unit-test"})
 
@@ -39,9 +42,12 @@ async def test_summarizer_allows_output_override():
     agent = SummarizerAgent(default_model="gpt-4o-mini", output_type=str)
     fake_agent = MagicMock()
 
-    with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
-    ) as mock_run:
+    with (
+        patch.object(agent, "get_agent", return_value=fake_agent),
+        patch(
+            "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
+        ) as mock_run,
+    ):
         mock_run.return_value = "summary"
         await agent.run_agent("Input text")
 
@@ -56,9 +62,12 @@ async def test_translator_merges_context():
     agent = TranslatorAgent(default_model="gpt-4o-mini")
     fake_agent = MagicMock()
 
-    with patch.object(agent, "get_agent", return_value=fake_agent), patch(
-        "openai_sdk_helpers.agent.translator._run_agent", new_callable=AsyncMock
-    ) as mock_run:
+    with (
+        patch.object(agent, "get_agent", return_value=fake_agent),
+        patch(
+            "openai_sdk_helpers.agent.translator._run_agent", new_callable=AsyncMock
+        ) as mock_run,
+    ):
         mock_run.return_value = "translated"
         result = await agent.run_agent(
             "Bonjour", target_language="English", context={"tone": "casual"}
@@ -93,4 +102,3 @@ def test_translator_default_prompt():
 
     assert "professional translator" in prompt
     assert "target language" in prompt
-
