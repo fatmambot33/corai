@@ -16,7 +16,7 @@ from ..environment import DATETIME_FMT
 from ..utils import JSONSerializable, log
 from .base import AgentBase
 from .config import AgentConfig
-from .enum import AgentEnum
+from ..structure.plan.enum import AgentEnum
 
 PromptFn = Callable[[str], PromptStructure]
 BuildPlanFn = Callable[[str], PlanStructure]

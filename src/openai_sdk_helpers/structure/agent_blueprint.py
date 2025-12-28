@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from ..agent.enum import AgentEnum
+from .plan.enum import AgentEnum
 from .base import BaseStructure, spec_field
 from .plan import TaskStructure, PlanStructure
 

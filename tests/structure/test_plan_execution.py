@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from openai_sdk_helpers.structure import TaskStructure, PlanStructure
-from openai_sdk_helpers.agent.enum import AgentEnum
+from openai_sdk_helpers.structure.plan.enum import AgentEnum
 
 
 def test_execute_runs_tasks_and_tracks_status():

@@ -8,7 +8,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping
 
-from ...agent.enum import AgentEnum
+from .enum import AgentEnum
 from ..base import BaseStructure, spec_field
 from .task import TaskStructure
 

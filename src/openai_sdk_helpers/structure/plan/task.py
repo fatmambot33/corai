@@ -7,7 +7,7 @@ from typing import List, Literal, Optional
 
 from pydantic import field_validator
 
-from ...agent.enum import AgentEnum
+from .enum import AgentEnum
 from ..base import BaseStructure, spec_field
 
 

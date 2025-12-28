@@ -210,12 +210,11 @@ class BaseStructure(BaseModel):
             cls,
             tool_name,
             tool_description,
-            force_required=force_required,
         )
 
     @classmethod
     def get_reponse_format(
-        cls, force_required: bool = False
+        cls
     ) -> ResponseTextConfigParam:
         """Build a response format for OpenAI chat completions.
 
@@ -233,10 +232,10 @@ class BaseStructure(BaseModel):
         """
         from .responses import response_format
 
-        return response_format(cls, force_required=force_required)
+        return response_format(cls)
 
     @classmethod
-    def get_schema(cls, force_required: bool = False) -> dict[str, Any]:
+    def get_schema(cls) -> dict[str, Any]:
         """Generate a JSON schema for the class.
 
         All object properties are marked as required to produce fully specified
@@ -311,12 +310,12 @@ class BaseStructure(BaseModel):
                         )
                         if not has_null:
                             any_of.append({"type": "null"})
-        if force_required:
-            add_required_fields(cleaned_schema)
+
+        add_required_fields(cleaned_schema)
         return cleaned_schema
 
     @classmethod
-    def save_schema_to_file(cls, force_required: bool = False) -> Path:
+    def save_schema_to_file(cls) -> Path:
         """
         Save the generated JSON schema to a file.
 
@@ -333,7 +332,7 @@ class BaseStructure(BaseModel):
         Path
             Path to the saved schema file.
         """
-        schema = cls.get_schema(force_required=force_required)
+        schema = cls.get_schema()
         if cls.DATA_PATH is None:
             raise RuntimeError(
                 "DATA_PATH is not set. Set BaseStructure.DATA_PATH before saving."

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.agent.enum import AgentEnum
+from openai_sdk_helpers.structure.plan.enum import AgentEnum
 from openai_sdk_helpers.agent.project_manager import ProjectManager
 from openai_sdk_helpers.structure import (
     TaskStructure,

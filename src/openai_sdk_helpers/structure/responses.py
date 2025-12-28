@@ -14,10 +14,7 @@ from ..utils import log
 
 
 def assistant_tool_definition(
-    structure: Type[BaseStructure],
-    name: str,
-    description: str,
-    force_required: bool = False,
+    structure: Type[BaseStructure], name: str, description: str
 ) -> dict:
     """Build a function tool definition for OpenAI Assistants.
 
@@ -29,8 +26,6 @@ def assistant_tool_definition(
         Name of the function tool.
     description : str
         Description of what the function tool does.
-    force_required : bool, default=False
-        When ``True``, mark all object properties as required.
 
     Returns
     -------
@@ -43,22 +38,18 @@ def assistant_tool_definition(
         "function": {
             "name": name,
             "description": description,
-            "parameters": structure.get_schema(force_required=force_required),
+            "parameters": structure.get_schema(),
         },
     }
 
 
-def assistant_format(
-    structure: Type[BaseStructure], force_required: bool = False
-) -> dict:
+def assistant_format(structure: Type[BaseStructure]) -> dict:
     """Build a response format definition for OpenAI Assistants.
 
     Parameters
     ----------
     structure : type[BaseStructure]
         Structure class that defines the response schema.
-    force_required : bool, default=False
-        When ``True``, mark all object properties as required.
 
     Returns
     -------
@@ -70,7 +61,7 @@ def assistant_format(
         "type": "json_schema",
         "json_schema": {
             "name": structure.__name__,
-            "schema": structure.get_schema(force_required=force_required),
+            "schema": structure.get_schema(),
         },
     }
 
@@ -79,7 +70,6 @@ def response_tool_definition(
     structure: Type[BaseStructure],
     tool_name: str,
     tool_description: str,
-    force_required: bool = False,
 ) -> dict:
     """Build a tool definition for OpenAI chat completions.
 
@@ -91,8 +81,6 @@ def response_tool_definition(
         Name of the function tool.
     tool_description : str
         Description of what the function tool does.
-    force_required : bool, default=False
-        When ``True``, mark all object properties as required.
 
     Returns
     -------
@@ -104,23 +92,19 @@ def response_tool_definition(
         "type": "function",
         "name": tool_name,
         "description": tool_description,
-        "parameters": structure.get_schema(force_required=force_required),
+        "parameters": structure.get_schema(),
         "strict": True,
         "additionalProperties": False,
     }
 
 
-def response_format(
-    structure: Type[BaseStructure], force_required: bool = False
-) -> ResponseTextConfigParam:
+def response_format(structure: Type[BaseStructure]) -> ResponseTextConfigParam:
     """Build a response format for OpenAI chat completions.
 
     Parameters
     ----------
     structure : type[BaseStructure]
         Structure class that defines the response schema.
-    force_required : bool, default=False
-        When ``True``, mark all object properties as required.
 
     Returns
     -------
@@ -131,7 +115,7 @@ def response_format(
     response_format_text_JSONSchema_config_param = (
         ResponseFormatTextJSONSchemaConfigParam(
             name=structure.__name__,
-            schema=structure.get_schema(force_required=force_required),
+            schema=structure.get_schema(),
             type="json_schema",
             description="This is a JSON schema format for the output structure.",
             strict=True,

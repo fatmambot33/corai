@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .base import AgentBase
 from .config import AgentConfig
-from .enum import AgentEnum
+from ..structure.plan.enum import AgentEnum
 from .project_manager import ProjectManager
 from .runner import *
 from .summarizer import SummarizerAgent

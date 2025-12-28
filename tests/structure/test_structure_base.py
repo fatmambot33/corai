@@ -69,7 +69,7 @@ def test_get_schema():
 
 def test_get_schema_force_required():
     """Test the get_schema method with force_required."""
-    schema = DummyStructure.get_schema(force_required=True)
+    schema = DummyStructure.get_schema()
     assert "required" in schema
     assert "name" in schema["required"]
     assert "age" in schema["required"]
