@@ -213,9 +213,7 @@ class BaseStructure(BaseModel):
         )
 
     @classmethod
-    def get_reponse_format(
-        cls
-    ) -> ResponseTextConfigParam:
+    def get_reponse_format(cls) -> ResponseTextConfigParam:
         """Build a response format for OpenAI chat completions.
 
         Parameters
