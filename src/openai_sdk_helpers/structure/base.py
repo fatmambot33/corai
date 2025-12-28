@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import (
     Any,
     ClassVar,
@@ -26,9 +27,11 @@ from typing import (
 
 # Third-party imports
 from pydantic import BaseModel, ConfigDict, Field
+from openai.types.responses.response_text_config_param import ResponseTextConfigParam
+
 
 # Internal imports
-from dataclasses import dataclass
+
 from ..utils import check_filepath, customJSONEncoder, log
 
 T = TypeVar("T", bound="BaseStructure")
@@ -177,6 +180,62 @@ class BaseStructure(BaseModel):
         return prompt_lines
 
     @classmethod
+    def response_tool_definition(
+        cls,
+        tool_name: str,
+        tool_description: str,
+        force_required: bool = False,
+    ) -> dict:
+        """Build a tool definition for OpenAI chat completions.
+
+        Parameters
+        ----------
+        structure : type[BaseStructure]
+            Structure class that defines the tool schema.
+        tool_name : str
+            Name of the function tool.
+        tool_description : str
+            Description of what the function tool does.
+        force_required : bool, default=False
+            When ``True``, mark all object properties as required.
+
+        Returns
+        -------
+        dict
+            Tool definition payload for chat completions.
+        """
+        from .responses import response_tool_definition
+
+        return response_tool_definition(
+            cls,
+            tool_name,
+            tool_description,
+            force_required=force_required,
+        )
+
+    @classmethod
+    def get_reponse_format(
+        cls, force_required: bool = False
+    ) -> ResponseTextConfigParam:
+        """Build a response format for OpenAI chat completions.
+
+        Parameters
+        ----------
+        cls : type[BaseStructure]
+            Structure class that defines the response schema.
+        force_required : bool, default=False
+            When ``True``, mark all object properties as required.
+
+        Returns
+        -------
+        ResponseTextConfigParam
+            Response format definition.
+        """
+        from .responses import response_format
+
+        return response_format(cls, force_required=force_required)
+
+    @classmethod
     def get_schema(cls, force_required: bool = False) -> dict[str, Any]:
         """Generate a JSON schema for the class.
 
@@ -252,43 +311,9 @@ class BaseStructure(BaseModel):
                         )
                         if not has_null:
                             any_of.append({"type": "null"})
-
-        add_required_fields(cleaned_schema)
+        if force_required:
+            add_required_fields(cleaned_schema)
         return cleaned_schema
-
-    @staticmethod
-    def apply_required_fields(schema: dict[str, Any]) -> dict[str, Any]:
-        """Force all object properties to be marked as required.
-
-        This mirrors the previous behavior that treated every field as required
-        in downstream JSON schemas.
-
-        Parameters
-        ----------
-        schema : dict[str, Any]
-            JSON schema to update in place.
-
-        Returns
-        -------
-        dict[str, Any]
-            Updated schema with required fields set for all objects.
-        """
-
-        def add_required_fields(target: dict[str, Any]) -> None:
-            """Ensure every object declares its required properties."""
-            properties = target.get("properties")
-            if isinstance(properties, dict) and properties:
-                target["required"] = sorted(properties.keys())
-            for value in target.values():
-                if isinstance(value, dict):
-                    add_required_fields(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict):
-                            add_required_fields(item)
-
-        add_required_fields(schema)
-        return schema
 
     @classmethod
     def save_schema_to_file(cls, force_required: bool = False) -> Path:

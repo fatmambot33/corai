@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...enums.base import CrosswalkJSONEnum
+from ..enums.base import CrosswalkJSONEnum
 
 
 class AgentEnum(CrosswalkJSONEnum):

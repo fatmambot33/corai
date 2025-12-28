@@ -1,4 +1,4 @@
-"""Tests for the BaseAgent class."""
+"""Tests for the AgentBase class."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import pytest
 from agents import RunContextWrapper
 from pydantic import BaseModel
 
-from openai_sdk_helpers.agent.base import BaseAgent
+from openai_sdk_helpers.agent.base import AgentBase
 
 
 class MockConfig(BaseModel):
@@ -40,25 +40,25 @@ def mock_run_context_wrapper():
 
 
 def test_base_agent_initialization(mock_config):
-    """Test BaseAgent initialization."""
-    agent = BaseAgent(config=mock_config)
+    """Test AgentBase initialization."""
+    agent = AgentBase(config=mock_config)
     assert agent.agent_name == "test_agent"
     assert agent.model == "test_model"
 
 
 def test_base_agent_initialization_with_prompt_dir(mock_config, tmp_path: Path):
-    """Test BaseAgent initialization with a prompt directory."""
+    """Test AgentBase initialization with a prompt directory."""
     prompt_dir = tmp_path / "prompts"
     prompt_dir.mkdir()
     prompt_file = prompt_dir / "test_agent.jinja"
     prompt_file.write_text("Hello, {{ key }}!")
-    agent = BaseAgent(config=mock_config, prompt_dir=prompt_dir)
+    agent = AgentBase(config=mock_config, prompt_dir=prompt_dir)
     assert agent._template.render(key="world") == "Hello, world!"
 
 
 def test_base_agent_build_prompt_from_jinja(mock_config, mock_run_context_wrapper):
     """Test building a prompt from a Jinja template."""
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent._template = MagicMock()
     agent._template.render.return_value = "Hello, value!"
     prompt = agent.build_prompt_from_jinja(mock_run_context_wrapper)
@@ -69,7 +69,7 @@ def test_base_agent_build_prompt_from_jinja(mock_config, mock_run_context_wrappe
 @patch("openai_sdk_helpers.agent.base.Agent")
 def test_get_agent(mock_agent, mock_config):
     """Test getting a configured agent instance."""
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent.get_agent()
     mock_agent.assert_called_once_with(
         name="test_agent",
@@ -82,7 +82,7 @@ def test_get_agent(mock_agent, mock_config):
 @patch("asyncio.run")
 def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
     """Test that _run_agent_sync creates a new event loop when none is running."""
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent.run_sync("test_input")
     mock_asyncio_run.assert_called_once()
 
@@ -90,7 +90,7 @@ def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
 @patch("openai_sdk_helpers.agent.base._run_agent_sync")
 def test_run_agent_sync(mock_run_agent_sync, mock_config):
     """Test running the agent synchronously."""
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent.run_sync("test_input")
     mock_run_agent_sync.assert_called_once()
 
@@ -98,7 +98,7 @@ def test_run_agent_sync(mock_run_agent_sync, mock_config):
 @patch("openai_sdk_helpers.agent.base._run_agent_streamed")
 def test_run_agent_streamed(mock_run_agent_streamed, mock_config):
     """Test running the agent with streaming."""
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent.run_streamed("test_input")
     mock_run_agent_streamed.assert_called_once()
 
@@ -109,7 +109,7 @@ def test_as_tool(mock_agent_class, mock_function_tool, mock_config):
     """Test returning the agent as a tool."""
     mock_agent_instance = mock_agent_class.return_value
     mock_agent_instance.as_tool.return_value = mock_function_tool
-    agent = BaseAgent(config=mock_config)
+    agent = AgentBase(config=mock_config)
     agent.as_tool()
     mock_agent_instance.as_tool.assert_called_once_with(
         tool_name="test_agent", tool_description=""

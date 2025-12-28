@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+from ..agent.enum import AgentEnum
 from .base import BaseStructure, spec_field
-from .plan import AgentEnum, AgentTaskStructure, PlanStructure
+from .plan import TaskStructure, PlanStructure
 
 
 class AgentBlueprint(BaseStructure):
@@ -108,32 +109,32 @@ class AgentBlueprint(BaseStructure):
             Ordered list of tasks representing the build lifecycle.
         """
         tasks = [
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.PLANNER,
                 prompt=self._scope_prompt(),
                 context=self.constraints,
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.DESIGNER,
                 prompt=self._design_prompt(),
                 context=self.required_tools + self.data_sources,
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.BUILDER,
                 prompt=self._synthesis_prompt(),
                 context=self.capabilities,
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.VALIDATOR,
                 prompt=self._validation_prompt(),
                 context=self.guardrails,
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.EVALUATOR,
                 prompt=self._evaluation_prompt(),
                 context=self.evaluation_plan,
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.RELEASE_MANAGER,
                 prompt=self._deployment_prompt(),
                 context=self.rollout_plan,

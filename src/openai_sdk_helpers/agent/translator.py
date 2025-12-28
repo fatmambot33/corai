@@ -5,12 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import BaseAgent, _run_agent
+from .base import AgentBase, _run_agent
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class TranslatorAgent(BaseAgent):
+class TranslatorAgent(AgentBase):
     """Translate text into a target language.
 
     Methods

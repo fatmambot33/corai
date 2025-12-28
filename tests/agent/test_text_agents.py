@@ -87,7 +87,7 @@ def test_summarizer_default_prompt():
 
     agent = SummarizerAgent(default_model="gpt-4o-mini")
 
-    prompt = agent._build_instructions_from_jinja()
+    prompt = agent._build_prompt_from_jinja()
 
     assert "summarizes long-form text" in prompt
     assert "bullet points" in prompt
@@ -98,7 +98,7 @@ def test_translator_default_prompt():
 
     agent = TranslatorAgent(default_model="gpt-4o-mini")
 
-    prompt = agent._build_instructions_from_jinja()
+    prompt = agent._build_prompt_from_jinja()
 
     assert "professional translator" in prompt
     assert "target language" in prompt

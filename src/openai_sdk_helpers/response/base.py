@@ -49,10 +49,10 @@ class ResponseBase(Generic[T]):
 
     Methods
     -------
-    generate_response_async(content, attachments)
+    run_response_async(content, attachments)
         Generate a response asynchronously and return parsed output.
-    generate_response(content, attachments)
-        Synchronous wrapper around ``generate_response_async``.
+    run_response(content, attachments)
+        Synchronous wrapper around ``run_response_async``.
     save(filepath)
         Serialize the message history to disk.
     close()
@@ -276,7 +276,7 @@ class ResponseBase(Generic[T]):
             )
             self.messages.add_user_message(message)
 
-    async def generate_response_async(
+    async def run_response_async(
         self,
         content: Union[str, List[str]],
         attachments: Optional[Union[str, List[str]]] = None,
@@ -302,7 +302,7 @@ class ResponseBase(Generic[T]):
         ValueError
             If no handler is found for a tool invoked by the API.
         """
-        log(f"{self.__class__.__name__}::generate_response")
+        log(f"{self.__class__.__name__}::run_response")
         parsed_result: Optional[T] = None
 
         self._build_input(
@@ -390,15 +390,15 @@ class ResponseBase(Generic[T]):
             return parsed_result
         return None
 
-    def generate_response(
+    def run_response(
         self,
         content: Union[str, List[str]],
         attachments: Optional[Union[str, List[str]]] = None,
     ) -> Optional[T]:
-        """Run :meth:`generate_response_async` synchronously."""
+        """Run :meth:`run_response_async` synchronously."""
 
         async def runner() -> Optional[T]:
-            return await self.generate_response_async(
+            return await self.run_response_async(
                 content=content, attachments=attachments
             )
 

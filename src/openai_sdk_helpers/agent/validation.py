@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure.validation import ValidationResultStructure
-from .base import BaseAgent, _run_agent
+from .base import AgentBase, _run_agent
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class ValidatorAgent(BaseAgent):
+class ValidatorAgent(AgentBase):
     """Check user prompts and agent responses against safety guardrails.
 
     Methods

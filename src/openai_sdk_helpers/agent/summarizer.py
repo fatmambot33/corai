@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure import SummaryStructure
-from .base import BaseAgent, _run_agent
+from .base import AgentBase, _run_agent
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class SummarizerAgent(BaseAgent):
+class SummarizerAgent(AgentBase):
     """Generate concise summaries from provided text.
 
     Methods

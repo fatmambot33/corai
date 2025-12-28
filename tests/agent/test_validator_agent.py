@@ -53,7 +53,7 @@ def test_validator_agent_default_prompt():
 
     agent = ValidatorAgent(default_model="gpt-4o-mini")
 
-    prompt = agent._build_instructions_from_jinja()
+    prompt = agent._build_prompt_from_jinja()
 
     assert "safety validator" in prompt
     assert "guardrails" in prompt

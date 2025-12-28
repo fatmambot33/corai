@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from openai_sdk_helpers.agent.project_manager import ProjectManager
 from openai_sdk_helpers.structure import (
-    AgentTaskStructure,
+    TaskStructure,
     PlanStructure,
     PromptStructure,
 )
@@ -15,14 +15,14 @@ from openai_sdk_helpers.structure import (
 def test_project_manager_integration(tmp_path):
     """Test the ProjectManager integration."""
 
-    def build_brief_fn(prompt: str) -> PromptStructure:
+    def prompt_fn(prompt: str) -> PromptStructure:
         return PromptStructure(prompt=f"Brief for {prompt}")
 
     def build_plan_fn(brief: str) -> PlanStructure:
         return PlanStructure(
             tasks=[
-                AgentTaskStructure(prompt=f"Task 1 for {brief}"),
-                AgentTaskStructure(prompt=f"Task 2 for {brief}"),
+                TaskStructure(prompt=f"Task 1 for {brief}"),
+                TaskStructure(prompt=f"Task 2 for {brief}"),
             ]
         )
 
@@ -37,7 +37,7 @@ def test_project_manager_integration(tmp_path):
 
     with patch("openai_sdk_helpers.agent.project_manager.ProjectManager.save"):
         pm = ProjectManager(
-            build_brief_fn=build_brief_fn,
+            prompt_fn=prompt_fn,
             build_plan_fn=build_plan_fn,
             execute_plan_fn=execute_plan_fn,
             summarize_fn=summarize_fn,

@@ -14,7 +14,7 @@ from jinja2 import Template
 
 
 class AgentConfigLike(Protocol):
-    """Protocol describing the configuration attributes for BaseAgent."""
+    """Protocol describing the configuration attributes for AgentBase."""
 
     name: str
     description: Optional[str]
@@ -26,13 +26,13 @@ class AgentConfigLike(Protocol):
     model_settings: Optional[Any]
 
 
-class BaseAgent:
+class AgentBase:
     """Factory for creating and configuring specialized agents.
 
     Methods
     -------
     from_config(config, run_context_wrapper)
-        Instantiate a ``BaseAgent`` from configuration.
+        Instantiate a ``AgentBase`` from configuration.
     build_prompt_from_jinja(run_context_wrapper)
         Render the agent prompt using Jinja and optional context.
     get_prompt(run_context_wrapper, _)
@@ -56,7 +56,7 @@ class BaseAgent:
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
-        """Initialize the ``BaseAgent`` using a configuration object.
+        """Initialize the ``AgentBase`` using a configuration object.
 
         Parameters
         ----------
@@ -114,8 +114,8 @@ class BaseAgent:
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
-    ) -> "BaseAgent":
-        """Create a :class:`BaseAgent` instance from configuration.
+    ) -> "AgentBase":
+        """Create a :class:`AgentBase` instance from configuration.
 
         Parameters
         ----------
@@ -130,7 +130,7 @@ class BaseAgent:
 
         Returns
         -------
-        BaseAgent
+        AgentBase
             Instantiated agent.
         """
         return cls(
@@ -140,7 +140,7 @@ class BaseAgent:
             default_model=default_model,
         )
 
-    def _build_instructions_from_jinja(self) -> str:
+    def _build_prompt_from_jinja(self) -> str:
         """Return the rendered instructions prompt for this agent.
 
         Returns
@@ -204,7 +204,7 @@ class BaseAgent:
         """
         agent_config: Dict[str, Any] = {
             "name": self.agent_name,
-            "instructions": self._build_instructions_from_jinja(),
+            "instructions": self._build_prompt_from_jinja(),
             "model": self.model,
         }
         if self._output_type:
@@ -429,7 +429,7 @@ def _run_agent_streamed(
 
 __all__ = [
     "AgentConfigLike",
-    "BaseAgent",
+    "AgentBase",
     "_run_agent",
     "_run_agent_sync",
     "_run_agent_streamed",

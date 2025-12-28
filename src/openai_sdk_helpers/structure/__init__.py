@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .agent_blueprint import AgentBlueprint
-from .plan import AgentEnum, AgentTaskStructure, PlanStructure
+from .plan import TaskStructure, PlanStructure
 from .base import BaseStructure, SchemaOptions, spec_field
 from .prompt import PromptStructure
 from .responses import (
@@ -35,8 +35,7 @@ __all__ = [
     "SchemaOptions",
     "spec_field",
     "AgentBlueprint",
-    "AgentEnum",
-    "AgentTaskStructure",
+    "TaskStructure",
     "PlanStructure",
     "PromptStructure",
     "SummaryTopic",

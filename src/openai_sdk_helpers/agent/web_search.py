@@ -17,14 +17,14 @@ from ..structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
-from .base import BaseAgent, _run_agent
+from .base import AgentBase, _run_agent
 from .config import AgentConfig
-from .utils import run_coro_sync
+from .utils import run_coroutine_agent_sync
 
 MAX_CONCURRENT_SEARCHES = 10
 
 
-class WebAgentPlanner(BaseAgent):
+class WebAgentPlanner(AgentBase):
     """Plan web searches to satisfy a user query.
 
     Methods
@@ -80,7 +80,7 @@ class WebAgentPlanner(BaseAgent):
         return result
 
 
-class WebSearchToolAgent(BaseAgent):
+class WebSearchToolAgent(AgentBase):
     """Execute web searches defined in a plan.
 
     Methods
@@ -201,7 +201,7 @@ class WebSearchToolAgent(BaseAgent):
             return WebSearchItemResultStructure(text="")
 
 
-class WebAgentWriter(BaseAgent):
+class WebAgentWriter(AgentBase):
     """Summarize search results into a human-readable report.
 
     Methods
@@ -266,7 +266,7 @@ class WebAgentWriter(BaseAgent):
         return result
 
 
-class WebAgentSearch(BaseAgent):
+class WebAgentSearch(AgentBase):
     """Manage the complete web search workflow.
 
     Methods
@@ -360,7 +360,7 @@ class WebAgentSearch(BaseAgent):
         WebSearchStructure
             Completed research output.
         """
-        return run_coro_sync(self.run_agent(search_query))
+        return run_coroutine_agent_sync(self.run_agent(search_query))
 
     @staticmethod
     async def run_web_agent(search_query: str) -> WebSearchStructure:
@@ -392,7 +392,9 @@ class WebAgentSearch(BaseAgent):
         WebSearchStructure
             Completed research output.
         """
-        return run_coro_sync(WebAgentSearch.run_web_agent(search_query=search_query))
+        return run_coroutine_agent_sync(
+            WebAgentSearch.run_web_agent(search_query=search_query)
+        )
 
 
 __all__ = [

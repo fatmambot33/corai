@@ -17,14 +17,14 @@ from ..structure.vector_search import (
     VectorSearchReportStructure,
 )
 from ..vector_storage import VectorStorage
-from .base import BaseAgent, _run_agent
+from .base import AgentBase, _run_agent
 from .config import AgentConfig
-from .utils import run_coro_sync
+from .utils import run_coroutine_agent_sync
 
 MAX_CONCURRENT_SEARCHES = 10
 
 
-class VectorSearchPlanner(BaseAgent):
+class VectorSearchPlanner(AgentBase):
     """Plan vector searches to satisfy a user query.
 
     Methods
@@ -80,7 +80,7 @@ class VectorSearchPlanner(BaseAgent):
         return result
 
 
-class VectorSearchTool(BaseAgent):
+class VectorSearchTool(AgentBase):
     """Execute vector searches defined in a search plan.
 
     Methods
@@ -233,7 +233,7 @@ class VectorSearchTool(BaseAgent):
         return VectorSearchItemResultStructure(texts=texts)
 
 
-class VectorSearchWriter(BaseAgent):
+class VectorSearchWriter(AgentBase):
     """Generate reports summarizing vector search results.
 
     Methods
@@ -298,7 +298,7 @@ class VectorSearchWriter(BaseAgent):
         return result
 
 
-class VectorSearch(BaseAgent):
+class VectorSearch(AgentBase):
     """Manage the complete vector search workflow.
 
     Methods
@@ -418,7 +418,7 @@ class VectorSearch(BaseAgent):
         VectorSearchStructure
             Completed research output.
         """
-        return run_coro_sync(self.run_agent(search_query))
+        return run_coroutine_agent_sync(self.run_agent(search_query))
 
     @staticmethod
     async def run_vector_agent(search_query: str) -> VectorSearchStructure:
@@ -450,7 +450,9 @@ class VectorSearch(BaseAgent):
         VectorSearchStructure
             Completed research output.
         """
-        return run_coro_sync(VectorSearch.run_vector_agent(search_query=search_query))
+        return run_coroutine_agent_sync(
+            VectorSearch.run_vector_agent(search_query=search_query)
+        )
 
 
 __all__ = [

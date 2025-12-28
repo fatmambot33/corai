@@ -1,4 +1,4 @@
-from openai_sdk_helpers.structure import AgentEnum
+from openai_sdk_helpers.agent.enum import AgentEnum
 
 
 def test_agent_enum_includes_text_agents():

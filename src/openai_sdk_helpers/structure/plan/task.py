@@ -7,11 +7,11 @@ from typing import List, Literal, Optional
 
 from pydantic import field_validator
 
+from ...agent.enum import AgentEnum
 from ..base import BaseStructure, spec_field
-from .enum import AgentEnum
 
 
-class AgentTaskStructure(BaseStructure):
+class TaskStructure(BaseStructure):
     """Structured representation of a single agent task.
 
     Methods
@@ -78,7 +78,7 @@ class AgentTaskStructure(BaseStructure):
 
         Examples
         --------
-        >>> AgentTaskStructure._coerce_task_type("WebAgentSearch")
+        >>> TaskStructure._coerce_task_type("WebAgentSearch")
         <AgentEnum.WEB_SEARCH: 'WebAgentSearch'>
         """
         if isinstance(value, AgentEnum):
@@ -103,7 +103,7 @@ class AgentTaskStructure(BaseStructure):
 
         Examples
         --------
-        >>> AgentTaskStructure(prompt="Test").print()
+        >>> TaskStructure(prompt="Test").print()
         'Task type: ...'  # doctest: +SKIP
         """
         return "\n".join(
@@ -119,4 +119,4 @@ class AgentTaskStructure(BaseStructure):
         )
 
 
-__all__ = ["AgentTaskStructure"]
+__all__ = ["TaskStructure"]

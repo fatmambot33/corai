@@ -15,7 +15,7 @@ async def sample_coro():
 
 def test_run_coro_sync():
     """Test the run_coro_sync function."""
-    result = utils.run_coro_sync(sample_coro())
+    result = utils.run_coroutine_agent_sync(sample_coro())
     assert result == "test result"
 
 
@@ -23,5 +23,5 @@ def test_run_coro_sync():
 def test_run_coro_sync_with_running_loop(mock_get_running_loop):
     """Test the run_coro_sync function when an event loop is running."""
     mock_get_running_loop.return_value.is_running.return_value = True
-    result = utils.run_coro_sync(sample_coro())
+    result = utils.run_coroutine_agent_sync(sample_coro())
     assert result == "test result"

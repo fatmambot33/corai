@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from openai_sdk_helpers.structure import AgentEnum, AgentTaskStructure, PlanStructure
+from openai_sdk_helpers.structure import TaskStructure, PlanStructure
+from openai_sdk_helpers.agent.enum import AgentEnum
 
 
 def test_execute_runs_tasks_and_tracks_status():
@@ -22,8 +23,8 @@ def test_execute_runs_tasks_and_tracks_status():
 
     plan = PlanStructure(
         tasks=[
-            AgentTaskStructure(task_type=AgentEnum.DESIGNER, prompt="Design agent"),
-            AgentTaskStructure(task_type=AgentEnum.BUILDER, prompt="Build agent"),
+            TaskStructure(task_type=AgentEnum.DESIGNER, prompt="Design agent"),
+            TaskStructure(task_type=AgentEnum.BUILDER, prompt="Build agent"),
         ]
     )
 
@@ -51,7 +52,7 @@ def test_execute_raises_when_agent_missing():
 
     plan = PlanStructure(
         tasks=[
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.DESIGNER,
                 prompt="Design agent",
             )
@@ -78,8 +79,8 @@ def test_execute_continues_on_error_when_configured():
 
     plan = PlanStructure(
         tasks=[
-            AgentTaskStructure(task_type=AgentEnum.DESIGNER, prompt="Design agent"),
-            AgentTaskStructure(task_type=AgentEnum.BUILDER, prompt="Build agent"),
+            TaskStructure(task_type=AgentEnum.DESIGNER, prompt="Design agent"),
+            TaskStructure(task_type=AgentEnum.BUILDER, prompt="Build agent"),
         ]
     )
 
@@ -116,12 +117,12 @@ def test_execute_forwards_task_context_alongside_history():
 
     plan = PlanStructure(
         tasks=[
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.PLANNER,
                 prompt="Scope mission",
                 context=["guardrail: limit scope"],
             ),
-            AgentTaskStructure(
+            TaskStructure(
                 task_type=AgentEnum.VALIDATOR,
                 prompt="Review outputs",
                 context=["tool: safety-check"],

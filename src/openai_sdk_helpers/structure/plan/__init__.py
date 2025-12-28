@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from .enum import AgentEnum
 from .plan import PlanStructure
-from .task import AgentTaskStructure
+from .task import TaskStructure
 
 __all__ = [
-    "AgentEnum",
     "PlanStructure",
-    "AgentTaskStructure",
+    "TaskStructure",
 ]

@@ -1,4 +1,5 @@
-from openai_sdk_helpers.structure import AgentBlueprint, AgentEnum
+from openai_sdk_helpers.structure import AgentBlueprint
+from openai_sdk_helpers.agent.enum import AgentEnum
 
 
 def test_blueprint_summary():

@@ -10,27 +10,29 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from ..structure import AgentEnum, AgentTaskStructure, PlanStructure, PromptStructure
+
+from ..structure import TaskStructure, PlanStructure, PromptStructure
 from ..environment import DATETIME_FMT
 from ..utils import JSONSerializable, log
-from .base import BaseAgent
+from .base import AgentBase
 from .config import AgentConfig
+from .enum import AgentEnum
 
-BuildBriefFn = Callable[[str], PromptStructure]
+PromptFn = Callable[[str], PromptStructure]
 BuildPlanFn = Callable[[str], PlanStructure]
 ExecutePlanFn = Callable[[PlanStructure], List[str]]
 SummarizeFn = Callable[[List[str]], str]
 
 
-class ProjectManager(BaseAgent, JSONSerializable):
+class ProjectManager(AgentBase, JSONSerializable):
     """Coordinate agent plans while persisting project state and outputs.
 
     Methods
     -------
-    build_instructions(prompt)
+    build_prompt(prompt)
         Summarize the prompt into a concise brief.
     build_plan()
-        Create a list of ``AgentTaskStructure`` entries for the project.
+        Create a list of ``TaskStructure`` entries for the project.
     execute_plan()
         Run each task sequentially while tracking status and timing.
     summarize_plan(results)
@@ -43,7 +45,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
 
     def __init__(
         self,
-        build_brief_fn: BuildBriefFn,
+        prompt_fn: PromptFn,
         build_plan_fn: BuildPlanFn,
         execute_plan_fn: ExecutePlanFn,
         summarize_fn: SummarizeFn,
@@ -57,7 +59,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
 
         Parameters
         ----------
-        build_brief_fn
+        prompt_fn
             Callable that generates a prompt brief from the input string.
         build_plan_fn
             Callable that generates a plan from the prompt brief.
@@ -88,7 +90,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
         super().__init__(
             config=config, prompt_dir=prompt_dir, default_model=default_model
         )
-        self._build_brief_fn = build_brief_fn
+        self._prompt_fn = prompt_fn
         self._build_plan_fn = build_plan_fn
         self._execute_plan_fn = execute_plan_fn
         self._summarize_fn = summarize_fn
@@ -102,7 +104,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
         self.start_date: Optional[datetime] = None
         self.end_date: Optional[datetime] = None
 
-    def build_instructions(self, prompt: str) -> None:
+    def build_prompt(self, prompt: str) -> None:
         """Return a concise brief for the project.
 
         Parameters
@@ -114,10 +116,10 @@ class ProjectManager(BaseAgent, JSONSerializable):
         -------
         None
         """
-        log("build_instructions", level=logging.INFO)
+        log("build_prompt", level=logging.INFO)
         self.start_date = datetime.now(timezone.utc)
         self.prompt = prompt
-        self.brief = self._build_brief_fn(prompt)
+        self.brief = self._prompt_fn(prompt)
         self.save()
 
     def build_plan(self) -> None:
@@ -126,7 +128,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
         Raises
         ------
         ValueError
-            If called before :meth:`build_instructions`.
+            If called before :meth:`build_prompt`.
 
         Returns
         -------
@@ -201,7 +203,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
         -------
         None
         """
-        self.build_instructions(prompt)
+        self.build_prompt(prompt)
         self.build_plan()
         results = self.execute_plan()
         self.summarize_plan(results)
@@ -233,7 +235,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
 
     @staticmethod
     def _run_task(
-        task: AgentTaskStructure,
+        task: TaskStructure,
         agent_callable: Callable[..., Any],
         aggregated_context: List[str],
     ) -> Any:
@@ -241,7 +243,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
 
         Parameters
         ----------
-        task : AgentTaskStructure
+        task : TaskStructure
             Task definition containing the callable and inputs.
         aggregated_context : list[str]
             Context combined from the task and prior task outputs.
@@ -280,7 +282,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
 
     @staticmethod
     def _run_task_in_thread(
-        task: AgentTaskStructure,
+        task: TaskStructure,
         agent_callable: Callable[..., Any],
         aggregated_context: List[str],
     ) -> Any:
@@ -372,7 +374,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
             return [str(item) for item in result]
         return [str(result)]
 
-    def _persist_task_results(self, task: AgentTaskStructure) -> Path:
+    def _persist_task_results(self, task: TaskStructure) -> Path:
         """Write task context and results to disk for future analysis."""
         run_dir = self._get_run_directory()
         task_label = self._task_label(task)
@@ -394,7 +396,7 @@ class ProjectManager(BaseAgent, JSONSerializable):
         return self._run_directory
 
     @staticmethod
-    def _task_label(task: AgentTaskStructure) -> str:
+    def _task_label(task: TaskStructure) -> str:
         """Generate a filesystem-safe label for the task."""
         task_type = ProjectManager._normalize_task_type(task.task_type)
         base = (task_type or "task").replace(" ", "_").lower()

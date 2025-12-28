@@ -9,7 +9,7 @@ from typing import Any, Coroutine, TypeVar
 T = TypeVar("T")
 
 
-def run_coro_sync(coro: Coroutine[Any, Any, T]) -> T:
+def run_coroutine_agent_sync(coro: Coroutine[Any, Any, T]) -> T:
     """Run a coroutine from synchronous code.
 
     Parameters
@@ -44,4 +44,4 @@ def run_coro_sync(coro: Coroutine[Any, Any, T]) -> T:
     return loop.run_until_complete(coro)
 
 
-__all__ = ["run_coro_sync"]
+__all__ = ["run_coroutine_agent_sync"]

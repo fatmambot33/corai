@@ -1,4 +1,4 @@
-"""Configuration helpers for ``BaseAgent``."""
+"""Configuration helpers for ``AgentBase``."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from ..structure import BaseStructure
 
 
 class AgentConfig(BaseStructure):
-    """Configuration required to build a :class:`BaseAgent`.
+    """Configuration required to build a :class:`AgentBase`.
 
     Methods
     -------

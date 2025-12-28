@@ -30,11 +30,11 @@ def run(
     Returns
     -------
     Any
-        Parsed response from :meth:`ResponseBase.generate_response`.
+        Parsed response from :meth:`ResponseBase.run_response`.
     """
     response = response_cls(**(response_kwargs or {}))
     try:
-        return response.generate_response(content=content)
+        return response.run_response(content=content)
     finally:
         response.close()
 

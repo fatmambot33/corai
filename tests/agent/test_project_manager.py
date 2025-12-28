@@ -7,18 +7,18 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from openai_sdk_helpers.agent.enum import AgentEnum
 from openai_sdk_helpers.agent.project_manager import ProjectManager
 from openai_sdk_helpers.structure import (
-    AgentEnum,
-    AgentTaskStructure,
+    TaskStructure,
     PlanStructure,
     PromptStructure,
 )
 
 
 @pytest.fixture
-def mock_build_brief_fn():
-    """Return a mock build_brief_fn."""
+def mock_prompt_fn():
+    """Return a mock prompt_fn."""
     return MagicMock(return_value=PromptStructure(prompt="test brief"))
 
 
@@ -43,7 +43,7 @@ def mock_summarize_fn():
 @pytest.fixture
 def project_manager(
     tmp_path,
-    mock_build_brief_fn,
+    mock_prompt_fn,
     mock_build_plan_fn,
     mock_execute_plan_fn,
     mock_summarize_fn,
@@ -51,7 +51,7 @@ def project_manager(
     """Return a ProjectManager instance."""
     with patch("openai_sdk_helpers.agent.project_manager.ProjectManager.save"):
         yield ProjectManager(
-            build_brief_fn=mock_build_brief_fn,
+            prompt_fn=mock_prompt_fn,
             build_plan_fn=mock_build_plan_fn,
             execute_plan_fn=mock_execute_plan_fn,
             summarize_fn=mock_summarize_fn,
@@ -69,11 +69,11 @@ def test_project_manager_initialization(project_manager):
     assert project_manager.summary is None
 
 
-def test_build_instructions(project_manager, mock_build_brief_fn):
+def test_build_prompt(project_manager, mock_prompt_fn):
     """Test building instructions."""
-    project_manager.build_instructions("test prompt")
+    project_manager.build_prompt("test prompt")
     assert project_manager.prompt == "test prompt"
-    mock_build_brief_fn.assert_called_once_with("test prompt")
+    mock_prompt_fn.assert_called_once_with("test prompt")
     assert project_manager.brief == PromptStructure(prompt="test brief")
 
 
@@ -93,7 +93,7 @@ def test_build_plan_no_brief(project_manager):
 
 def test_execute_plan(project_manager, mock_execute_plan_fn):
     """Test executing a plan."""
-    task = AgentTaskStructure(prompt="test task")
+    task = TaskStructure(prompt="test task")
     project_manager.plan = PlanStructure(tasks=[task])
     project_manager.execute_plan()
     mock_execute_plan_fn.assert_called_once_with(project_manager.plan)
@@ -114,12 +114,12 @@ def test_summarize_plan_no_results(project_manager):
 
 def test_run_plan(project_manager):
     """Test running a full plan."""
-    project_manager.build_instructions = MagicMock()
+    project_manager.build_prompt = MagicMock()
     project_manager.build_plan = MagicMock()
     project_manager.execute_plan = MagicMock()
     project_manager.summarize_plan = MagicMock()
     project_manager.run_plan("test prompt")
-    project_manager.build_instructions.assert_called_once_with("test prompt")
+    project_manager.build_prompt.assert_called_once_with("test prompt")
     project_manager.build_plan.assert_called_once()
     project_manager.execute_plan.assert_called_once()
     project_manager.summarize_plan.assert_called_once()
@@ -132,7 +132,7 @@ def test_file_path(project_manager):
 
 def test_run_task(project_manager):
     """Test running a single task."""
-    task = AgentTaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
+    task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
     agent_callable = MagicMock(return_value="test output")
     result = project_manager._run_task(task, agent_callable, [])
     assert result == "test output"
@@ -140,7 +140,7 @@ def test_run_task(project_manager):
 
 def test_run_task_in_thread(project_manager):
     """Test running a task in a thread."""
-    task = AgentTaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
+    task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
     agent_callable = MagicMock(return_value="test output")
     result = project_manager._run_task_in_thread(task, agent_callable, [])
     assert result == "test output"

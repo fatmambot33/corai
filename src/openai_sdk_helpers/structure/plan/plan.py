@@ -8,9 +8,9 @@ import threading
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping
 
+from ...agent.enum import AgentEnum
 from ..base import BaseStructure, spec_field
-from .enum import AgentEnum
-from .task import AgentTaskStructure
+from .task import TaskStructure
 
 
 class PlanStructure(BaseStructure):
@@ -23,12 +23,12 @@ class PlanStructure(BaseStructure):
     __len__()
         Return the count of tasks in the plan.
     append(task)
-        Append an ``AgentTaskStructure`` to the plan.
+        Append an ``TaskStructure`` to the plan.
     execute(agent_registry, halt_on_error)
         Run tasks sequentially using the provided agent callables.
     """
 
-    tasks: List[AgentTaskStructure] = spec_field(
+    tasks: List[TaskStructure] = spec_field(
         "tasks",
         default_factory=list,
         description="Ordered list of agent tasks to execute.",
@@ -84,12 +84,12 @@ class PlanStructure(BaseStructure):
         """
         return len(self.tasks)
 
-    def append(self, task: AgentTaskStructure) -> None:
+    def append(self, task: TaskStructure) -> None:
         """Add a task to the plan in execution order.
 
         Parameters
         ----------
-        task : AgentTaskStructure
+        task : TaskStructure
             Task to append to the plan.
 
         Returns
@@ -103,7 +103,7 @@ class PlanStructure(BaseStructure):
         Examples
         --------
         >>> plan = PlanStructure()
-        >>> plan.append(AgentTaskStructure(prompt="Test"))  # doctest: +SKIP
+        >>> plan.append(TaskStructure(prompt="Test"))  # doctest: +SKIP
         """
         self.tasks.append(task)
 
@@ -183,7 +183,7 @@ class PlanStructure(BaseStructure):
 
     @staticmethod
     def _run_task(
-        task: AgentTaskStructure,
+        task: TaskStructure,
         *,
         agent_callable: Callable[..., Any],
         aggregated_context: list[str],
@@ -192,7 +192,7 @@ class PlanStructure(BaseStructure):
 
         Parameters
         ----------
-        task : AgentTaskStructure
+        task : TaskStructure
             Task definition containing inputs and metadata.
         agent_callable : Callable[..., Any]
             Function responsible for performing the task.
