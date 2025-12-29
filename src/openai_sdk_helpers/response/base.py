@@ -129,6 +129,8 @@ class ResponseBase(Generic[T]):
         self._tools = tools if tools is not None else []
         self._schema = schema
         self._output_structure = output_structure
+        self._cleanup_user_vector_storage = False
+        self._cleanup_system_vector_storage = False
 
         if client is None:
             if api_key is None:
@@ -162,6 +164,7 @@ class ResponseBase(Generic[T]):
             self._system_vector_storage = self._vector_storage_cls(
                 store_name=storage_name, client=self._client, model=self._model
             )
+            self._cleanup_system_vector_storage = True
             system_vector_storage = cast(Any, self._system_vector_storage)
             for file_path, tool_type in attachments:
                 uploaded_file = system_vector_storage.upload_file(file_path=file_path)
@@ -248,6 +251,7 @@ class ResponseBase(Generic[T]):
                         client=self._client,
                         model=self._model,
                     )
+                    self._cleanup_user_vector_storage = True
                     user_vector_storage = cast(Any, self._user_vector_storage)
                     if not any(
                         tool.get("type") == "file_search" for tool in self._tools
@@ -483,17 +487,17 @@ class ResponseBase(Generic[T]):
         self.close()
 
     def close(self) -> None:
-        """Delete remote vector stores and clean up the session."""
+        """Delete managed vector stores and clean up the session."""
         log(f"Closing session {self.uuid} for {self.__class__.__name__}")
 
         try:
-            if self._user_vector_storage:
+            if self._user_vector_storage and self._cleanup_user_vector_storage:
                 self._user_vector_storage.delete()
                 log("User vector store deleted.")
         except Exception as exc:
             log(f"Error deleting user vector store: {exc}", level=logging.WARNING)
         try:
-            if self._system_vector_storage:
+            if self._system_vector_storage and self._cleanup_system_vector_storage:
                 self._system_vector_storage.delete()
                 log("System vector store deleted.")
         except Exception as exc:
