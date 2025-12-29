@@ -323,6 +323,19 @@ class ProjectManager(AgentBase, JSONSerializable):
         if not inspect.isawaitable(result):
             return result
 
+        if isinstance(result, (asyncio.Future, asyncio.Task)):
+            if result.done():
+                return result.result()
+
+            try:
+                owning_loop = result.get_loop()
+            except AttributeError:  # pragma: no cover - defensive guard
+                owning_loop = None
+            if owning_loop is not None and owning_loop.is_running():
+                return asyncio.run_coroutine_threadsafe(
+                    ProjectManager._await_wrapper(result), owning_loop
+                ).result()
+
         awaitable: asyncio.Future[Any] | asyncio.Task[Any] | Any = result
         coroutine = (
             awaitable
