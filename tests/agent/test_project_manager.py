@@ -192,6 +192,22 @@ def test_resolve_result_waits_on_running_loop_future(project_manager):
         loop.close()
 
 
+def test_resolve_result_rejects_pending_future_on_own_loop(project_manager):
+    """_resolve_result should avoid blocking the loop that owns a pending task."""
+
+    async def runner() -> None:
+        future: asyncio.Future[str] = asyncio.get_running_loop().create_future()
+        asyncio.get_running_loop().call_soon(future.set_result, "loop-value")
+
+        with pytest.raises(RuntimeError, match="owning running event loop"):
+            project_manager._resolve_result(future)
+
+        # Ensure the loop processes the scheduled result to avoid warnings.
+        assert await future == "loop-value"
+
+    asyncio.run(runner())
+
+
 def test_run_task_in_thread_awaits_async_callable(project_manager):
     """_run_task_in_thread should await asynchronous agent callables."""
 

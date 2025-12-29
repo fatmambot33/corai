@@ -353,6 +353,15 @@ class ProjectManager(AgentBase, JSONSerializable):
             except AttributeError:  # pragma: no cover - defensive guard
                 owning_loop = None
             if owning_loop is not None and owning_loop.is_running():
+                try:
+                    current_loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    current_loop = None
+                if current_loop is not None and current_loop is owning_loop:
+                    raise RuntimeError(
+                        "Cannot resolve a pending task from its owning running event loop; "
+                        "await the task instead."
+                    )
                 return asyncio.run_coroutine_threadsafe(
                     ProjectManager._await_wrapper(result), owning_loop
                 ).result()
