@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -121,7 +122,7 @@ def test_attach_vector_store_raises_for_missing_store(response_base):
 def test_attach_vector_store_requires_api_key():
     """Raise when no client or API key is available for lookup."""
 
-    response = SimpleNamespace(_client=None, _tools=[])
+    response = cast(ResponseBase[Any], SimpleNamespace(_client=None, _tools=[]))
 
     with pytest.raises(ValueError):
         attach_vector_store(response, "store-one")

@@ -7,7 +7,7 @@ import logging
 import mimetypes
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Optional, Union
+from typing import List, Optional, Union, cast
 
 from openai import OpenAI
 from openai.pagination import SyncPage
@@ -480,7 +480,12 @@ class VectorStorage:
 
             try:
                 content = self._client.files.content(file_id=file_id)
-                data = content.read() if hasattr(content, "read") else content
+                if isinstance(content, bytes):
+                    data = content
+                elif hasattr(content, "read"):
+                    data = cast(bytes, content.read())
+                else:
+                    raise TypeError("Unsupported content type for file download")
                 with open(target_path, "wb") as handle:
                     handle.write(data)
                 stats.success += 1
