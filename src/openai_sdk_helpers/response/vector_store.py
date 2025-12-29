@@ -38,7 +38,6 @@ def attach_vector_store(
         If a vector store cannot be resolved or no API key is available when
         required.
     """
-
     requested_stores = ensure_list(vector_stores)
 
     client = getattr(response, "_client", None)
