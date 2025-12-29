@@ -117,8 +117,11 @@ vector_search = VectorSearch(
 ```
 
 The helper reads `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_PROJECT_ID`,
-`OPENAI_BASE_URL`, and `OPENAI_MODEL` by default but supports overrides for
-custom deployments.
+`OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_TIMEOUT`, and `OPENAI_MAX_RETRIES` by
+default but supports overrides for custom deployments. Pass uncommon OpenAI
+client keyword arguments (such as `default_headers`, `http_client`, or
+`base_url` proxies) through `extra_client_kwargs` when instantiating
+`OpenAISettings`.
 
 ## Development
 

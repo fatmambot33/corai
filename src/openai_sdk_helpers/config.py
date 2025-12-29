@@ -61,6 +61,28 @@ class OpenAISettings(BaseModel):
             " provided. Defaults to ``OPENAI_MODEL``."
         ),
     )
+    timeout: Optional[float] = Field(
+        default=None,
+        description=(
+            "Request timeout in seconds applied to all OpenAI client calls."
+            " Defaults to ``OPENAI_TIMEOUT``."
+        ),
+    )
+    max_retries: Optional[int] = Field(
+        default=None,
+        description=(
+            "Maximum number of automatic retries for transient failures."
+            " Defaults to ``OPENAI_MAX_RETRIES``."
+        ),
+    )
+    extra_client_kwargs: Dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Additional keyword arguments forwarded to ``openai.OpenAI``. Use"
+            " this for less common options like ``default_headers`` or"
+            " ``http_client``."
+        ),
+    )
 
     @classmethod
     def from_env(
@@ -103,6 +125,13 @@ class OpenAISettings(BaseModel):
             "default_model": overrides.get("default_model")
             or env_file_values.get("OPENAI_MODEL")
             or os.getenv("OPENAI_MODEL"),
+            "timeout": overrides.get("timeout")
+            or env_file_values.get("OPENAI_TIMEOUT")
+            or os.getenv("OPENAI_TIMEOUT"),
+            "max_retries": overrides.get("max_retries")
+            or env_file_values.get("OPENAI_MAX_RETRIES")
+            or os.getenv("OPENAI_MAX_RETRIES"),
+            "extra_client_kwargs": overrides.get("extra_client_kwargs") or {},
         }
 
         settings = cls(**values)
@@ -128,7 +157,7 @@ class OpenAISettings(BaseModel):
         Keyword arguments populated with available authentication and routing
         values.
         """
-        kwargs: Dict[str, Any] = {}
+        kwargs: Dict[str, Any] = dict(self.extra_client_kwargs)
         if self.api_key:
             kwargs["api_key"] = self.api_key
         if self.org_id:
@@ -137,6 +166,10 @@ class OpenAISettings(BaseModel):
             kwargs["project"] = self.project_id
         if self.base_url:
             kwargs["base_url"] = self.base_url
+        if self.timeout is not None:
+            kwargs["timeout"] = self.timeout
+        if self.max_retries is not None:
+            kwargs["max_retries"] = self.max_retries
         return kwargs
 
     def create_client(self) -> OpenAI:
