@@ -37,6 +37,10 @@ class ProjectManager(AgentBase, JSONSerializable):
         Run each task sequentially while tracking status and timing.
     summarize_plan(results)
         Summarize a collection of result strings.
+    run_plan(prompt)
+        Execute the prompt-to-summary workflow end to end.
+    file_path
+        Path to the JSON artifact for the current run.
     to_dict()
         Return a JSON-serializable snapshot of stored project data.
     save()
@@ -245,6 +249,8 @@ class ProjectManager(AgentBase, JSONSerializable):
         ----------
         task : TaskStructure
             Task definition containing the callable and inputs.
+        agent_callable : Callable[..., Any]
+            Callable that executes the task prompt and returns a result.
         aggregated_context : list[str]
             Context combined from the task and prior task outputs.
 
@@ -286,7 +292,22 @@ class ProjectManager(AgentBase, JSONSerializable):
         agent_callable: Callable[..., Any],
         aggregated_context: List[str],
     ) -> Any:
-        """Execute a task in a background thread to avoid event-loop conflicts."""
+        """Execute a task in a background thread to avoid event-loop conflicts.
+
+        Parameters
+        ----------
+        task : TaskStructure
+            Task definition containing the callable and inputs.
+        agent_callable : Callable[..., Any]
+            Callable that executes the task prompt and returns a result.
+        aggregated_context : list[str]
+            Context combined from the task and prior task outputs.
+
+        Returns
+        -------
+        Any
+            Resolved output from the underlying callable.
+        """
         result_container: Dict[str, Any] = {"result": None, "error": None}
 
         def _runner() -> None:
@@ -364,7 +385,18 @@ class ProjectManager(AgentBase, JSONSerializable):
 
     @staticmethod
     async def _await_wrapper(awaitable: Any) -> Any:
-        """Await a generic awaitable and return its result."""
+        """Await a generic awaitable and return its result.
+
+        Parameters
+        ----------
+        awaitable : Any
+            Awaitable object to resolve.
+
+        Returns
+        -------
+        Any
+            Result of the awaited object.
+        """
         return await awaitable
 
     @staticmethod
@@ -388,7 +420,18 @@ class ProjectManager(AgentBase, JSONSerializable):
         return [str(result)]
 
     def _persist_task_results(self, task: TaskStructure) -> Path:
-        """Write task context and results to disk for future analysis."""
+        """Write task context and results to disk for future analysis.
+
+        Parameters
+        ----------
+        task : TaskStructure
+            Task definition containing the callable and inputs.
+
+        Returns
+        -------
+        Path
+            Location where the task artifact was saved.
+        """
         run_dir = self._get_run_directory()
         task_label = self._task_label(task)
         file_path = run_dir / f"{task_label}.json"
@@ -396,7 +439,13 @@ class ProjectManager(AgentBase, JSONSerializable):
         return file_path
 
     def _get_run_directory(self) -> Path:
-        """Return (and create) the directory used to persist task artifacts."""
+        """Return (and create) the directory used to persist task artifacts.
+
+        Returns
+        -------
+        Path
+            Directory where task outputs are stored for the run.
+        """
         if not hasattr(self, "_run_directory"):
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             self._run_directory = (
@@ -410,14 +459,36 @@ class ProjectManager(AgentBase, JSONSerializable):
 
     @staticmethod
     def _task_label(task: TaskStructure) -> str:
-        """Generate a filesystem-safe label for the task."""
+        """Generate a filesystem-safe label for the task.
+
+        Parameters
+        ----------
+        task : TaskStructure
+            Task definition containing the callable and inputs.
+
+        Returns
+        -------
+        str
+            Lowercase label safe for filesystem usage.
+        """
         task_type = ProjectManager._normalize_task_type(task.task_type)
         base = (task_type or "task").replace(" ", "_").lower()
         return f"{base}_{task_type}"
 
     @staticmethod
     def _normalize_task_type(task_type: AgentEnum | str) -> str:
-        """Return the normalized task type string."""
+        """Return the normalized task type string.
+
+        Parameters
+        ----------
+        task_type : AgentEnum or str
+            Task classification to normalize.
+
+        Returns
+        -------
+        str
+            String representation of the task type.
+        """
         if isinstance(task_type, AgentEnum):
             return task_type.value
         if task_type in AgentEnum.__members__:
