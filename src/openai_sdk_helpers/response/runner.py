@@ -8,11 +8,11 @@ from typing import Any, Optional, Type, TypeVar
 
 from .base import ResponseBase
 
-T = TypeVar("T")
+
 R = TypeVar("R", bound=ResponseBase[Any])
 
 
-def run(
+def run_sync(
     response_cls: Type[R],
     *,
     content: str,
@@ -101,4 +101,4 @@ def run_streamed(
     )
 
 
-__all__ = ["run", "run_async", "run_streamed"]
+__all__ = ["run_sync", "run_async", "run_streamed"]

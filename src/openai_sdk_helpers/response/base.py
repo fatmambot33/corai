@@ -400,9 +400,7 @@ class ResponseBase(Generic[T]):
         """Run :meth:`run_response_async` synchronously."""
 
         async def runner() -> Optional[T]:
-            return await self.run_async(
-                content=content, attachments=attachments
-            )
+            return await self.run_async(content=content, attachments=attachments)
 
         try:
             asyncio.get_running_loop()
@@ -441,9 +439,7 @@ class ResponseBase(Generic[T]):
         Optional[T]
             Parsed response object or ``None``.
         """
-        return asyncio.run(
-            self.run_async(content=content, attachments=attachments)
-        )
+        return asyncio.run(self.run_async(content=content, attachments=attachments))
 
     def save(self, filepath: Optional[str | Path] = None) -> None:
         """Serialize the message history to a JSON file."""

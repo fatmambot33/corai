@@ -37,7 +37,7 @@ class _StubResponseBase(ResponseBase[Any]):
         self._output_structure = None
         self.messages = MagicMock()
 
- 
+
 @patch("openai_sdk_helpers.agent.base.run_streamed")
 @patch("openai_sdk_helpers.agent.base.run_async", new_callable=AsyncMock)
 @patch("openai_sdk_helpers.agent.base.run_sync")

@@ -16,6 +16,7 @@ from openai_sdk_helpers.agent.base import AgentBase
 
 warnings.filterwarnings("ignore", "coroutine.*was never awaited", RuntimeWarning)
 
+
 class MockConfig(BaseModel):
     """Mock agent configuration."""
 
