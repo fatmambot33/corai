@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure import SummaryStructure
-from .base import AgentBase, _run_agent
+from .base import AgentBase
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
@@ -74,10 +74,9 @@ class SummarizerAgent(AgentBase):
         if metadata:
             context = {"metadata": metadata}
 
-        result = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=text,
-            agent_context=context,
+        result = await self.run_async(
+            input=text,
+            context=context,
             output_type=self._output_type,
         )
         return result

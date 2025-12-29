@@ -22,9 +22,7 @@ async def test_validator_agent_merges_context():
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
-        patch(
-            "openai_sdk_helpers.agent.validation._run_agent", new_callable=AsyncMock
-        ) as mock_run,
+        patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
         mock_run.return_value = validation
         result = await agent.run_agent(
@@ -35,9 +33,8 @@ async def test_validator_agent_merges_context():
         )
 
     mock_run.assert_awaited_once_with(
-        agent=fake_agent,
-        agent_input="User asks for advice",
-        agent_context={
+        input="User asks for advice",
+        context={
             "user_input": "User asks for advice",
             "agent_output": "Agent response",
             "policy_notes": "No PII",

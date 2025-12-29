@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import warnings
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, Mock
 
 import pytest
 from agents import RunContextWrapper
@@ -13,6 +14,7 @@ from pydantic import BaseModel
 
 from openai_sdk_helpers.agent.base import AgentBase
 
+warnings.filterwarnings("ignore", "coroutine.*was never awaited", RuntimeWarning)
 
 class MockConfig(BaseModel):
     """Mock agent configuration."""
@@ -87,30 +89,37 @@ def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
     mock_asyncio_run.assert_called_once()
 
 
-@patch("openai_sdk_helpers.agent.base._run_agent_sync")
-def test_run_agent_sync(mock_run_agent_sync, mock_config):
+@patch("openai_sdk_helpers.agent.base.run_sync")
+def test_run_agent_sync(mock_run_sync, mock_config):
     """Test running the agent synchronously."""
+    mock_run_sync.return_value = "result"
     agent = AgentBase(config=mock_config)
-    agent.run_sync("test_input")
-    mock_run_agent_sync.assert_called_once()
+    result = agent.run_sync("test_input")
+    assert result == "result"
+    mock_run_sync.assert_called_once()
 
 
-@patch("openai_sdk_helpers.agent.base._run_agent_streamed")
-def test_run_agent_streamed(mock_run_agent_streamed, mock_config):
+@patch("openai_sdk_helpers.agent.base.run_streamed")
+def test_run_agent_streamed(mock_run_streamed, mock_config):
     """Test running the agent with streaming."""
+    mock_run_streamed.return_value = "result"
     agent = AgentBase(config=mock_config)
-    agent.run_streamed("test_input")
-    mock_run_agent_streamed.assert_called_once()
+    result = agent.run_streamed("test_input")
+    assert result == "result"
+    mock_run_streamed.assert_called_once()
 
 
-@patch("openai_sdk_helpers.agent.base.FunctionTool")
-@patch("openai_sdk_helpers.agent.base.Agent")
-def test_as_tool(mock_agent_class, mock_function_tool, mock_config):
+def test_as_tool(mock_config):
     """Test returning the agent as a tool."""
-    mock_agent_instance = mock_agent_class.return_value
-    mock_agent_instance.as_tool.return_value = mock_function_tool
-    agent = AgentBase(config=mock_config)
-    agent.as_tool()
-    mock_agent_instance.as_tool.assert_called_once_with(
-        tool_name="test_agent", tool_description=""
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        agent = AgentBase(config=mock_config)
+        mock_agent = Mock()
+        mock_tool = Mock()
+        mock_agent.as_tool.return_value = mock_tool
+        with patch.object(agent, "get_agent", return_value=mock_agent):
+            result = agent.as_tool()
+        mock_agent.as_tool.assert_called_once_with(
+            tool_name="test_agent", tool_description=""
+        )
+        assert result == mock_tool

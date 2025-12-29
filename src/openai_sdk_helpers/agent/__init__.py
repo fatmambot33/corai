@@ -6,7 +6,7 @@ from .base import AgentBase
 from .config import AgentConfig
 from ..structure.plan.enum import AgentEnum
 from .project_manager import ProjectManager
-from .runner import run, run_async, run_streamed
+from .runner import run_sync, run_async, run_streamed
 from .summarizer import SummarizerAgent
 from .translator import TranslatorAgent
 from .validation import ValidatorAgent
@@ -19,7 +19,7 @@ __all__ = [
     "AgentConfig",
     "AgentEnum",
     "ProjectManager",
-    "run",
+    "run_sync",
     "run_async",
     "run_streamed",
     "run_coroutine_agent_sync",

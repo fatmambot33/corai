@@ -36,7 +36,7 @@ def run(
     """
     response = response_cls(**(response_kwargs or {}))
     try:
-        return response.run_response(content=content)
+        return response.run_sync(content=content)
     finally:
         response.close()
 
@@ -65,7 +65,7 @@ async def run_async(
     """
     response = response_cls(**(response_kwargs or {}))
     try:
-        return await response.run_response_async(content=content)
+        return await response.run_async(content=content)
     finally:
         response.close()
 

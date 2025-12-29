@@ -19,17 +19,14 @@ async def test_summarizer_agent_runs_with_metadata():
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
-        patch(
-            "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
-        ) as mock_run,
+        patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
         mock_run.return_value = summary
         result = await agent.run_agent("Input text", metadata={"source": "unit-test"})
 
     mock_run.assert_awaited_once_with(
-        agent=fake_agent,
-        agent_input="Input text",
-        agent_context={"metadata": {"source": "unit-test"}},
+        input="Input text",
+        context={"metadata": {"source": "unit-test"}},
         output_type=agent._output_type,
     )
     assert result is summary
@@ -44,9 +41,7 @@ async def test_summarizer_allows_output_override():
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
-        patch(
-            "openai_sdk_helpers.agent.summarizer._run_agent", new_callable=AsyncMock
-        ) as mock_run,
+        patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
         mock_run.return_value = "summary"
         await agent.run_agent("Input text")
@@ -64,9 +59,7 @@ async def test_translator_merges_context():
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
-        patch(
-            "openai_sdk_helpers.agent.translator._run_agent", new_callable=AsyncMock
-        ) as mock_run,
+        patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
         mock_run.return_value = "translated"
         result = await agent.run_agent(
@@ -74,9 +67,8 @@ async def test_translator_merges_context():
         )
 
     mock_run.assert_awaited_once_with(
-        agent=fake_agent,
-        agent_input="Bonjour",
-        agent_context={"target_language": "English", "tone": "casual"},
+        input="Bonjour",
+        context={"target_language": "English", "tone": "casual"},
         output_type=str,
     )
     assert result == "translated"
@@ -115,7 +107,7 @@ def test_translator_run_sync_forwards_context():
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
         patch(
-            "openai_sdk_helpers.agent.base._run_agent_sync", return_value=fake_result
+            "openai_sdk_helpers.agent.base.Runner.run", return_value=fake_result
         ) as mock_run_sync,
     ):
         result = agent.run_sync(
@@ -125,7 +117,7 @@ def test_translator_run_sync_forwards_context():
     mock_run_sync.assert_called_once_with(
         fake_agent,
         "Hola",
-        agent_context={"target_language": "English", "formality": "casual"},
+        context={"formality": "casual", "target_language": "English"},
     )
     fake_result.final_output_as.assert_called_once_with(str)
     assert result == "translated"

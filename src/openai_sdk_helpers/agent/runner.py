@@ -8,16 +8,15 @@ signatures whether they need asynchronous, synchronous, or streamed results.
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
+import asyncio
+import threading
+from agents import Agent, Runner, RunResult, RunResultStreaming
 
-from agents import Agent, RunResult, RunResultStreaming
 
-from .base import _run_agent, _run_agent_streamed, _run_agent_sync
-
-
-async def run_async(
+async def _run_async(
     agent: Agent,
-    agent_input: str,
-    agent_context: Optional[Dict[str, Any]] = None,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> Any:
     """Run an ``Agent`` asynchronously.
@@ -26,9 +25,9 @@ async def run_async(
     ----------
     agent
         Configured agent instance to execute.
-    agent_input
+    input
         Prompt or query string for the agent.
-    agent_context
+    context
         Optional context dictionary passed to the agent. Default ``None``.
     output_type
         Optional type used to cast the final output. Default ``None``.
@@ -38,18 +37,117 @@ async def run_async(
     Any
         Agent response, optionally converted to ``output_type``.
     """
-    return await _run_agent(
+    result = await Runner.run(agent, input, context=context)
+    if output_type is not None:
+        result = result.final_output_as(output_type)
+    return result
+
+
+def _run_sync(
+    agent: Agent,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
+) -> RunResult:
+    """Run an ``Agent`` synchronously.
+
+    Parameters
+    ----------
+    agent
+        Configured agent instance to execute.
+    input
+        Prompt or query string for the agent.
+    context
+        Optional context dictionary passed to the agent. Default ``None``.
+
+    Returns
+    -------
+    RunResult
+        Result from the agent execution.
+    """
+    coro = Runner.run(agent, input, context=context)
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+
+    if loop.is_running():
+        result: RunResult | None = None
+
+        def _thread_runner() -> None:
+            nonlocal result
+            result = asyncio.run(coro)
+
+        thread = threading.Thread(target=_thread_runner, daemon=True)
+        thread.start()
+        thread.join()
+        if result is None:
+            raise RuntimeError("Agent execution did not return a result.")
+        return result
+
+    return loop.run_until_complete(coro)
+
+
+def _run_streamed(
+    agent: Agent,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
+) -> RunResultStreaming:
+    """Run an ``Agent`` synchronously and return a streaming result.
+
+    Parameters
+    ----------
+    agent
+        Configured agent to execute.
+    input
+        Prompt or query string for the agent.
+    context
+        Optional context dictionary passed to the agent. Default ``None``.
+
+    Returns
+    -------
+    RunResultStreaming
+        Instance for streaming outputs.
+    """
+    result = Runner.run_streamed(agent, input, context=context)
+    return result
+
+
+async def run_async(
+    agent: Agent,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
+    output_type: Optional[Any] = None,
+) -> Any:
+    """Run an ``Agent`` asynchronously.
+
+    Parameters
+    ----------
+    agent
+        Configured agent instance to execute.
+    input
+        Prompt or query string for the agent.
+    context
+        Optional context dictionary passed to the agent. Default ``None``.
+    output_type
+        Optional type used to cast the final output. Default ``None``.
+
+    Returns
+    -------
+    Any
+        Agent response, optionally converted to ``output_type``.
+    """
+    return await _run_async(
         agent=agent,
-        agent_input=agent_input,
-        agent_context=agent_context,
+        input=input,
+        context=context,
         output_type=output_type,
     )
 
 
-def run(
+def run_sync(
     agent: Agent,
-    agent_input: str,
-    agent_context: Optional[Dict[str, Any]] = None,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> Any:
     """Run an ``Agent`` synchronously.
@@ -58,9 +156,9 @@ def run(
     ----------
     agent
         Configured agent instance to execute.
-    agent_input
+    input
         Prompt or query string for the agent.
-    agent_context
+    context
         Optional context dictionary passed to the agent. Default ``None``.
     output_type
         Optional type used to cast the final output. Default ``None``.
@@ -70,10 +168,10 @@ def run(
     Any
         Agent response, optionally converted to ``output_type``.
     """
-    result: RunResult = _run_agent_sync(
+    result: RunResult = _run_sync(
         agent=agent,
-        agent_input=agent_input,
-        agent_context=agent_context,
+        input=input,
+        context=context,
     )
     if output_type:
         return result.final_output_as(output_type)
@@ -82,8 +180,8 @@ def run(
 
 def run_streamed(
     agent: Agent,
-    agent_input: str,
-    agent_context: Optional[Dict[str, Any]] = None,
+    input: str,
+    context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> RunResultStreaming:
     """Run an ``Agent`` and return a streaming result.
@@ -92,9 +190,9 @@ def run_streamed(
     ----------
     agent
         Configured agent instance to execute.
-    agent_input
+    input
         Prompt or query string for the agent.
-    agent_context
+    context
         Optional context dictionary passed to the agent. Default ``None``.
     output_type
         Optional type used to cast the final output. Default ``None``.
@@ -104,14 +202,14 @@ def run_streamed(
     RunResultStreaming
         Streaming output wrapper from the agent execution.
     """
-    result = _run_agent_streamed(
+    result = _run_streamed(
         agent=agent,
-        agent_input=agent_input,
-        context=agent_context,
+        input=input,
+        context=context,
     )
     if output_type:
         return result.final_output_as(output_type)
     return result
 
 
-__all__ = ["run", "run_async", "run_streamed"]
+__all__ = ["run_sync", "run_async", "run_streamed"]

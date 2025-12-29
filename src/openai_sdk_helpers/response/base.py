@@ -49,14 +49,10 @@ class ResponseBase(Generic[T]):
 
     Methods
     -------
-    run_response_async(content, attachments)
-        Generate a response asynchronously and return parsed output.
-    run_response(content, attachments)
-        Synchronous wrapper around ``run_response_async``.
     run_async(content, attachments)
-        Alias for ``run_response_async`` using simplified naming.
-    run(content, attachments)
-        Alias for ``run_response`` using simplified naming.
+        Generate a response asynchronously and return parsed output.
+    run_sync(content, attachments)
+        Synchronous wrapper around ``run_async``.
     run_streamed(content, attachments)
         Await ``run_async`` to mirror the agent API.
     save(filepath)
@@ -282,7 +278,7 @@ class ResponseBase(Generic[T]):
             )
             self.messages.add_user_message(message)
 
-    async def run_response_async(
+    async def run_async(
         self,
         content: Union[str, List[str]],
         attachments: Optional[Union[str, List[str]]] = None,
@@ -396,7 +392,7 @@ class ResponseBase(Generic[T]):
             return parsed_result
         return None
 
-    def run_response(
+    def run_sync(
         self,
         content: Union[str, List[str]],
         attachments: Optional[Union[str, List[str]]] = None,
@@ -404,7 +400,7 @@ class ResponseBase(Generic[T]):
         """Run :meth:`run_response_async` synchronously."""
 
         async def runner() -> Optional[T]:
-            return await self.run_response_async(
+            return await self.run_async(
                 content=content, attachments=attachments
             )
 
@@ -422,54 +418,6 @@ class ResponseBase(Generic[T]):
         thread.start()
         thread.join()
         return result
-
-    async def run_async(
-        self,
-        content: Union[str, List[str]],
-        attachments: Optional[Union[str, List[str]]] = None,
-    ) -> Optional[T]:
-        """Generate a response asynchronously.
-
-        This is an alias for :meth:`run_response_async` using the simplified
-        ``run_async`` naming that mirrors agent helpers.
-
-        Parameters
-        ----------
-        content
-            Prompt text or list of texts.
-        attachments
-            Optional file path or list of paths to upload and attach.
-
-        Returns
-        -------
-        Optional[T]
-            Parsed response object or ``None``.
-        """
-        return await self.run_response_async(content=content, attachments=attachments)
-
-    def run(
-        self,
-        content: Union[str, List[str]],
-        attachments: Optional[Union[str, List[str]]] = None,
-    ) -> Optional[T]:
-        """Generate a response synchronously.
-
-        This is an alias for :meth:`run_response` using the simplified ``run``
-        naming used by agents for convenience.
-
-        Parameters
-        ----------
-        content
-            Prompt text or list of texts.
-        attachments
-            Optional file path or list of paths to upload and attach.
-
-        Returns
-        -------
-        Optional[T]
-            Parsed response object or ``None``.
-        """
-        return self.run_response(content=content, attachments=attachments)
 
     def run_streamed(
         self,
@@ -494,7 +442,7 @@ class ResponseBase(Generic[T]):
             Parsed response object or ``None``.
         """
         return asyncio.run(
-            self.run_response_async(content=content, attachments=attachments)
+            self.run_async(content=content, attachments=attachments)
         )
 
     def save(self, filepath: Optional[str | Path] = None) -> None:

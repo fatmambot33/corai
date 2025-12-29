@@ -17,7 +17,7 @@ from ..structure.vector_search import (
     VectorSearchReportStructure,
 )
 from ..vector_storage import VectorStorage
-from .base import AgentBase, _run_agent
+from .base import AgentBase
 from .config import AgentConfig
 from .utils import run_coroutine_agent_sync
 
@@ -71,9 +71,8 @@ class VectorSearchPlanner(AgentBase):
         VectorSearchPlanStructure
             Generated search plan.
         """
-        result: VectorSearchPlanStructure = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=query,
+        result: VectorSearchPlanStructure = await self.run_async(
+            input=query,
             output_type=self._output_type,
         )
 
@@ -288,10 +287,9 @@ class VectorSearchWriter(AgentBase):
             "original_query": query,
             "search_results": search_results,
         }
-        result: VectorSearchReportStructure = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=query,
-            agent_context=template_context,
+        result: VectorSearchReportStructure = await self.run_async(
+            input=query,
+            context=template_context,
             output_type=self._output_type,
         )
 

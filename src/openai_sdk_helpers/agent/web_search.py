@@ -17,7 +17,7 @@ from ..structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
-from .base import AgentBase, _run_agent
+from .base import AgentBase
 from .config import AgentConfig
 from .utils import run_coroutine_agent_sync
 
@@ -71,9 +71,8 @@ class WebAgentPlanner(AgentBase):
         WebSearchPlanStructure
             Plan describing searches to perform.
         """
-        result: WebSearchPlanStructure = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=query,
+        result: WebSearchPlanStructure = await self.run_async(
+            input=query,
             output_type=self._output_type,
         )
 
@@ -181,9 +180,9 @@ class WebSearchToolAgent(AgentBase):
             "reason": item.reason,
         }
 
-        result = await super().run(
-            agent_input=item.query,
-            agent_context=template_context,
+        result = await super().run_async(
+            input=item.query,
+            context=template_context,
             output_type=str,
         )
         return self._coerce_item_result(result)
@@ -256,10 +255,9 @@ class WebAgentWriter(AgentBase):
             "original_query": query,
             "search_results": search_results,
         }
-        result: WebSearchReportStructure = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=query,
-            agent_context=template_context,
+        result: WebSearchReportStructure = await self.run_async(
+            input=query,
+            context=template_context,
             output_type=self._output_type,
         )
 

@@ -11,6 +11,7 @@ from agents import Agent, Runner, RunResult, RunResultStreaming
 from agents.run_context import RunContextWrapper
 from agents.tool import FunctionTool
 from jinja2 import Template
+from .runner import run_sync, run_streamed, run_async
 
 
 class AgentConfigLike(Protocol):
@@ -39,13 +40,13 @@ class AgentBase:
         Render the agent prompt using the provided run context.
     get_agent()
         Construct the configured :class:`agents.Agent` instance.
-    run(agent_input, agent_context, output_type)
+    run(input, context, output_type)
         Execute the agent asynchronously (alias of ``run_async``).
-    run_async(agent_input, agent_context, output_type)
+    run_async(input, context, output_type)
         Execute the agent asynchronously and optionally cast the result.
-    run_sync(agent_input, agent_context, output_type)
+    run_sync(input, context, output_type)
         Execute the agent synchronously.
-    run_streamed(agent_input, agent_context, output_type)
+    run_streamed(input, context, output_type)
         Return a streaming result for the agent execution.
     as_tool()
         Return the agent as a callable tool.
@@ -220,17 +221,17 @@ class AgentBase:
 
     async def run_async(
         self,
-        agent_input: str,
-        agent_context: Optional[Dict[str, Any]] = None,
+        input: str,
+        context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> Any:
         """Execute the agent asynchronously.
 
         Parameters
         ----------
-        agent_input
+        input
             Prompt or query for the agent.
-        agent_context
+        context
             Optional dictionary passed to the agent. Default ``None``.
         output_type
             Optional type used to cast the final output. Default ``None``.
@@ -242,61 +243,26 @@ class AgentBase:
         """
         if self._output_type is not None and output_type is None:
             output_type = self._output_type
-        return await _run_agent(
+        return await run_async(
             agent=self.get_agent(),
-            agent_input=agent_input,
-            agent_context=agent_context,
+            input=input,
+            context=context,
             output_type=output_type,
         )
 
-    def run(
-        self,
-        agent_input: str,
-        agent_context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[Any] = None,
-    ) -> Any:
-        """Execute the agent synchronously.
-
-        This convenience method mirrors :meth:`run_sync` so callers can use the
-        shorter ``run`` name while still running the agent in a blocking
-        manner.
-
-        Parameters
-        ----------
-        agent_input
-            Prompt or query for the agent.
-        agent_context
-            Optional dictionary passed to the agent. Default ``None``.
-        output_type
-            Optional type used to cast the final output. Default ``None``.
-
-        Returns
-        -------
-        Any
-            Agent result, optionally converted to ``output_type``.
-        """
-        result = _run_agent_sync(
-            self.get_agent(), agent_input, agent_context=agent_context
-        )
-        if self._output_type and not output_type:
-            output_type = self._output_type
-        if output_type:
-            return result.final_output_as(output_type)
-        return result
-
     def run_sync(
         self,
-        agent_input: str,
-        agent_context: Optional[Dict[str, Any]] = None,
+        input: str,
+        context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> Any:
         """Run the agent synchronously.
 
         Parameters
         ----------
-        agent_input
+        input
             Prompt or query for the agent.
-        agent_context
+        context
             Optional dictionary passed to the agent. Default ``None``.
         output_type
             Optional type used to cast the final output. Default ``None``.
@@ -306,25 +272,26 @@ class AgentBase:
         Any
             Agent result, optionally converted to ``output_type``.
         """
-        return self.run(
-            agent_input=agent_input,
-            agent_context=agent_context,
+        return run_sync(
+            agent=self.get_agent(),
+            input=input,
+            context=context,
             output_type=output_type,
         )
 
     def run_streamed(
         self,
-        agent_input: str,
-        agent_context: Optional[Dict[str, Any]] = None,
+        input: str,
+        context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> RunResultStreaming:
         """Return a streaming result for the agent execution.
 
         Parameters
         ----------
-        agent_input
+        input
             Prompt or query for the agent.
-        agent_context
+        context
             Optional dictionary passed to the agent. Default ``None``.
         output_type
             Optional type used to cast the final output. Default ``None``.
@@ -334,10 +301,10 @@ class AgentBase:
         RunResultStreaming
             Streaming output wrapper from the agent execution.
         """
-        result = _run_agent_streamed(
+        result = run_streamed(
             agent=self.get_agent(),
-            agent_input=agent_input,
-            context=agent_context,
+            input=input,
+            context=context,
         )
         if self._output_type and not output_type:
             output_type = self._output_type
@@ -360,109 +327,4 @@ class AgentBase:
         return tool_obj
 
 
-async def _run_agent(
-    agent: Agent,
-    agent_input: str,
-    agent_context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[Any] = None,
-) -> Any:
-    """Run an ``Agent`` asynchronously.
-
-    Parameters
-    ----------
-    agent
-        Configured agent instance to execute.
-    agent_input
-        Prompt or query string for the agent.
-    agent_context
-        Optional context dictionary passed to the agent. Default ``None``.
-    output_type
-        Optional type used to cast the final output. Default ``None``.
-
-    Returns
-    -------
-    Any
-        Agent response, optionally converted to ``output_type``.
-    """
-    result = await Runner.run(agent, agent_input, context=agent_context)
-    if output_type is not None:
-        result = result.final_output_as(output_type)
-    return result
-
-
-def _run_agent_sync(
-    agent: Agent,
-    agent_input: str,
-    agent_context: Optional[Dict[str, Any]] = None,
-) -> RunResult:
-    """Run an ``Agent`` synchronously.
-
-    Parameters
-    ----------
-    agent
-        Configured agent instance to execute.
-    agent_input
-        Prompt or query string for the agent.
-    agent_context
-        Optional context dictionary passed to the agent. Default ``None``.
-
-    Returns
-    -------
-    RunResult
-        Result from the agent execution.
-    """
-    coro = Runner.run(agent, agent_input, context=agent_context)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(coro)
-
-    if loop.is_running():
-        result: RunResult | None = None
-
-        def _thread_runner() -> None:
-            nonlocal result
-            result = asyncio.run(coro)
-
-        thread = threading.Thread(target=_thread_runner, daemon=True)
-        thread.start()
-        thread.join()
-        if result is None:
-            raise RuntimeError("Agent execution did not return a result.")
-        return result
-
-    return loop.run_until_complete(coro)
-
-
-def _run_agent_streamed(
-    agent: Agent,
-    agent_input: str,
-    context: Optional[Dict[str, Any]] = None,
-) -> RunResultStreaming:
-    """Run an ``Agent`` synchronously and return a streaming result.
-
-    Parameters
-    ----------
-    agent
-        Configured agent to execute.
-    agent_input
-        Prompt or query string for the agent.
-    context
-        Optional context dictionary passed to the agent. Default ``None``.
-
-    Returns
-    -------
-    RunResultStreaming
-        Instance for streaming outputs.
-    """
-    result = Runner.run_streamed(agent, agent_input, context=context)
-    return result
-
-
-__all__ = [
-    "AgentConfigLike",
-    "AgentBase",
-    "_run_agent",
-    "_run_agent_sync",
-    "_run_agent_streamed",
-]
+__all__ = ["AgentConfigLike", "AgentBase"]

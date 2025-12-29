@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure.validation import ValidationResultStructure
-from .base import AgentBase, _run_agent
+from .base import AgentBase
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
@@ -86,10 +86,9 @@ class ValidatorAgent(AgentBase):
         if extra_context:
             context.update(extra_context)
 
-        result: ValidationResultStructure = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=user_input,
-            agent_context=context,
+        result: ValidationResultStructure = await self.run_async(
+            input=user_input,
+            context=context,
             output_type=ValidationResultStructure,
         )
         return result

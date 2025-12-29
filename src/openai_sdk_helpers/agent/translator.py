@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import AgentBase, _run_agent
+from .base import AgentBase
 from .config import AgentConfig
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
@@ -77,39 +77,38 @@ class TranslatorAgent(AgentBase):
         if context:
             template_context.update(context)
 
-        result: str = await _run_agent(
-            agent=self.get_agent(),
-            agent_input=text,
-            agent_context=template_context,
+        result: str = await self.run_async(
+            input=text,
+            context=template_context,
             output_type=str,
         )
         return result
 
     def run_sync(
         self,
-        agent_input: str,
-        agent_context: Optional[Dict[str, Any]] = None,
+        input: str,
+        context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
         *,
         target_language: Optional[str] = None,
         **kwargs: Any,
     ) -> str:
-        """Translate ``agent_input`` to ``target_language`` synchronously.
+        """Translate ``input`` to ``target_language`` synchronously.
 
         Parameters
         ----------
-        agent_input : str
+        input : str
             Source content to translate.
-        agent_context : dict, optional
+        context : dict, optional
             Additional context values to merge into the prompt. Default ``None``.
         output_type : type or None, optional
             Optional output type cast for the response. Default ``None``.
         target_language : str, optional
             Target language to translate the content into. Required unless supplied
-            within ``agent_context`` or ``kwargs``.
+            within ``context`` or ``kwargs``.
         **kwargs
             Optional keyword arguments. ``context`` is accepted as an alias for
-            ``agent_context`` for backward compatibility.
+            ``context`` for backward compatibility.
 
         Returns
         -------
@@ -118,8 +117,8 @@ class TranslatorAgent(AgentBase):
         """
         merged_context: Dict[str, Any] = {}
 
-        if agent_context:
-            merged_context.update(agent_context)
+        if context:
+            merged_context.update(context)
         if "context" in kwargs and kwargs["context"]:
             merged_context.update(kwargs["context"])
         if target_language:
@@ -130,8 +129,8 @@ class TranslatorAgent(AgentBase):
             raise ValueError(msg)
 
         result: str = super().run_sync(
-            agent_input=agent_input,
-            agent_context=merged_context,
+            input=input,
+            context=merged_context,
             output_type=output_type or str,
         )
         return result
