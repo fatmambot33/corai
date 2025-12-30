@@ -34,19 +34,21 @@ def _extract_assistant_text(response: ResponseBase[Any]) -> str:
         Concatenated assistant text, or an empty string when unavailable.
     """
 
-    for message in reversed(response.messages.messages):
-        if message.role != "assistant":
-            continue
-        content = getattr(message.content, "content", None)
-        if content is None:
-            continue
-        text_parts: List[str] = []
-        for part in ensure_list(content):
-            text_value = getattr(getattr(part, "text", None), "value", None)
-            if text_value:
-                text_parts.append(text_value)
-        if text_parts:
-            return "\n\n".join(text_parts)
+    message = response.get_last_message(role="assistant")
+    if message is None:
+        return ""
+
+    content = getattr(message.content, "content", None)
+    if content is None:
+        return ""
+
+    text_parts: List[str] = []
+    for part in ensure_list(content):
+        text_value = getattr(getattr(part, "text", None), "value", None)
+        if text_value:
+            text_parts.append(text_value)
+    if text_parts:
+        return "\n\n".join(text_parts)
     return ""
 
 

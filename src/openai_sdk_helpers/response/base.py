@@ -32,7 +32,7 @@ from openai.types.responses.response_input_param import ResponseInputItemParam
 from openai.types.responses.response_input_text_param import ResponseInputTextParam
 from openai.types.responses.response_output_message import ResponseOutputMessage
 
-from .messages import ResponseMessages
+from .messages import ResponseMessage, ResponseMessages
 from ..structure import BaseStructure
 from ..utils import ensure_list, log
 
@@ -444,6 +444,25 @@ class ResponseBase(Generic[T]):
             Parsed response object or ``None``.
         """
         return asyncio.run(self.run_async(content=content, attachments=attachments))
+
+    def get_last_message(self, role: str = "assistant") -> ResponseMessage | None:
+        """Return the most recent message for the given role.
+
+        Parameters
+        ----------
+        role : str, default="assistant"
+            Role name to filter messages by.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest message matching ``role`` or ``None`` when absent.
+        """
+
+        for message in reversed(self.messages.messages):
+            if message.role == role:
+                return message
+        return None
 
     def save(self, filepath: Optional[str | Path] = None) -> None:
         """Serialize the message history to a JSON file."""
