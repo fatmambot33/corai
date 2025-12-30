@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Tuple
+import json
+import ast
 
 from openai.types.responses.response_function_tool_call_param import (
     ResponseFunctionToolCallParam,
@@ -68,3 +70,40 @@ class ResponseToolCall:
             },
         )
         return function_call, function_call_output
+
+
+def parse_tool_arguments(arguments: str) -> dict:
+    """Parse tool call arguments which may not be valid JSON.
+
+    The OpenAI API is expected to return well-formed JSON for tool arguments,
+    but minor formatting issues (such as the use of single quotes) can occur.
+    This helper first tries ``json.loads`` and falls back to
+    ``ast.literal_eval`` for simple cases.
+
+    Parameters
+    ----------
+    arguments
+        Raw argument string from the tool call.
+
+    Returns
+    -------
+    dict
+        Parsed dictionary of arguments.
+
+    Raises
+    ------
+    ValueError
+        If the arguments cannot be parsed as JSON.
+
+    Examples
+    --------
+    >>> parse_tool_arguments('{"key": "value"}')["key"]
+    'value'
+    """
+    try:
+        return json.loads(arguments)
+    except json.JSONDecodeError:
+        try:
+            return ast.literal_eval(arguments)
+        except Exception as exc:  # noqa: BLE001
+            raise ValueError(f"Invalid JSON arguments: {arguments}") from exc

@@ -12,8 +12,6 @@ from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 from openai_sdk_helpers.utils import ensure_list
 
-DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "streamlit_app_config.py"
-
 
 class StreamlitAppConfig(BaseModel):
     """Validated configuration for the config-driven Streamlit application.
@@ -142,13 +140,13 @@ class StreamlitAppConfig(BaseModel):
 
     @staticmethod
     def load_app_config(
-        config_path: Path = DEFAULT_CONFIG_PATH,
+        config_path: Path,
     ) -> "StreamlitAppConfig":
         """Load, validate, and return the Streamlit application configuration.
 
         Parameters
         ----------
-        config_path : Path, default=DEFAULT_CONFIG_PATH
+        config_path : Path
             Filesystem path to the configuration module.
 
         Returns
@@ -290,18 +288,18 @@ def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:
 
 
 def load_app_config(
-    config_path: Path = DEFAULT_CONFIG_PATH,
+    config_path: Path,
 ) -> StreamlitAppConfig:
     """Proxy to :meth:`StreamlitAppConfig.load_app_config` for compatibility."""
     return StreamlitAppConfig.load_app_config(config_path=config_path)
 
 
-def _load_configuration(config_path: Path = DEFAULT_CONFIG_PATH) -> StreamlitAppConfig:
+def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     """Load the Streamlit configuration and present user-friendly errors.
 
     Parameters
     ----------
-    config_path : Path, default=DEFAULT_CONFIG_PATH
+    config_path : Path
         Filesystem location of the developer-authored configuration module.
 
     Returns
@@ -320,7 +318,6 @@ def _load_configuration(config_path: Path = DEFAULT_CONFIG_PATH) -> StreamlitApp
 
 
 __all__ = [
-    "DEFAULT_CONFIG_PATH",
     "StreamlitAppConfig",
     "load_app_config",
     "_load_configuration",

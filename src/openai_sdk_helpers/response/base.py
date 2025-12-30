@@ -455,23 +455,35 @@ class BaseResponse(Generic[T]):
         """
         return asyncio.run(self.run_async(content=content, attachments=attachments))
 
-    def get_last_message(self, role: str = "assistant") -> ResponseMessage | None:
-        """Return the most recent message for the given role.
-
-        Parameters
-        ----------
-        role : str, default="assistant"
-            Role name to filter messages by.
+    def get_last_tool_message(self) -> ResponseMessage | None:
+        """Return the most recent tool message.
 
         Returns
         -------
         ResponseMessage or None
-            Latest message matching ``role`` or ``None`` when absent.
+            Latest tool message or ``None`` when absent.
         """
-        for message in reversed(self.messages.messages):
-            if message.role == role:
-                return message
-        return None
+        return self.messages.get_last_tool_message()
+
+    def get_last_user_message(self) -> ResponseMessage | None:
+        """Return the most recent user message.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest user message or ``None`` when absent.
+        """
+        return self.messages.get_last_user_message()
+
+    def get_last_assistant_message(self) -> ResponseMessage | None:
+        """Return the most recent assistant message.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest assistant message or ``None`` when absent.
+        """
+        return self.messages.get_last_assistant_message()
 
     @classmethod
     def build_streamlit_config(
@@ -562,7 +574,7 @@ class BaseResponse(Generic[T]):
     def close(self) -> None:
         """Delete managed vector stores and clean up the session."""
         log(f"Closing session {self.uuid} for {self.__class__.__name__}")
-
+        self.save()
         try:
             if self._user_vector_storage and self._cleanup_user_vector_storage:
                 self._user_vector_storage.delete()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import ast
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from enum import Enum

@@ -23,9 +23,9 @@ def test_response_base_initialization(mock_openai_client):
             schema=None,
             output_structure=None,
             tool_handlers={},
-            model="gpt-4",
+            model="gpt-4o",
             api_key="test_api_key",
         )
         assert instance._instructions == "Test instructions"
-        assert instance._model == "gpt-4"
+        assert instance._model == "gpt-4o-mini"
         assert instance.messages.messages[0].role == "system"

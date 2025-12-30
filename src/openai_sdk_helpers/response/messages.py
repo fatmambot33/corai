@@ -209,3 +209,51 @@ class ResponseMessages(JSONSerializable):
         return [
             msg.to_openai_format() for msg in self.messages if msg.role != "assistant"
         ]
+
+    def _get_last_message(self, role: str) -> ResponseMessage | None:
+        """Return the most recent message for the given role.
+
+        Parameters
+        ----------
+        role : str
+            Role name to filter messages by.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest message matching ``role`` or ``None`` when absent.
+        """
+        for message in reversed(self.messages):
+            if message.role == role:
+                return message
+        return None
+
+    def get_last_assistant_message(self) -> ResponseMessage | None:
+        """Return the most recent assistant message.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest assistant message or ``None`` when absent.
+        """
+        return self._get_last_message(role="assistant")
+
+    def get_last_tool_message(self) -> ResponseMessage | None:
+        """Return the most recent tool message.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest tool message or ``None`` when absent.
+        """
+        return self._get_last_message(role="tool")
+
+    def get_last_user_message(self) -> ResponseMessage | None:
+        """Return the most recent user message.
+
+        Returns
+        -------
+        ResponseMessage or None
+            Latest user message or ``None`` when absent.
+        """
+        return self._get_last_message(role="user")

@@ -311,7 +311,7 @@ class WebAgentSearch(AgentBase):
         )
         self._prompt_dir = prompt_dir
 
-    async def run_agent(self, search_query: str) -> WebSearchStructure:
+    async def run_agent_async(self, search_query: str) -> WebSearchStructure:
         """Execute the entire research workflow for ``search_query``.
 
         Parameters
@@ -358,10 +358,9 @@ class WebAgentSearch(AgentBase):
         WebSearchStructure
             Completed research output.
         """
-        return run_coroutine_agent_sync(self.run_agent(search_query))
+        return run_coroutine_agent_sync(self.run_agent_async(search_query))
 
-    @staticmethod
-    async def run_web_agent(search_query: str) -> WebSearchStructure:
+    async def run_web_agent_async(self, search_query: str) -> WebSearchStructure:
         """Return a research report for the given query using ``WebAgentSearch``.
 
         Parameters
@@ -374,7 +373,7 @@ class WebAgentSearch(AgentBase):
         WebSearchStructure
             Completed research output.
         """
-        return await WebAgentSearch().run_agent(search_query=search_query)
+        return await self.run_agent_async(search_query=search_query)
 
     @staticmethod
     def run_web_agent_sync(search_query: str) -> WebSearchStructure:
@@ -391,7 +390,7 @@ class WebAgentSearch(AgentBase):
             Completed research output.
         """
         return run_coroutine_agent_sync(
-            WebAgentSearch.run_web_agent(search_query=search_query)
+            WebAgentSearch().run_web_agent_async(search_query=search_query)
         )
 
 

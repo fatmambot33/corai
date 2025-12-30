@@ -44,3 +44,7 @@ class WebSearchStructure(BaseStructure):
         "web_search_results"
     )
     web_search_report: WebSearchReportStructure = spec_field("web_search_report")
+
+    def print(self) -> str:
+        """Return the markdown report."""
+        return self.web_search_report.markdown_report

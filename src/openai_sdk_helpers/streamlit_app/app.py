@@ -6,18 +6,18 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-import streamlit as st  # type: ignore[import-not-found]
+import streamlit as st
+from dotenv import load_dotenv
 
-from openai_sdk_helpers.response.base import BaseResponse
-from openai_sdk_helpers.response.vector_store import attach_vector_store
+load_dotenv()
+
+from openai_sdk_helpers.response import BaseResponse, attach_vector_store
 from openai_sdk_helpers.streamlit_app import (
-    DEFAULT_CONFIG_PATH,
     StreamlitAppConfig,
     _load_configuration,
 )
 from openai_sdk_helpers.structure.base import BaseStructure
-from openai_sdk_helpers.utils import ensure_list
-from openai_sdk_helpers.utils.core import coerce_jsonable
+from openai_sdk_helpers.utils import ensure_list, coerce_jsonable
 
 
 def _extract_assistant_text(response: BaseResponse[Any]) -> str:
@@ -33,7 +33,7 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
     str
         Concatenated assistant text, or an empty string when unavailable.
     """
-    message = response.get_last_message(role="assistant")
+    message = response.get_last_assistant_message() or response.get_last_tool_message()
     if message is None:
         return ""
 
@@ -210,7 +210,9 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
     try:
         with st.spinner("Thinking..."):
             result = response.run_sync(content=prompt)
+        print(f"DEBUG APP: result = {result}")
         summary = _render_summary(result, response)
+        print(f"DEBUG APP: summary = {repr(summary)}")
         raw_output = _build_raw_output(result, response)
         st.session_state["chat_history"].append(
             {"role": "assistant", "summary": summary, "raw": raw_output}
@@ -226,12 +228,12 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
         st.error("Something went wrong, but your chat history is still here.")
 
 
-def main(config_path: Path = DEFAULT_CONFIG_PATH) -> None:
+def main(config_path: Path) -> None:
     """Run the config-driven Streamlit chat app.
 
     Parameters
     ----------
-    config_path : Path, default=DEFAULT_CONFIG_PATH
+    config_path : Path
         Filesystem location of the configuration module.
     """
     config = _load_configuration(config_path)
@@ -258,4 +260,10 @@ def main(config_path: Path = DEFAULT_CONFIG_PATH) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if len(sys.argv) != 2:
+        print("Usage: python app.py <config_path>")
+        sys.exit(1)
+    config_path = Path(sys.argv[1])
+    main(config_path)
