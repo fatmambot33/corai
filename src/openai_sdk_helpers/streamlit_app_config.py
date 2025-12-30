@@ -53,23 +53,7 @@ class ExampleResponse(ResponseBase[ExampleResponsePayload]):
         )
 
 
-def build_response() -> ExampleResponse:
-    """Instantiate a new :class:`ExampleResponse` session.
-
-    Returns
-    -------
-    ExampleResponse
-        Freshly configured response ready for chat interactions.
-    """
-
-    return ExampleResponse()
-
-
-APP_CONFIG = {
-    "build_response": build_response,
-    "display_title": "Example assistant chat",
-    "description": "Config-driven chat experience for internal demos.",
-    "system_vector_store": None,
-    "preserve_vector_stores": False,
-    "model": None,
-}
+APP_CONFIG = ExampleResponse.build_streamlit_config(
+    display_title="Example assistant chat",
+    description="Config-driven chat experience for internal demos.",
+)

@@ -5,7 +5,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.streamlit_app import StreamlitAppConfig, load_app_config
+from openai_sdk_helpers.structure.base import BaseStructure
 
 
 def _write_config(tmp_path: Path, body: str) -> Path:
@@ -93,3 +95,45 @@ APP_CONFIG = {"build_response": lambda: None}
     config = load_app_config(config_path=config_path)
 
     assert isinstance(config, StreamlitAppConfig)
+
+
+class _DummyResponse(ResponseBase[BaseStructure]):
+    """Minimal :class:`ResponseBase` subclass for config construction tests.
+
+    Methods
+    -------
+    __init__()
+        Configure a stub response session for testing.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            instructions="hi",
+            tools=[],
+            schema=None,
+            output_structure=None,
+            tool_handlers={},
+            client=object(),
+            model="dummy",
+        )
+
+
+def test_response_base_builds_streamlit_config() -> None:
+    config = _DummyResponse.build_streamlit_config(
+        display_title="Custom title",
+        description="Custom description",
+        system_vector_store="files",
+        preserve_vector_stores=True,
+        model="dummy",
+    )
+
+    assert isinstance(config, StreamlitAppConfig)
+    assert config.display_title == "Custom title"
+    assert config.description == "Custom description"
+    assert config.preserve_vector_stores is True
+    assert config.model == "dummy"
+    assert config.system_vector_store == ["files"]
+
+    response_instance = config.build_response()
+
+    assert isinstance(response_instance, _DummyResponse)

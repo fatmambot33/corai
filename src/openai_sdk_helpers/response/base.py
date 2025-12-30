@@ -15,6 +15,7 @@ from typing import (
     Generic,
     List,
     Optional,
+    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -41,6 +42,9 @@ ToolHandler = Callable[[ResponseFunctionToolCall], Union[str, Any]]
 ProcessContent = Callable[[str], Tuple[str, List[str]]]
 
 
+RB = TypeVar("RB", bound="ResponseBase[BaseStructure]")
+
+
 class ResponseBase(Generic[T]):
     """Manage OpenAI interactions for structured responses.
 
@@ -55,6 +59,8 @@ class ResponseBase(Generic[T]):
         Synchronous wrapper around ``run_async``.
     run_streamed(content, attachments)
         Await ``run_async`` to mirror the agent API.
+    build_streamlit_config(...)
+        Construct a :class:`StreamlitAppConfig` using this class as the builder.
     save(filepath)
         Serialize the message history to disk.
     close()
@@ -463,6 +469,51 @@ class ResponseBase(Generic[T]):
             if message.role == role:
                 return message
         return None
+
+    @classmethod
+    def build_streamlit_config(
+        cls: type[RB],
+        *,
+        display_title: str = "Example copilot",
+        description: str | None = None,
+        system_vector_store: Sequence[str] | str | None = None,
+        preserve_vector_stores: bool = False,
+        model: str | None = None,
+    ) -> "StreamlitAppConfig":
+        """Construct a :class:`StreamlitAppConfig` using ``cls`` as the builder.
+
+        Parameters
+        ----------
+        display_title : str, default="Example copilot"
+            Title displayed at the top of the Streamlit page.
+        description : str or None, default=None
+            Optional short description shown beneath the title.
+        system_vector_store : Sequence[str] | str | None, default=None
+            Optional vector store names to attach as system context.
+        preserve_vector_stores : bool, default=False
+            When ``True``, skip automatic vector store cleanup on close.
+        model : str or None, default=None
+            Optional model hint for display alongside the chat interface.
+
+        Returns
+        -------
+        StreamlitAppConfig
+            Validated configuration bound to ``cls`` as the response builder.
+        """
+
+        from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
+
+        def build_response() -> ResponseBase[BaseStructure]:
+            return cls()  # type: ignore[call-arg]
+
+        return StreamlitAppConfig(
+            build_response=build_response,
+            display_title=display_title,
+            description=description,
+            system_vector_store=system_vector_store,
+            preserve_vector_stores=preserve_vector_stores,
+            model=model,
+        )
 
     def save(self, filepath: Optional[str | Path] = None) -> None:
         """Serialize the message history to a JSON file."""
