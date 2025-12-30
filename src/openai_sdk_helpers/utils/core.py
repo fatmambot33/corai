@@ -208,7 +208,6 @@ def coerce_jsonable(value: Any) -> Any:
     Any
         JSON-serializable representation of ``value``.
     """
-
     from openai_sdk_helpers.response.base import ResponseBase
     from openai_sdk_helpers.structure.base import BaseStructure
 

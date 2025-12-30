@@ -10,6 +10,7 @@ import threading
 import uuid
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -36,6 +37,9 @@ from openai.types.responses.response_output_message import ResponseOutputMessage
 from .messages import ResponseMessage, ResponseMessages
 from ..structure import BaseStructure
 from ..utils import ensure_list, log
+
+if TYPE_CHECKING:
+    from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
 
 T = TypeVar("T", bound=BaseStructure)
 ToolHandler = Callable[[ResponseFunctionToolCall], Union[str, Any]]
@@ -464,7 +468,6 @@ class ResponseBase(Generic[T]):
         ResponseMessage or None
             Latest message matching ``role`` or ``None`` when absent.
         """
-
         for message in reversed(self.messages.messages):
             if message.role == role:
                 return message
@@ -500,14 +503,17 @@ class ResponseBase(Generic[T]):
         StreamlitAppConfig
             Validated configuration bound to ``cls`` as the response builder.
         """
-
         from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
+
+        normalized_stores = None
+        if system_vector_store is not None:
+            normalized_stores = ensure_list(system_vector_store)
 
         return StreamlitAppConfig(
             response=cls,
             display_title=display_title,
             description=description,
-            system_vector_store=system_vector_store,
+            system_vector_store=normalized_stores,
             preserve_vector_stores=preserve_vector_stores,
             model=model,
         )

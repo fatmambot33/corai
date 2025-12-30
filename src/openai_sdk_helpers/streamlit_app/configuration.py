@@ -5,14 +5,13 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 from types import ModuleType
-from typing import Callable, Sequence
+from typing import Callable, Sequence, cast
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import BaseStructure
 from openai_sdk_helpers.utils import ensure_list
 
-ResponseFactory = Callable[[], ResponseBase[BaseStructure]]
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "streamlit_app_config.py"
 
 
@@ -23,28 +22,20 @@ class StreamlitAppConfig(BaseModel):
     -------
     normalized_vector_stores()
         Return configured system vector stores as a list of names.
+    create_response()
+        Instantiate the configured ``ResponseBase``.
     """
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
-    build_response: ResponseFactory | None = Field(
-        default=None,
-        description=(
-            "Optional callable that constructs and returns a preconfigured "
-            "``ResponseBase`` instance."
-        ),
-    )
-    response: (
-        ResponseBase[BaseStructure]
-        | type[ResponseBase]
-        | ResponseFactory
-        | None
-    ) = Field(
-        default=None,
-        description=(
-            "``ResponseBase`` subclass or instance used to derive "
-            "``build_response`` when provided."
-        ),
+    response: ResponseBase[BaseStructure] | type[ResponseBase] | Callable | None = (
+        Field(
+            default=None,
+            description=(
+                "Configured ``ResponseBase`` subclass, instance, or callable that returns"
+                " a response instance."
+            ),
+        )
     )
     display_title: str = Field(
         default="Example copilot",
@@ -70,31 +61,6 @@ class StreamlitAppConfig(BaseModel):
         description="Optional model hint for display alongside the chat interface.",
     )
 
-    @field_validator("build_response")
-    @classmethod
-    def validate_builder(cls, value: ResponseFactory | None) -> ResponseFactory | None:
-        """Ensure the configuration provides a callable response builder when set.
-
-        Parameters
-        ----------
-        value : ResponseFactory
-            Candidate response factory supplied by the configuration file.
-
-        Returns
-        -------
-        ResponseFactory
-            The original callable when validation succeeds.
-
-        Raises
-        ------
-        TypeError
-            If ``value`` is not callable.
-        """
-
-        if value is not None and not callable(value):
-            raise TypeError("build_response must be callable.")
-        return value
-
     @field_validator("system_vector_store", mode="before")
     @classmethod
     def validate_vector_store(
@@ -117,13 +83,28 @@ class StreamlitAppConfig(BaseModel):
         TypeError
             If any entry cannot be coerced to ``str``.
         """
-
         if value is None:
             return None
         stores = ensure_list(value)
         if not all(isinstance(store, str) for store in stores):
             raise ValueError("system_vector_store values must be strings.")
         return list(stores)
+
+    @field_validator("response")
+    @classmethod
+    def validate_response(
+        cls, value: ResponseBase[BaseStructure] | type[ResponseBase] | Callable | None
+    ) -> ResponseBase[BaseStructure] | type[ResponseBase] | Callable | None:
+        """Ensure the configuration provides a valid response source."""
+        if value is None:
+            return None
+        if isinstance(value, ResponseBase):
+            return value
+        if isinstance(value, type) and issubclass(value, ResponseBase):
+            return value
+        if callable(value):
+            return value
+        raise TypeError("response must be a ResponseBase, subclass, or callable")
 
     def normalized_vector_stores(self) -> list[str]:
         """Return configured system vector stores as a list.
@@ -133,24 +114,29 @@ class StreamlitAppConfig(BaseModel):
         list[str]
             Vector store names or an empty list when none are configured.
         """
-
         return list(self.system_vector_store or [])
 
     @model_validator(mode="after")
-    def ensure_builder(self) -> "StreamlitAppConfig":
-        """Derive ``build_response`` from ``response`` when missing.
+    def ensure_response(self) -> "StreamlitAppConfig":
+        """Validate that a response source is provided."""
+        if self.response is None:
+            raise ValueError("response must be provided.")
+        return self
+
+    def create_response(self) -> ResponseBase[BaseStructure]:
+        """Instantiate and return the configured response instance.
+
+        Returns
+        -------
+        ResponseBase[BaseStructure]
+            Active response instance.
 
         Raises
         ------
-        ValueError
-            If neither ``build_response`` nor ``response`` is provided.
+        TypeError
+            If the configured ``response`` cannot produce a ``ResponseBase``.
         """
-
-        if self.build_response is None and self.response is not None:
-            self.build_response = _coerce_response_builder(self.response)
-        if self.build_response is None:
-            raise ValueError("Either build_response or response must be provided.")
-        return self
+        return _instantiate_response(self.response)
 
     @staticmethod
     def load_app_config(
@@ -168,7 +154,6 @@ class StreamlitAppConfig(BaseModel):
         StreamlitAppConfig
             Validated configuration derived from ``config_path``.
         """
-
         module = _import_config_module(config_path)
         return _extract_config(module)
 
@@ -193,11 +178,8 @@ def _import_config_module(config_path: Path) -> ModuleType:
     ImportError
         If the module cannot be imported.
     """
-
     if not config_path.exists():
-        raise FileNotFoundError(
-            f"Configuration file not found at '{config_path}'."
-        )
+        raise FileNotFoundError(f"Configuration file not found at '{config_path}'.")
 
     spec = importlib.util.spec_from_file_location(config_path.stem, config_path)
     if spec is None or spec.loader is None:
@@ -228,7 +210,6 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
     TypeError
         If ``APP_CONFIG`` is neither a mapping nor ``StreamlitAppConfig`` instance.
     """
-
     if not hasattr(module, "APP_CONFIG"):
         raise ValueError("APP_CONFIG must be defined in the configuration module.")
 
@@ -249,31 +230,34 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
     )
 
 
-def _coerce_response_builder(candidate: object) -> ResponseFactory:
-    """Convert a response candidate into a builder callable.
+def _instantiate_response(candidate: object) -> ResponseBase[BaseStructure]:
+    """Instantiate a :class:`ResponseBase` from the provided candidate.
 
     Parameters
     ----------
     candidate : object
-        Input from developer configuration representing the response session.
+        Configured response source.
 
     Returns
     -------
-    ResponseFactory
-        Callable that yields a configured :class:`ResponseBase` instance.
+    ResponseBase[BaseStructure]
+        Active response instance.
 
     Raises
     ------
     TypeError
-        If ``candidate`` cannot be turned into a response factory.
+        If the candidate cannot produce a ``ResponseBase`` instance.
     """
-
     if isinstance(candidate, ResponseBase):
-        return lambda: candidate
-    if isinstance(candidate, type) and issubclass(candidate, ResponseBase):
-        return lambda: candidate()
-    if callable(candidate):
         return candidate
+    if isinstance(candidate, type) and issubclass(candidate, ResponseBase):
+        response_cls = cast(type[ResponseBase[BaseStructure]], candidate)
+        return response_cls()  # type: ignore[call-arg]
+    if callable(candidate):
+        response_callable = cast(Callable[[], ResponseBase[BaseStructure]], candidate)
+        response = response_callable()
+        if isinstance(response, ResponseBase):
+            return response
     raise TypeError("response must be a ResponseBase, subclass, or callable")
 
 
@@ -293,10 +277,11 @@ def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:
     StreamlitAppConfig
         Validated configuration derived from ``raw_config``.
     """
-
     config_kwargs = dict(raw_config)
-    if "response" in config_kwargs and "build_response" not in config_kwargs:
-        response_candidate = config_kwargs.pop("response")
+    response_candidate = config_kwargs.pop("response", None)
+    if response_candidate is None:
+        response_candidate = config_kwargs.pop("build_response", None)
+    if response_candidate is not None:
         config_kwargs["response"] = response_candidate
 
     return StreamlitAppConfig(**config_kwargs)
@@ -306,7 +291,6 @@ def load_app_config(
     config_path: Path = DEFAULT_CONFIG_PATH,
 ) -> StreamlitAppConfig:
     """Proxy to :meth:`StreamlitAppConfig.load_app_config` for compatibility."""
-
     return StreamlitAppConfig.load_app_config(config_path=config_path)
 
 
@@ -323,14 +307,14 @@ def _load_configuration(config_path: Path = DEFAULT_CONFIG_PATH) -> StreamlitApp
     StreamlitAppConfig
         Validated configuration object.
     """
-
     try:
         return StreamlitAppConfig.load_app_config(config_path=config_path)
     except Exception as exc:  # pragma: no cover - surfaced in UI
-        import streamlit as st
+        import streamlit as st  # type: ignore[import-not-found]
 
         st.error(f"Configuration error: {exc}")
         st.stop()
+        raise RuntimeError("Configuration loading halted.") from exc
 
 
 __all__ = [

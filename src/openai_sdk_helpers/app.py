@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-import streamlit as st
+import streamlit as st  # type: ignore[import-not-found]
 
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.response.vector_store import attach_vector_store
@@ -33,7 +33,6 @@ def _extract_assistant_text(response: ResponseBase[Any]) -> str:
     str
         Concatenated assistant text, or an empty string when unavailable.
     """
-
     message = response.get_last_message(role="assistant")
     if message is None:
         return ""
@@ -67,7 +66,6 @@ def _render_summary(result: Any, response: ResponseBase[Any]) -> str:
     str
         Display-ready summary text for the chat transcript.
     """
-
     if isinstance(result, BaseStructure):
         return result.print()
     if isinstance(result, dict):
@@ -96,7 +94,6 @@ def _build_raw_output(result: Any, response: ResponseBase[Any]) -> Dict[str, Any
     dict[str, Any]
         Mapping that includes parsed data and raw conversation messages.
     """
-
     return {
         "parsed": coerce_jsonable(result),
         "conversation": response.messages.to_json(),
@@ -109,7 +106,7 @@ def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
     Parameters
     ----------
     config : StreamlitAppConfig
-        Loaded configuration containing the response builder.
+        Loaded configuration containing the response definition.
 
     Returns
     -------
@@ -119,17 +116,14 @@ def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
     Raises
     ------
     TypeError
-        If the configured ``build_response`` does not return ``ResponseBase``.
+        If the configured ``response`` cannot produce ``ResponseBase``.
     """
-
     if "response_instance" in st.session_state:
         cached = st.session_state["response_instance"]
         if isinstance(cached, ResponseBase):
             return cached
 
-    response = config.build_response()
-    if not isinstance(response, ResponseBase):
-        raise TypeError("build_response must return a ResponseBase instance.")
+    response = config.create_response()
 
     if config.preserve_vector_stores:
         setattr(response, "_cleanup_system_vector_storage", False)
@@ -156,7 +150,6 @@ def _reset_chat(close_response: bool = True) -> None:
     None
         This function mutates ``st.session_state`` in-place.
     """
-
     response = st.session_state.get("response_instance")
     if close_response and isinstance(response, ResponseBase):
         response.close()
@@ -172,7 +165,6 @@ def _init_session_state() -> None:
     None
         This function initializes chat-related session keys when absent.
     """
-
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
@@ -185,7 +177,6 @@ def _render_chat_history() -> None:
     None
         Renders chat messages in the current Streamlit session.
     """
-
     for message in st.session_state.get("chat_history", []):
         role = message.get("role", "assistant")
         with st.chat_message(role):
@@ -207,9 +198,8 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
     prompt : str
         User-entered text to send to the assistant.
     config : StreamlitAppConfig
-        Loaded configuration containing the response builder.
+        Loaded configuration containing the response definition.
     """
-
     st.session_state["chat_history"].append({"role": "user", "content": prompt})
     try:
         response = _get_response_instance(config)
@@ -244,7 +234,6 @@ def main(config_path: Path = DEFAULT_CONFIG_PATH) -> None:
     config_path : Path, default=DEFAULT_CONFIG_PATH
         Filesystem location of the configuration module.
     """
-
     config = _load_configuration(config_path)
     st.set_page_config(page_title=config.display_title, layout="wide")
     _init_session_state()

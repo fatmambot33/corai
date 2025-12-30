@@ -36,6 +36,7 @@ class ExampleResponse(ResponseBase[ExampleResponsePayload]):
     """
 
     def __init__(self) -> None:
+        """Initialize the example response with default OpenAI settings."""
         settings = OpenAISettings.from_env()
         model_name = settings.default_model or DEFAULT_MODEL_FALLBACK
         super().__init__(
