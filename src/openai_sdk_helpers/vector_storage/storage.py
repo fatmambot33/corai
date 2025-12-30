@@ -199,20 +199,19 @@ class VectorStorage:
 
         Parameters
         ----------
-        file_path
+        file_path : str
             Local path to the file to upload.
-        purpose
-            Purpose of the file (for example ``"assistants"``). Default
-            ``"assistants"``.
-        attributes
+        purpose : str, default "assistants"
+            Purpose of the file (for example ``"assistants"``).
+        attributes : dict or None, default None
             Custom attributes to associate with the file. The ``file_name``
-            attribute is added automatically. Default ``None``.
-        overwrite
+            attribute is added automatically.
+        overwrite : bool, default False
             When ``True``, re-upload even if a file with the same name already
-            exists. Default ``False``.
-        refresh_cache
+            exists.
+        refresh_cache : bool, default False
             When ``True``, refresh the local cache of existing files before
-            checking for duplicates. Default ``False``.
+            checking for duplicates.
 
         Returns
         -------
@@ -284,16 +283,16 @@ class VectorStorage:
 
         Parameters
         ----------
-        file_patterns
+        file_patterns : str or list of str
             Glob pattern or list of patterns (for example
             ``'/path/to/files/**/*.txt'``).
-        purpose
-            Purpose assigned to uploaded files. Default ``"assistants"``.
-        attributes
-            Custom attributes to associate with each file. Default ``None``.
-        overwrite
+        purpose : str, default "assistants"
+            Purpose assigned to uploaded files.
+        attributes : dict or None, default None
+            Custom attributes to associate with each file.
+        overwrite : bool, default False
             When ``True``, re-upload files even if files with the same name
-            already exist. Default ``False``.
+            already exist.
 
         Returns
         -------

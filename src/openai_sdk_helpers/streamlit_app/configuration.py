@@ -24,6 +24,8 @@ class StreamlitAppConfig(BaseModel):
         Return configured system vector stores as a list of names.
     create_response()
         Instantiate the configured ``BaseResponse``.
+    load_app_config(config_path)
+        Load, validate, and return the Streamlit application configuration.
     """
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)

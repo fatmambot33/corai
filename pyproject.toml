@@ -64,3 +64,6 @@ include = ["src/openai_sdk_helpers"]
 
 [tool.pyright]
 extraPaths = ["src"]
+
+[tool.pydocstyle]
+convention = "numpy"
