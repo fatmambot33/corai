@@ -327,6 +327,7 @@ def log(message: str, level: int = logging.INFO) -> None:
 __all__ = [
     "ensure_list",
     "check_filepath",
+    "coerce_jsonable",
     "JSONSerializable",
     "customJSONEncoder",
     "log",

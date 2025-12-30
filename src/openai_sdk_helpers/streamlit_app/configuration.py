@@ -41,7 +41,7 @@ class StreamlitAppConfig(BaseModel):
         default=None,
         description="Optional short description shown beneath the title.",
     )
-    system_vector_store: Sequence[str] | str | None = Field(
+    system_vector_store: list[str] | None = Field(
         default=None,
         description=(
             "Optional vector store names to attach as system context for "
@@ -82,7 +82,7 @@ class StreamlitAppConfig(BaseModel):
             raise TypeError("build_response must be callable.")
         return value
 
-    @field_validator("system_vector_store")
+    @field_validator("system_vector_store", mode="before")
     @classmethod
     def validate_vector_store(
         cls, value: Sequence[str] | str | None
@@ -109,8 +109,8 @@ class StreamlitAppConfig(BaseModel):
             return None
         stores = ensure_list(value)
         if not all(isinstance(store, str) for store in stores):
-            raise TypeError("system_vector_store values must be strings.")
-        return stores
+            raise ValueError("system_vector_store values must be strings.")
+        return list(stores)
 
     def normalized_vector_stores(self) -> list[str]:
         """Return configured system vector stores as a list.
@@ -121,11 +121,7 @@ class StreamlitAppConfig(BaseModel):
             Vector store names or an empty list when none are configured.
         """
 
-        if self.system_vector_store is None:
-            return []
-        if isinstance(self.system_vector_store, str):
-            return [self.system_vector_store]
-        return list(self.system_vector_store)
+        return list(self.system_vector_store or [])
 
     @staticmethod
     def load_app_config(

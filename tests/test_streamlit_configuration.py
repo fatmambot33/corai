@@ -65,6 +65,23 @@ APP_CONFIG = {"build_response": lambda: None, "system_vector_store": [1, 2]}
         StreamlitAppConfig.load_app_config(config_path=config_path)
 
 
+def test_vector_store_normalization_returns_copy(tmp_path: Path) -> None:
+    config_path = _write_config(
+        tmp_path,
+        """
+APP_CONFIG = {"build_response": lambda: None, "system_vector_store": "files"}
+""",
+    )
+
+    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+
+    stores = config.normalized_vector_stores()
+    stores.append("mutated")
+
+    assert config.system_vector_store == ["files"]
+    assert config.normalized_vector_stores() == ["files"]
+
+
 def test_load_app_config_proxy(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
