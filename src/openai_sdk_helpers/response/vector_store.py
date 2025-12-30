@@ -7,11 +7,11 @@ from typing import Any, Optional, Sequence
 from openai import OpenAI
 
 from ..utils import ensure_list
-from .base import ResponseBase
+from .base import BaseResponse
 
 
 def attach_vector_store(
-    response: ResponseBase[Any],
+    response: BaseResponse[Any],
     vector_stores: str | Sequence[str],
     api_key: Optional[str] = None,
 ) -> list[str]:

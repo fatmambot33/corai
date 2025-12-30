@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
 
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.streamlit_app import StreamlitAppConfig, load_app_config
 from openai_sdk_helpers.structure.base import BaseStructure
 
@@ -16,8 +17,8 @@ def _write_config(tmp_path: Path, body: str) -> Path:
     return config_path
 
 
-class _DummyResponse(ResponseBase[BaseStructure]):
-    """Minimal :class:`ResponseBase` subclass for config construction tests.
+class _DummyResponse(BaseResponse[BaseStructure]):
+    """Minimal :class:`BaseResponse` subclass for config construction tests.
 
     Methods
     -------
@@ -32,7 +33,7 @@ class _DummyResponse(ResponseBase[BaseStructure]):
             schema=None,
             output_structure=None,
             tool_handlers={},
-            client=object(),
+            client=MagicMock(),
             model="dummy",
         )
 
@@ -41,11 +42,11 @@ def test_load_app_config_success(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -66,7 +67,7 @@ APP_CONFIG = {"response": TempResponse}
 
     assert config.display_title == "Example copilot"
     assert config.normalized_vector_stores() == []
-    assert isinstance(config.create_response(), ResponseBase)
+    assert isinstance(config.create_response(), BaseResponse)
 
 
 def test_missing_config_file() -> None:
@@ -122,11 +123,11 @@ def test_vector_store_normalization_returns_copy(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -156,11 +157,11 @@ def test_load_app_config_proxy(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -207,11 +208,11 @@ def test_config_accepts_response_alias(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -231,18 +232,18 @@ APP_CONFIG = {"response": TempResponse, "display_title": "Alias title"}
     config = StreamlitAppConfig.load_app_config(config_path=config_path)
 
     assert config.display_title == "Alias title"
-    assert isinstance(config.create_response(), ResponseBase)
+    assert isinstance(config.create_response(), BaseResponse)
 
 
 def test_config_accepts_response_class_directly(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -263,7 +264,7 @@ APP_CONFIG = TempResponse
 
     response_instance = config.create_response()
 
-    assert isinstance(response_instance, ResponseBase)
+    assert isinstance(response_instance, BaseResponse)
     assert response_instance.__class__.__name__ == "TempResponse"
 
 
@@ -271,11 +272,11 @@ def test_config_accepts_response_instance(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 
-class TempResponse(ResponseBase[BaseStructure]):
+class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
             instructions="hi",
@@ -296,7 +297,7 @@ APP_CONFIG = TempResponse()
 
     response_instance = config.create_response()
 
-    assert isinstance(response_instance, ResponseBase)
+    assert isinstance(response_instance, BaseResponse)
     assert response_instance.__class__.__name__ == "TempResponse"
 
 

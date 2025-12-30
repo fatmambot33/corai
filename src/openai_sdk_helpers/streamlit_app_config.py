@@ -5,7 +5,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 
 DEFAULT_MODEL_FALLBACK = "gpt-4o-mini"
@@ -26,7 +26,7 @@ class ExampleResponsePayload(BaseStructure):
     )
 
 
-class ExampleResponse(ResponseBase[ExampleResponsePayload]):
+class ExampleResponse(BaseResponse[ExampleResponsePayload]):
     """Response tuned for a generic chat experience with structured output.
 
     Methods

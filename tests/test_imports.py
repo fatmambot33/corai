@@ -30,4 +30,4 @@ def test_top_level_exports():
     import openai_sdk_helpers as sdk
 
     assert hasattr(sdk, "AgentBase")
-    assert hasattr(sdk, "ResponseBase")
+    assert hasattr(sdk, "BaseResponse")

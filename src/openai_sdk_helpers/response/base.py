@@ -46,10 +46,10 @@ ToolHandler = Callable[[ResponseFunctionToolCall], Union[str, Any]]
 ProcessContent = Callable[[str], Tuple[str, List[str]]]
 
 
-RB = TypeVar("RB", bound="ResponseBase[BaseStructure]")
+RB = TypeVar("RB", bound="BaseResponse[BaseStructure]")
 
 
-class ResponseBase(Generic[T]):
+class BaseResponse(Generic[T]):
     """Manage OpenAI interactions for structured responses.
 
     This base class handles input construction, OpenAI requests, tool calls,
@@ -551,7 +551,7 @@ class ResponseBase(Generic[T]):
             f"messages={len(self.messages.messages)}, data_path={data_path}>"
         )
 
-    def __enter__(self) -> "ResponseBase[T]":
+    def __enter__(self) -> "BaseResponse[T]":
         """Enter the context manager for this response session."""
         return self
 

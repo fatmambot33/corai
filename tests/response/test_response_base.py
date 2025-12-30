@@ -1,10 +1,10 @@
-"""Tests for the ResponseBase class."""
+"""Tests for the BaseResponse class."""
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 
 
 @pytest.fixture
@@ -14,10 +14,10 @@ def mock_openai_client():
 
 
 def test_response_base_initialization(mock_openai_client):
-    """Test the initialization of the ResponseBase class."""
+    """Test the initialization of the BaseResponse class."""
     with patch("openai.OpenAI") as mock_openai:
         mock_openai.return_value = mock_openai_client
-        instance = ResponseBase(
+        instance = BaseResponse(
             instructions="Test instructions",
             tools=[],
             schema=None,

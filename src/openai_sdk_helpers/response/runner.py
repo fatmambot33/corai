@@ -6,10 +6,10 @@ import asyncio
 
 from typing import Any, Optional, Type, TypeVar
 
-from .base import ResponseBase
+from .base import BaseResponse
 
 
-R = TypeVar("R", bound=ResponseBase[Any])
+R = TypeVar("R", bound=BaseResponse[Any])
 
 
 def run_sync(
@@ -32,7 +32,7 @@ def run_sync(
     Returns
     -------
     Any
-        Parsed response from :meth:`ResponseBase.run_response`.
+        Parsed response from :meth:`BaseResponse.run_response`.
     """
     response = response_cls(**(response_kwargs or {}))
     try:
@@ -61,7 +61,7 @@ async def run_async(
     Returns
     -------
     Any
-        Parsed response from :meth:`ResponseBase.run_response_async`.
+        Parsed response from :meth:`BaseResponse.run_response_async`.
     """
     response = response_cls(**(response_kwargs or {}))
     try:
@@ -79,7 +79,7 @@ def run_streamed(
     """Run a response workflow and return the asynchronous result.
 
     This mirrors the agent API for discoverability. Streaming responses are not
-    currently supported by :class:`ResponseBase`, so this returns the same value
+    currently supported by :class:`BaseResponse`, so this returns the same value
     as :func:`run_async`.
 
     Parameters

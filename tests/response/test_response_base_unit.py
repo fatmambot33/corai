@@ -1,4 +1,4 @@
-"""Unit tests for the ResponseBase class."""
+"""Unit tests for the BaseResponse class."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from openai_sdk_helpers.response import attach_vector_store
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.response.messages import ResponseMessage
 
 
@@ -24,8 +24,8 @@ def mock_openai_client():
 
 @pytest.fixture
 def response_base(mock_openai_client):
-    """Return a ResponseBase instance."""
-    return ResponseBase(
+    """Return a BaseResponse instance."""
+    return BaseResponse(
         instructions="test instructions",
         tools=[],
         schema=None,
@@ -37,7 +37,7 @@ def response_base(mock_openai_client):
 
 
 def test_response_base_initialization(response_base):
-    """Test ResponseBase initialization."""
+    """Test BaseResponse initialization."""
     assert response_base._instructions == "test instructions"
     assert response_base._model == "test_model"
 
@@ -48,7 +48,7 @@ def test_data_path(response_base, tmp_path):
     response_base._module_name = "test_module"
     assert (
         response_base.data_path
-        == tmp_path / "test_module" / "responsebase" / "responsebase"
+        == tmp_path / "test_module" / "baseresponse" / "baseresponse"
     )
 
 
@@ -123,7 +123,7 @@ def test_attach_vector_store_raises_for_missing_store(response_base):
 def test_attach_vector_store_requires_api_key():
     """Raise when no client or API key is available for lookup."""
 
-    response = cast(ResponseBase[Any], SimpleNamespace(_client=None, _tools=[]))
+    response = cast(BaseResponse[Any], SimpleNamespace(_client=None, _tools=[]))
 
     with pytest.raises(ValueError):
         attach_vector_store(response, "store-one")
@@ -132,9 +132,15 @@ def test_attach_vector_store_requires_api_key():
 def test_get_last_message_returns_latest_assistant(response_base):
     """Return the most recent assistant message when available."""
 
-    response_base.messages.messages.append(ResponseMessage(role="user", content="hi"))
-    first_assistant = ResponseMessage(role="assistant", content="first")
-    latest_assistant = ResponseMessage(role="assistant", content="second")
+    response_base.messages.messages.append(
+        ResponseMessage(role="user", content={"role": "user", "content": "hi"})
+    )
+    first_assistant = ResponseMessage(
+        role="assistant", content={"role": "assistant", "content": "first"}
+    )
+    latest_assistant = ResponseMessage(
+        role="assistant", content={"role": "assistant", "content": "second"}
+    )
     response_base.messages.messages.extend([first_assistant, latest_assistant])
 
     assert response_base.get_last_message() is latest_assistant
@@ -143,6 +149,8 @@ def test_get_last_message_returns_latest_assistant(response_base):
 def test_get_last_message_handles_missing_role(response_base):
     """Return None when the requested role is not present."""
 
-    response_base.messages.messages.append(ResponseMessage(role="user", content="hi"))
+    response_base.messages.messages.append(
+        ResponseMessage(role="user", content={"role": "user", "content": "hi"})
+    )
 
     assert response_base.get_last_message(role="assistant") is None

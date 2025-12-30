@@ -18,7 +18,7 @@ from .agent import (
     WebAgentSearch,
 )
 from .response import (
-    ResponseBase,
+    BaseResponse,
     ResponseMessage,
     ResponseMessages,
     ResponseToolCall,
@@ -55,7 +55,7 @@ __all__ = [
     "WebSearchStructure",
     "VectorSearchStructure",
     "ValidationResultStructure",
-    "ResponseBase",
+    "BaseResponse",
     "ResponseMessage",
     "ResponseMessages",
     "ResponseToolCall",

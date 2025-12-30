@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 import streamlit as st  # type: ignore[import-not-found]
 
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.response.vector_store import attach_vector_store
 from openai_sdk_helpers.streamlit_app import (
     DEFAULT_CONFIG_PATH,
@@ -20,12 +20,12 @@ from openai_sdk_helpers.utils import ensure_list
 from openai_sdk_helpers.utils.core import coerce_jsonable
 
 
-def _extract_assistant_text(response: ResponseBase[Any]) -> str:
+def _extract_assistant_text(response: BaseResponse[Any]) -> str:
     """Return the latest assistant message as a friendly string.
 
     Parameters
     ----------
-    response : ResponseBase[Any]
+    response : BaseResponse[Any]
         Active response session containing message history.
 
     Returns
@@ -51,14 +51,14 @@ def _extract_assistant_text(response: ResponseBase[Any]) -> str:
     return ""
 
 
-def _render_summary(result: Any, response: ResponseBase[Any]) -> str:
+def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
     """Generate the assistant-facing summary shown in the transcript.
 
     Parameters
     ----------
     result : Any
-        Parsed result returned from ``ResponseBase.run_sync``.
-    response : ResponseBase[Any]
+        Parsed result returned from ``BaseResponse.run_sync``.
+    response : BaseResponse[Any]
         Response instance containing the latest assistant message.
 
     Returns
@@ -79,14 +79,14 @@ def _render_summary(result: Any, response: ResponseBase[Any]) -> str:
     return "No response returned."
 
 
-def _build_raw_output(result: Any, response: ResponseBase[Any]) -> Dict[str, Any]:
+def _build_raw_output(result: Any, response: BaseResponse[Any]) -> Dict[str, Any]:
     """Assemble the raw payload shown under the expandable transcript section.
 
     Parameters
     ----------
     result : Any
         Parsed result returned from the response instance.
-    response : ResponseBase[Any]
+    response : BaseResponse[Any]
         Response session containing message history.
 
     Returns
@@ -100,8 +100,8 @@ def _build_raw_output(result: Any, response: ResponseBase[Any]) -> Dict[str, Any
     }
 
 
-def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
-    """Instantiate and cache the configured :class:`ResponseBase`.
+def _get_response_instance(config: StreamlitAppConfig) -> BaseResponse[Any]:
+    """Instantiate and cache the configured :class:`BaseResponse`.
 
     Parameters
     ----------
@@ -110,17 +110,17 @@ def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
 
     Returns
     -------
-    ResponseBase[Any]
+    BaseResponse[Any]
         Active response instance for the current session.
 
     Raises
     ------
     TypeError
-        If the configured ``response`` cannot produce ``ResponseBase``.
+        If the configured ``response`` cannot produce ``BaseResponse``.
     """
     if "response_instance" in st.session_state:
         cached = st.session_state["response_instance"]
-        if isinstance(cached, ResponseBase):
+        if isinstance(cached, BaseResponse):
             return cached
 
     response = config.create_response()
@@ -151,7 +151,7 @@ def _reset_chat(close_response: bool = True) -> None:
         This function mutates ``st.session_state`` in-place.
     """
     response = st.session_state.get("response_instance")
-    if close_response and isinstance(response, ResponseBase):
+    if close_response and isinstance(response, BaseResponse):
         response.close()
     st.session_state["chat_history"] = []
     st.session_state.pop("response_instance", None)
