@@ -345,41 +345,16 @@ class BaseResponse(Generic[T]):
         for response_output in response.output:
             if isinstance(response_output, ResponseFunctionToolCall):
                 log(
-                    f"Tool call detected. Executing {response_output.name}.",
+                    f"Tool call detected. Executing {response_output.function.name}.",
                     level=logging.INFO,
                 )
-
-                tool_name = response_output.name
-                handler = self._tool_handlers.get(tool_name)
-
-                if handler is None:
-                    log(
-                        f"No handler found for tool '{tool_name}'",
-                        level=logging.ERROR,
-                    )
-                    raise ValueError(f"No handler for tool: {tool_name}")
-
-                try:
-                    if inspect.iscoroutinefunction(handler):
-                        tool_result_json = await handler(response_output)
-                    else:
-                        tool_result_json = handler(response_output)
-                    if isinstance(tool_result_json, str):
-                        tool_result = json.loads(tool_result_json)
-                        tool_output = tool_result_json
-                    else:
-                        tool_result = tool_result_json
-                        tool_output = json.dumps(tool_result)
-                    self.messages.add_tool_message(
-                        content=response_output, output=tool_output
-                    )
-                    self.save()
-                except Exception as exc:
-                    log(
-                        f"Error executing tool handler '{tool_name}': {exc}",
-                        level=logging.ERROR,
-                    )
-                    raise RuntimeError(f"Error in tool handler '{tool_name}': {exc}")
+                tool_output, tool_result = await self._execute_tool_call(
+                    response_output
+                )
+                self.messages.add_tool_message(
+                    content=response_output, output=tool_output
+                )
+                self.save()
 
                 if self._output_structure:
                     output_dict = self._output_structure.from_raw_input(tool_result)
@@ -430,6 +405,55 @@ class BaseResponse(Generic[T]):
         thread.start()
         thread.join()
         return result
+
+    async def _execute_tool_call(
+        self, tool_call: ResponseFunctionToolCall
+    ) -> tuple[str, str | Any]:
+        """Execute a tool call and return the parsed result and raw output.
+
+        Parameters
+        ----------
+        tool_call
+            The tool call object from the OpenAI API response.
+
+        Returns
+        -------
+        tuple[str, str | Any]
+            A tuple containing the raw JSON output and the parsed result.
+
+        Raises
+        ------
+        ValueError
+            If no handler is found for the specified tool.
+        RuntimeError
+            If the tool handler encounters an error during execution.
+        """
+        tool_name = tool_call.function.name
+        handler = self._tool_handlers.get(tool_name)
+
+        if handler is None:
+            log(f"No handler found for tool '{tool_name}'", level=logging.ERROR)
+            raise ValueError(f"No handler for tool: {tool_name}")
+
+        try:
+            # The handler now receives a parsed BaseStructure object
+            parsed_args = self._output_structure.from_raw_input(
+                tool_call.function.arguments
+            )
+            if inspect.iscoroutinefunction(handler):
+                tool_result_json = await handler(parsed_args)
+            else:
+                tool_result_json = handler(parsed_args)
+
+            if isinstance(tool_result_json, str):
+                return tool_result_json, json.loads(tool_result_json)
+            return json.dumps(tool_result_json), tool_result_json
+        except Exception as exc:
+            log(
+                f"Error executing tool handler '{tool_name}': {exc}",
+                level=logging.ERROR,
+            )
+            raise RuntimeError(f"Error in tool handler '{tool_name}': {exc}")
 
     def run_streamed(
         self,

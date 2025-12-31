@@ -36,11 +36,10 @@ class StreamlitWebSearch(BaseResponse[WebSearchStructure]):
         )
 
 
-async def perform_search(tool) -> str:
+async def perform_search(structured_args: WebSearchStructure) -> str:
     """Perform a web search and return structured results."""
-    parsed_args = WebSearchStructure.from_raw_input(tool.arguments)
     web_result = await WebAgentSearch(default_model="gpt-4o-mini").run_web_agent_async(
-        parsed_args.query
+        structured_args.query
     )
     return json.dumps(web_result.to_json(), cls=customJSONEncoder)
 
