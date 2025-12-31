@@ -217,6 +217,7 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
         st.session_state["chat_history"].append(
             {"role": "assistant", "summary": summary, "raw": raw_output}
         )
+        st.rerun()
     except Exception as exc:  # pragma: no cover - surfaced in UI
         st.session_state["chat_history"].append(
             {
