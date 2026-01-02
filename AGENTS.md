@@ -29,8 +29,8 @@ These instructions apply to any automated agent contributing to this repository.
 Before running tests, install the development dependencies:
 
 ```bash
-# Install the package with dev dependency group (PEP 735)
-pip install -e . --group dev
+# Install the package with dev dependency group
+pip install -e .[dev]
 ```
 
 To ensure your changes will pass the automated checks in our Continuous Integration (CI) pipeline, run the following commands locally before committing. All checks must pass.
