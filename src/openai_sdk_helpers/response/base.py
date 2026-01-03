@@ -139,6 +139,8 @@ class BaseResponse(Generic[T]):
             schema is None and not self._tools and output_structure is not None
         )
         if should_auto_generate:
+            # At this point, output_structure is guaranteed to be non-None
+            assert output_structure is not None
             self._schema = output_structure.response_format()
         else:
             self._schema = schema
