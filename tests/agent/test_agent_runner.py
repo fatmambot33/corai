@@ -31,12 +31,10 @@ def test_run_sync(mock_runner_run, mock_run_coroutine, mock_agent):
     """Test the run_sync function."""
     mock_result = MagicMock()
     mock_run_coroutine.return_value = mock_result
-    
+
     runner.run_sync(mock_agent, "test_input")
-    
-    mock_runner_run.assert_called_once_with(
-        mock_agent, "test_input", context=None
-    )
+
+    mock_runner_run.assert_called_once_with(mock_agent, "test_input", context=None)
     assert mock_run_coroutine.called
 
 
@@ -45,10 +43,8 @@ def test_run_streamed(mock_run_streamed, mock_agent):
     """Test the run_streamed function."""
     mock_result = MagicMock()
     mock_run_streamed.return_value = mock_result
-    
+
     result = runner.run_streamed(mock_agent, "test_input")
-    
-    mock_run_streamed.assert_called_once_with(
-        mock_agent, "test_input", context=None
-    )
+
+    mock_run_streamed.assert_called_once_with(mock_agent, "test_input", context=None)
     assert result == mock_result
