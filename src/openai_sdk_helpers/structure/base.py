@@ -146,16 +146,22 @@ class BaseStructure(BaseModel):
         all parent classes that inherit from BaseModel, ensuring inherited
         fields are included in schema generation.
 
+        Results are computed once per class and cached for performance.
+
         Returns
         -------
         dict[Any, Any]
             Mapping of field names to Pydantic ModelField instances.
         """
-        fields = {}
-        for base in reversed(cls.__mro__):  # Traverse inheritance tree
-            if issubclass(base, BaseModel) and hasattr(base, "model_fields"):
-                fields.update(base.model_fields)  # Merge fields from parent
-        return fields
+        # Use class-level caching for performance
+        cache_attr = "_all_fields_cache"
+        if not hasattr(cls, cache_attr):
+            fields = {}
+            for base in reversed(cls.__mro__):  # Traverse inheritance tree
+                if issubclass(base, BaseModel) and hasattr(base, "model_fields"):
+                    fields.update(base.model_fields)  # Merge fields from parent
+            setattr(cls, cache_attr, fields)
+        return getattr(cls, cache_attr)
 
     @classmethod
     def _get_field_prompt(
@@ -711,8 +717,11 @@ class BaseStructure(BaseModel):
         except json.JSONDecodeError:
             try:
                 structured_data = ast.literal_eval(arguments)
-            except Exception as exc:  # noqa: BLE001
-                raise ValueError(f"Invalid JSON arguments: {arguments}") from exc
+            except (SyntaxError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid JSON arguments: {arguments}. "
+                    f"Expected valid JSON or Python literal."
+                ) from exc
         return cls.from_raw_input(structured_data)
 
     @staticmethod
