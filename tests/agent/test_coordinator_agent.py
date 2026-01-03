@@ -42,7 +42,7 @@ def mock_summarize_fn():
 
 
 @pytest.fixture
-def project_manager(
+def coordinator_agent(
     tmp_path,
     mock_prompt_fn,
     mock_build_plan_fn,
@@ -62,115 +62,118 @@ def project_manager(
         )
 
 
-def test_project_manager_initialization(project_manager):
+def test_coordinator_agent_initialization(coordinator_agent):
     """Test ProjectManager initialization."""
-    assert project_manager.prompt is None
-    assert project_manager.brief is None
-    assert project_manager.plan == PlanStructure()
-    assert project_manager.summary is None
+    assert coordinator_agent.prompt is None
+    assert coordinator_agent.brief is None
+    assert coordinator_agent.plan == PlanStructure()
+    assert coordinator_agent.summary is None
 
 
-def test_build_prompt(project_manager, mock_prompt_fn):
+def test_build_prompt(coordinator_agent, mock_prompt_fn):
     """Test building instructions."""
-    project_manager.build_prompt("test prompt")
-    assert project_manager.prompt == "test prompt"
+    coordinator_agent.build_prompt("test prompt")
+    assert coordinator_agent.prompt == "test prompt"
     mock_prompt_fn.assert_called_once_with("test prompt")
-    assert project_manager.brief == PromptStructure(prompt="test brief")
+    assert coordinator_agent.brief == PromptStructure(prompt="test brief")
 
 
-def test_build_plan(project_manager, mock_build_plan_fn):
+def test_build_plan(coordinator_agent, mock_build_plan_fn):
     """Test building a plan."""
-    project_manager.brief = PromptStructure(prompt="test brief")
-    project_manager.build_plan()
+    coordinator_agent.brief = PromptStructure(prompt="test brief")
+    coordinator_agent.build_plan()
     mock_build_plan_fn.assert_called_once_with("test brief")
-    assert project_manager.plan == PlanStructure()
+    assert coordinator_agent.plan == PlanStructure()
 
 
-def test_build_plan_no_brief(project_manager):
+def test_build_plan_no_brief(coordinator_agent):
     """Test that building a plan without a brief raises an error."""
     with pytest.raises(ValueError):
-        project_manager.build_plan()
+        coordinator_agent.build_plan()
 
 
-def test_execute_plan(project_manager, mock_execute_plan_fn):
+def test_execute_plan(coordinator_agent, mock_execute_plan_fn):
     """Test executing a plan."""
     task = TaskStructure(prompt="test task")
-    project_manager.plan = PlanStructure(tasks=[task])
-    project_manager.execute_plan()
-    mock_execute_plan_fn.assert_called_once_with(project_manager.plan)
+    coordinator_agent.plan = PlanStructure(tasks=[task])
+    coordinator_agent.execute_plan()
+    mock_execute_plan_fn.assert_called_once_with(coordinator_agent.plan)
 
 
-def test_summarize_plan(project_manager, mock_summarize_fn):
+def test_summarize_plan(coordinator_agent, mock_summarize_fn):
     """Test summarizing a plan."""
-    summary = project_manager.summarize_plan(["test result"])
+    summary = coordinator_agent.summarize_plan(["test result"])
     mock_summarize_fn.assert_called_once_with(["test result"])
     assert summary == "test summary"
 
 
-def test_summarize_plan_no_results(project_manager):
+def test_summarize_plan_no_results(coordinator_agent):
     """Test summarizing a plan with no results."""
-    summary = project_manager.summarize_plan()
+    summary = coordinator_agent.summarize_plan()
     assert summary == ""
 
 
-def test_run_plan(project_manager):
+def test_run_plan(coordinator_agent):
     """Test running a full plan."""
-    project_manager.build_prompt = MagicMock()
-    project_manager.build_plan = MagicMock()
-    project_manager.execute_plan = MagicMock()
-    project_manager.summarize_plan = MagicMock()
-    project_manager.run_plan("test prompt")
-    project_manager.build_prompt.assert_called_once_with("test prompt")
-    project_manager.build_plan.assert_called_once()
-    project_manager.execute_plan.assert_called_once()
-    project_manager.summarize_plan.assert_called_once()
+    coordinator_agent.build_prompt = MagicMock()
+    coordinator_agent.build_plan = MagicMock()
+    coordinator_agent.execute_plan = MagicMock()
+    coordinator_agent.summarize_plan = MagicMock()
+    coordinator_agent.run_plan("test prompt")
+    coordinator_agent.build_prompt.assert_called_once_with("test prompt")
+    coordinator_agent.build_plan.assert_called_once()
+    coordinator_agent.execute_plan.assert_called_once()
+    coordinator_agent.summarize_plan.assert_called_once()
 
 
-def test_file_path(project_manager):
+def test_file_path(coordinator_agent):
     """Test the file_path property."""
-    assert project_manager.file_path.name.endswith(".json")
+    assert coordinator_agent.file_path.name.endswith(".json")
 
 
-def test_run_task(project_manager):
+def test_run_task(coordinator_agent):
     """Test running a single task."""
     task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
     agent_callable = MagicMock(return_value="test output")
-    result = project_manager._run_task(task, agent_callable, [])
+    result = coordinator_agent._run_task(task, agent_callable, [])
     assert result == "test output"
 
 
-def test_run_task_in_thread(project_manager):
+def test_run_task_in_thread(coordinator_agent):
     """Test running a task in a thread."""
     task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
     agent_callable = MagicMock(return_value="test output")
-    result = project_manager._run_task_in_thread(task, agent_callable, [])
+    result = coordinator_agent._run_task_in_thread(task, agent_callable, [])
     assert result == "test output"
 
 
-def test_resolve_result(project_manager):
+def test_resolve_result(coordinator_agent):
     """Test resolving a result."""
-    result = project_manager._resolve_result("test result")
+    result = coordinator_agent._resolve_result("test result")
     assert result == "test result"
 
 
-def test_normalize_results(project_manager):
+def test_normalize_results(coordinator_agent):
     """Test normalizing results."""
-    assert project_manager._normalize_results(None) == []
-    assert project_manager._normalize_results("test") == ["test"]
-    assert project_manager._normalize_results(["test1", "test2"]) == ["test1", "test2"]
+    assert coordinator_agent._normalize_results(None) == []
+    assert coordinator_agent._normalize_results("test") == ["test"]
+    assert coordinator_agent._normalize_results(["test1", "test2"]) == [
+        "test1",
+        "test2",
+    ]
 
 
-def test_resolve_result_handles_completed_future(project_manager):
+def test_resolve_result_handles_completed_future(coordinator_agent):
     """ProjectManager should unwrap results from completed futures."""
     loop = asyncio.new_event_loop()
     future: asyncio.Future[str] = loop.create_future()
     future.set_result("ready")
 
-    assert project_manager._resolve_result(future) == "ready"
+    assert coordinator_agent._resolve_result(future) == "ready"
     loop.close()
 
 
-def test_resolve_result_waits_on_running_loop_future(project_manager):
+def test_resolve_result_waits_on_running_loop_future(coordinator_agent):
     """ProjectManager should wait for futures tied to running event loops."""
 
     loop = asyncio.new_event_loop()
@@ -185,14 +188,14 @@ def test_resolve_result_waits_on_running_loop_future(project_manager):
     loop.call_soon_threadsafe(result.set_result, "from-loop")
 
     try:
-        assert project_manager._resolve_result(result) == "from-loop"
+        assert coordinator_agent._resolve_result(result) == "from-loop"
     finally:
         loop.call_soon_threadsafe(loop.stop)
         thread.join()
         loop.close()
 
 
-def test_resolve_result_rejects_pending_future_on_own_loop(project_manager):
+def test_resolve_result_rejects_pending_future_on_own_loop(coordinator_agent):
     """_resolve_result should avoid blocking the loop that owns a pending task."""
 
     async def runner() -> None:
@@ -200,7 +203,7 @@ def test_resolve_result_rejects_pending_future_on_own_loop(project_manager):
         asyncio.get_running_loop().call_soon(future.set_result, "loop-value")
 
         with pytest.raises(RuntimeError, match="owning running event loop"):
-            project_manager._resolve_result(future)
+            coordinator_agent._resolve_result(future)
 
         # Ensure the loop processes the scheduled result to avoid warnings.
         assert await future == "loop-value"
@@ -208,7 +211,7 @@ def test_resolve_result_rejects_pending_future_on_own_loop(project_manager):
     asyncio.run(runner())
 
 
-def test_run_task_in_thread_awaits_async_callable(project_manager):
+def test_run_task_in_thread_awaits_async_callable(coordinator_agent):
     """_run_task_in_thread should await asynchronous agent callables."""
 
     async def async_agent(prompt: str, context: list[str] | None = None) -> str:
@@ -216,6 +219,6 @@ def test_run_task_in_thread_awaits_async_callable(project_manager):
         return f"{prompt}::{len(context or [])}"
 
     task = TaskStructure(prompt="async-task", task_type=AgentEnum.SUMMARIZER)
-    result = project_manager._run_task_in_thread(task, async_agent, ["ctx"])
+    result = coordinator_agent._run_task_in_thread(task, async_agent, ["ctx"])
 
     assert result == "async-task\n\nContext:\nctx::1"

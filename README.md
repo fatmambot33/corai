@@ -301,7 +301,7 @@ src/openai_sdk_helpers/
 │   ├── translator.py  # Translation agent
 │   ├── validation.py  # Input/output validation agent
 │   ├── vector_search.py  # Multi-agent vector search workflow
-│   └── project_manager.py  # Coordinated multi-step workflows
+│   └── coordinator_agent.py  # Coordinated multi-step workflows
 ├── prompt/             # Jinja2 template rendering utilities
 ├── response/           # Response parsing and transformation helpers
 ├── structure/          # Pydantic-based typed data structures
@@ -331,7 +331,7 @@ The package is organized around cohesive, reusable building blocks:
   reporting. Bundles `VectorSearchPlanner`, `VectorSearchTool`, and 
   `VectorSearchWriter` into a single entry point.
 
-- **`openai_sdk_helpers.agent.project_manager.ProjectManager`**  
+- **`openai_sdk_helpers.agent.coordinator_agent.ProjectManager`**  
   Orchestrates multi-step workflows with prompt creation, plan building, task 
   execution, and summarization. Persists intermediate artifacts to disk.
 

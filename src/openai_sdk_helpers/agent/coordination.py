@@ -84,7 +84,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
         """
         if config is None:
             config = AgentConfig(
-                name="project_manager",
+                name="coordinator_agent",
                 description="Coordinates agents for planning and summarization.",
             )
         super().__init__(
@@ -444,7 +444,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
             self._run_directory = (
                 self._module_data_path
                 / Path(self._name)
-                / "project_manager"
+                / "coordinator_agent"
                 / timestamp
             )
         self._run_directory.mkdir(parents=True, exist_ok=True)

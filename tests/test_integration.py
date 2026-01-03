@@ -12,7 +12,7 @@ from openai_sdk_helpers.structure import (
 )
 
 
-def test_project_manager_integration(tmp_path):
+def test_coordinator_agent_integration(tmp_path):
     """Test the CoordinatorAgent integration."""
 
     def prompt_fn(prompt: str) -> PromptStructure:
