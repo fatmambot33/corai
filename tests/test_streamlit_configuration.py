@@ -30,7 +30,6 @@ class _DummyResponse(BaseResponse[BaseStructure]):
         super().__init__(
             instructions="hi",
             tools=[],
-            
             output_structure=None,
             tool_handlers={},
             openai_settings=OpenAISettings(api_key="test", default_model="dummy"),
