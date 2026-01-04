@@ -207,10 +207,10 @@ def example_comparison():
     # Inline approach (current)
     inline_tools = [
         PromptStructure.response_tool_definition(
-            "web_agent", "Run a web research workflow"
+            "web_agent", tool_description="Run a web research workflow"
         ),
         PromptStructure.response_tool_definition(
-            "vector_agent", "Run a vector search workflow"
+            "vector_agent", tool_description="Run a vector search workflow"
         ),
     ]
 
