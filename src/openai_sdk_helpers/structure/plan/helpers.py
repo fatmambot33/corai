@@ -63,9 +63,9 @@ def execute_task(
     ----------
     task : TaskStructure
         Task definition containing prompt and metadata.
-    agent_callable : Callable[..., Any]
-        Function responsible for executing the task. Should accept the
-        task prompt and optional context keyword argument.
+    agent_callable : Callable[..., object | Coroutine[Any, Any, object]]
+        Synchronous or asynchronous callable responsible for executing the task.
+        Should accept the task prompt and optional context keyword argument.
     context : list[str] or None, default None
         Optional context accumulated from previous tasks.
 
@@ -97,7 +97,9 @@ def execute_task(
     # Build plan with single task and execute
     # Use the actual enum directly as key to match the callable
     plan = PlanStructure(tasks=[task])
-    registry: dict[AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]] = {
+    registry: dict[
+        AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]
+    ] = {
         task.task_type: agent_callable,  # Use the enum directly
     }
 

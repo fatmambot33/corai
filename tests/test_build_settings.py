@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 import pytest
 
 from openai_sdk_helpers.utils import build_openai_settings
@@ -46,9 +43,7 @@ def test_build_openai_settings_params_override_env(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-env-key")
     monkeypatch.setenv("OPENAI_MODEL", "gpt-3.5")
 
-    result = build_openai_settings(
-        api_key="sk-param-key", default_model="gpt-4o"
-    )
+    result = build_openai_settings(api_key="sk-param-key", default_model="gpt-4o")
 
     # Parameters should override environment
     assert result.api_key == "sk-param-key"
@@ -145,9 +140,7 @@ def test_build_openai_settings_with_dotenv(tmp_path, monkeypatch):
     # Create a .env file
     env_file = tmp_path / ".env"
     env_file.write_text(
-        "OPENAI_API_KEY=sk-dotenv-key\n"
-        "OPENAI_MODEL=gpt-4\n"
-        "OPENAI_TIMEOUT=90\n"
+        "OPENAI_API_KEY=sk-dotenv-key\n" "OPENAI_MODEL=gpt-4\n" "OPENAI_TIMEOUT=90\n"
     )
 
     result = build_openai_settings(dotenv_path=env_file)

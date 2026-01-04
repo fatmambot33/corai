@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from jinja2 import Environment, FileSystemLoader, Template, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader, Template
 
 load_dotenv()
 warnings.filterwarnings("ignore")

@@ -16,12 +16,8 @@ from openai_sdk_helpers.structure.plan import (
 
 def test_create_plan_basic():
     """Test create_plan factory function."""
-    task1 = TaskStructure(
-        task_type=AgentEnum.WEB_SEARCH, prompt="Search for something"
-    )
-    task2 = TaskStructure(
-        task_type=AgentEnum.SUMMARIZER, prompt="Summarize results"
-    )
+    task1 = TaskStructure(task_type=AgentEnum.WEB_SEARCH, prompt="Search for something")
+    task2 = TaskStructure(task_type=AgentEnum.SUMMARIZER, prompt="Summarize results")
 
     plan = create_plan(task1, task2)
 
@@ -150,7 +146,7 @@ def test_execute_plan_halt_on_error():
     )
 
     # With halt_on_error=True (default), should stop after first error
-    results = execute_plan(plan, registry, halt_on_error=True)
+    execute_plan(plan, registry, halt_on_error=True)
 
     # First task should have error status
     assert plan.tasks[0].status == "error"

@@ -263,11 +263,8 @@ def build_openai_settings(
     try:
         return OpenAISettings.from_env(dotenv_path=dotenv_path, **overrides)
     except ValueError as exc:
-        # Re-raise with clearer message
-        raise ValueError(
-            "Failed to build OpenAI settings. Ensure OPENAI_API_KEY is set "
-            "in environment or passed as parameter."
-        ) from exc
+        # Re-raise with more context but preserve original message
+        raise ValueError(f"Failed to build OpenAI settings: {exc}") from exc
 
 
 T = TypeVar("T")

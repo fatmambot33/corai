@@ -165,31 +165,21 @@ def tool_handler_factory(
 
         # Validate with Pydantic if model provided
         if input_model is not None:
-            try:
-                validated_input = input_model(**parsed_args)
-                # Convert back to dict for function call
-                call_kwargs = validated_input.model_dump()
-            except ValidationError as exc:
-                # Re-raise the original ValidationError with added context in message
-                raise exc
+            validated_input = input_model(**parsed_args)
+            # Convert back to dict for function call
+            call_kwargs = validated_input.model_dump()
         else:
             call_kwargs = parsed_args
 
-        # Execute function (handle async if needed)
+        # Execute function (sync only - async functions not supported)
         if inspect.iscoroutinefunction(func):
-            # Note: For async functions, the handler itself should be awaited
-            # by the caller. We can't await here in a sync context.
-            import asyncio
+            raise TypeError(
+                f"Async functions are not supported by tool_handler_factory. "
+                f"Function '{func.__name__}' is async. "
+                "Wrap async functions in a synchronous adapter before passing to tool_handler_factory."
+            )
 
-            try:
-                loop = asyncio.get_running_loop()
-                # If we're in an async context, create a task
-                result = loop.create_task(func(**call_kwargs))
-            except RuntimeError:
-                # No event loop running, use asyncio.run
-                result = asyncio.run(func(**call_kwargs))
-        else:
-            result = func(**call_kwargs)
+        result = func(**call_kwargs)
 
         # Serialize result
         return serialize_tool_result(result)
