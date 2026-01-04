@@ -6,6 +6,7 @@ from openai_sdk_helpers.response.base import BaseResponse
 def test_response_base_initialization(openai_settings, mock_openai_client):
     """Test the initialization of the BaseResponse class."""
     instance = BaseResponse(
+        name="test",
         instructions="Test instructions",
         tools=[],
         output_structure=None,

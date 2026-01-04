@@ -17,6 +17,7 @@ from openai_sdk_helpers.response.messages import ResponseMessage
 def response_base(openai_settings):
     """Return a BaseResponse instance."""
     return BaseResponse(
+        name="test",
         instructions="test instructions",
         tools=[],
         output_structure=None,
@@ -33,12 +34,12 @@ def test_response_base_initialization(response_base, openai_settings):
 
 def test_data_path(response_base, tmp_path):
     """Test the data_path property."""
-    response_base._data_path_fn = lambda name: tmp_path / name
-    response_base._name = "test_module"
-    assert (
-        response_base.data_path
-        == tmp_path / "test_module" / "baseresponse" / "baseresponse"
-    )
+    # data_path is resolved at init time, stored in _data_path
+    # It should contain the class name (baseresponse)
+    assert response_base._data_path is not None
+    assert "baseresponse" in str(response_base._data_path)
+    # The name parameter should be accessible via the name property
+    assert response_base.name == "test"
 
 
 def test_close(response_base):

@@ -36,6 +36,7 @@ from openai.types.responses.response_output_message import ResponseOutputMessage
 
 from .messages import ResponseMessage, ResponseMessages
 from ..config import OpenAISettings
+from ..environment import get_data_path
 from ..structure import BaseStructure
 from ..types import OpenAIClient
 from ..utils import ensure_list, log
@@ -45,9 +46,6 @@ if TYPE_CHECKING:  # pragma: no cover - only for typing hints
 
 T = TypeVar("T", bound=BaseStructure)
 ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
-ProcessContent = Callable[[str], tuple[str, list[str]]]
-
-
 RB = TypeVar("RB", bound="BaseResponse[BaseStructure]")
 
 
@@ -111,16 +109,14 @@ class BaseResponse(Generic[T]):
     def __init__(
         self,
         *,
+        name: str,
         instructions: str,
         tools: list | None,
         output_structure: type[T] | None,
         tool_handlers: dict[str, ToolHandler],
         openai_settings: OpenAISettings,
-        process_content: ProcessContent | None = None,
-        name: str | None = None,
         system_vector_store: list[str] | None = None,
-        data_path_fn: Callable[[str], Path] | None = None,
-        save_path: Path | str | None = None,
+        data_path: Path | str | None = None,
     ) -> None:
         """Initialize a response session with OpenAI configuration.
 
@@ -130,6 +126,9 @@ class BaseResponse(Generic[T]):
 
         Parameters
         ----------
+        name : str
+            Name for this response session, used for organizing artifacts
+            and naming vector stores.
         instructions : str
             System instructions provided to the OpenAI API for context.
         tools : list or None
@@ -144,18 +143,12 @@ class BaseResponse(Generic[T]):
             result.
         openai_settings : OpenAISettings
             Fully configured OpenAI settings with API key and default model.
-        process_content : callable or None, default None
-            Optional callback that processes input text and extracts file
-            attachments. Must return a tuple of (processed_text, attachment_list).
-        name : str or None, default None
-            Module name used for data path construction when data_path_fn is set.
         system_vector_store : list[str] or None, default None
             Optional list of vector store names to attach as system context.
-        data_path_fn : callable or None, default None
-            Function mapping name to a base directory path for artifact storage.
-        save_path : Path, str, or None, default None
-            Optional path to a directory or file where message history is saved.
-            If a directory, files are named using the session UUID.
+        data_path : Path, str, or None, default None
+            Optional absolute directory path for storing artifacts. If not provided,
+            defaults to get_data_path(class_name). Session files are saved as
+            data_path / uuid.json.
 
         Raises
         ------
@@ -170,18 +163,28 @@ class BaseResponse(Generic[T]):
         >>> from openai_sdk_helpers import BaseResponse, OpenAISettings
         >>> settings = OpenAISettings(api_key="sk-...", default_model="gpt-4")
         >>> response = BaseResponse(
+        ...     name="my_session",
         ...     instructions="You are helpful",
         ...     tools=None,
         ...     output_structure=None,
         ...     tool_handlers={},
-        ...     openai_settings=settings
+        ...     openai_settings=settings,
         ... )
         """
         self._tool_handlers = tool_handlers
-        self._process_content = process_content
         self._name = name
-        self._data_path_fn = data_path_fn
-        self._save_path = Path(save_path) if save_path is not None else None
+
+        # Resolve data_path with class name appended
+        class_name = self.__class__.__name__.lower()
+        if data_path is not None:
+            data_path_obj = Path(data_path)
+            if data_path_obj.name == class_name:
+                self._data_path = data_path_obj
+            else:
+                self._data_path = data_path_obj / class_name
+        else:
+            self._data_path = get_data_path(class_name)
+
         self._instructions = instructions
         self._tools = tools if tools is not None else []
         self._output_structure = output_structure
@@ -203,7 +206,6 @@ class BaseResponse(Generic[T]):
             )
 
         self.uuid = uuid.uuid4()
-        self.name = self.__class__.__name__.lower()
 
         system_content: ResponseInputMessageContentListParam = [
             ResponseInputTextParam(type="input_text", text=instructions)
@@ -227,40 +229,19 @@ class BaseResponse(Generic[T]):
 
         self.messages = ResponseMessages()
         self.messages.add_system_message(content=system_content)
-        if self._save_path is not None or (
-            self._data_path_fn is not None and self._name is not None
-        ):
+        if self._data_path is not None:
             self.save()
 
     @property
-    def data_path(self) -> Path:
-        """Return the directory for persisting session artifacts.
-
-        Constructs a path using data_path_fn, name, class name, and the
-        session name. Both data_path_fn and name must be set during
-        initialization for this property to work.
+    def name(self) -> str:
+        """Return the name of this response session.
 
         Returns
         -------
-        Path
-            Absolute path for persisting response artifacts and message history.
-
-        Raises
-        ------
-        RuntimeError
-            If data_path_fn or name were not provided during initialization.
-
-        Examples
-        --------
-        >>> response.data_path
-        PosixPath('/data/myapp/baseresponse/session_123')
+        str
+            Name used for organizing artifacts and naming vector stores.
         """
-        if self._data_path_fn is None or self._name is None:
-            raise RuntimeError(
-                "data_path_fn and name are required to build data paths."
-            )
-        base_path = self._data_path_fn(self._name)
-        return base_path / self.__class__.__name__.lower() / self.name
+        return self._name
 
     def _build_input(
         self,
@@ -269,16 +250,15 @@ class BaseResponse(Generic[T]):
     ) -> None:
         """Construct input messages for the OpenAI API request.
 
-        Processes content through the optional process_content callback,
-        uploads any file attachments to vector stores, and adds all
-        messages to the conversation history.
+        Uploads any file attachments to vector stores and adds all messages
+        to the conversation history.
 
         Parameters
         ----------
         content : str or list[str]
             String or list of strings to include as user messages.
         attachments : list[str] or None, default None
-            Optional list of file paths to upload and attach to the message.
+            Optional list of file paths to upload and attach to all messages.
 
         Notes
         -----
@@ -287,45 +267,46 @@ class BaseResponse(Generic[T]):
         the tools list.
         """
         contents = ensure_list(content)
+        all_attachments = attachments or []
 
+        # Upload files once and collect their IDs
+        file_ids: list[str] = []
+        if all_attachments:
+            if self._user_vector_storage is None:
+                from openai_sdk_helpers.vector_storage import VectorStorage
+
+                store_name = (
+                    f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
+                )
+                self._user_vector_storage = VectorStorage(
+                    store_name=store_name,
+                    client=self._client,
+                    model=self._model,
+                )
+                user_vector_storage = cast(Any, self._user_vector_storage)
+                if not any(tool.get("type") == "file_search" for tool in self._tools):
+                    self._tools.append(
+                        {
+                            "type": "file_search",
+                            "vector_store_ids": [user_vector_storage.id],
+                        }
+                    )
+
+            user_vector_storage = cast(Any, self._user_vector_storage)
+            for file_path in all_attachments:
+                uploaded_file = user_vector_storage.upload_file(file_path)
+                file_ids.append(uploaded_file.id)
+
+        # Add each content as a separate message with the same attachments
         for raw_content in contents:
-            if self._process_content is None:
-                processed_text, content_attachments = raw_content, []
-            else:
-                processed_text, content_attachments = self._process_content(raw_content)
+            processed_text = raw_content.strip()
             input_content: list[ResponseInputTextParam | ResponseInputFileParam] = [
                 ResponseInputTextParam(type="input_text", text=processed_text)
             ]
 
-            all_attachments = (attachments or []) + content_attachments
-
-            for file_path in all_attachments:
-                if self._user_vector_storage is None:
-                    from openai_sdk_helpers.vector_storage import VectorStorage
-
-                    store_name = f"{self.__class__.__name__.lower()}_{self.name}_{self.uuid}_user"
-                    self._user_vector_storage = VectorStorage(
-                        store_name=store_name,
-                        client=self._client,
-                        model=self._model,
-                    )
-                    user_vector_storage = cast(Any, self._user_vector_storage)
-                    if not any(
-                        tool.get("type") == "file_search" for tool in self._tools
-                    ):
-                        self._tools.append(
-                            {
-                                "type": "file_search",
-                                "vector_store_ids": [user_vector_storage.id],
-                            }
-                        )
-                    else:
-                        # If system vector store is attached, its ID will be in tool config
-                        pass
-                user_vector_storage = cast(Any, self._user_vector_storage)
-                uploaded_file = user_vector_storage.upload_file(file_path)
+            for file_id in file_ids:
                 input_content.append(
-                    ResponseInputFileParam(type="input_file", file_id=uploaded_file.id)
+                    ResponseInputFileParam(type="input_file", file_id=file_id)
                 )
 
             message = cast(
@@ -443,7 +424,7 @@ class BaseResponse(Generic[T]):
                     parsed_result = cast(T, tool_result)
 
             if isinstance(response_output, ResponseOutputMessage):
-                self.messages.add_assistant_message(response_output, kwargs)
+                self.messages.add_assistant_message(response_output, metadata=kwargs)
                 self.save()
                 if hasattr(response, "output_text") and response.output_text:
                     raw_text = response.output_text
@@ -462,6 +443,7 @@ class BaseResponse(Generic[T]):
     def run_sync(
         self,
         content: str | list[str],
+        *,
         attachments: str | list[str] | None = None,
     ) -> T | None:
         """Execute run_async synchronously with proper event loop handling.
@@ -509,6 +491,7 @@ class BaseResponse(Generic[T]):
     def run_streamed(
         self,
         content: str | list[str],
+        *,
         attachments: str | list[str] | None = None,
     ) -> T | None:
         """Execute run_async and await the result.
@@ -629,43 +612,32 @@ class BaseResponse(Generic[T]):
         """Serialize the message history to a JSON file.
 
         Saves the complete conversation history to disk. The target path
-        is determined by filepath parameter, save_path from initialization,
-        or data_path_fn if configured.
+        is determined by filepath parameter, or data_path if configured.
 
         Parameters
         ----------
         filepath : str, Path, or None, default None
-            Optional explicit path for the JSON file. If None, uses save_path
-            or constructs path from data_path_fn and session UUID.
+            Optional explicit path for the JSON file. If None, constructs
+            path from data_path and session UUID.
 
         Notes
         -----
-        If no save location is configured (no filepath, save_path, or
-        data_path_fn), the save operation is silently skipped.
+        If no filepath is provided and no data_path was configured during
+        initialization, the save operation is silently skipped.
 
         Examples
         --------
         >>> response.save("/path/to/session.json")
-        >>> response.save()  # Uses configured save_path or data_path
+        >>> response.save()  # Uses data_path / uuid.json
         """
         if filepath is not None:
             target = Path(filepath)
-        elif self._save_path is not None:
-            if self._save_path.suffix == ".json":
-                target = self._save_path
-            else:
-                filename = f"{str(self.uuid).lower()}.json"
-                target = self._save_path / filename
-        elif self._data_path_fn is not None and self._name is not None:
-            filename = f"{str(self.uuid).lower()}.json"
-            target = self.data_path / filename
         else:
-            log(
-                "Skipping save: no filepath, save_path, or data_path_fn configured.",
-                level=logging.DEBUG,
-            )
-            return
+            filename = f"{str(self.uuid).lower()}.json"
+            target = self._data_path / self._name / filename
 
+        # Ensure parent directory exists
+        target.parent.mkdir(parents=True, exist_ok=True)
         self.messages.to_json_file(str(target))
         log(f"Saved messages to {target}")
 
@@ -677,12 +649,9 @@ class BaseResponse(Generic[T]):
         str
             String showing class name, model, UUID, message count, and data path.
         """
-        data_path = None
-        if self._data_path_fn is not None and self._name is not None:
-            data_path = self.data_path
         return (
             f"<{self.__class__.__name__}(model={self._model}, uuid={self.uuid}, "
-            f"messages={len(self.messages.messages)}, data_path={data_path}>"
+            f"messages={len(self.messages.messages)}, data_path={self._data_path}>"
         )
 
     def __enter__(self) -> BaseResponse[T]:

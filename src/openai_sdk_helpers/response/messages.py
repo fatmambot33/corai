@@ -155,6 +155,7 @@ class ResponseMessages(JSONSerializable):
     def add_assistant_message(
         self,
         content: ResponseOutputMessage,
+        *,
         metadata: dict[str, str | float | bool],
     ) -> None:
         """Append an assistant message to the conversation.

@@ -117,6 +117,7 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
 
     def __init__(
         self,
+        *,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
         max_concurrent_searches: int = 10,

@@ -80,6 +80,7 @@ class VectorSearchTool(
 
     def __init__(
         self,
+        *,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
         store_name: Optional[str] = None,
@@ -256,6 +257,7 @@ class VectorSearch:
 
     def __init__(
         self,
+        *,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
         vector_store_name: Optional[str] = None,

@@ -71,6 +71,7 @@ def serialize_tool_result(result: Any) -> str:
 
 def tool_handler_factory(
     func: Callable[..., Any],
+    *,
     input_model: type[T] | None = None,
 ) -> Callable[[Any], str]:
     """Create a generic tool handler that parses, validates, and serializes.

@@ -6,6 +6,7 @@ def test_dummy_for_coverage(openai_settings):
         pass
 
     r = BaseResponse(
+        name="test",
         instructions="hi",
         tools=[],
         output_structure=None,

@@ -102,7 +102,7 @@ def test_vector_storage_requires_model(monkeypatch, dummy_client):
 
 def test_upload_and_delete_file(tmp_path, dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("test-store", client=dummy_client)
+    storage = VectorStorage(store_name="test-store", client=dummy_client)
 
     text_file = tmp_path / "example.txt"
     text_file.write_text("hello")
@@ -119,7 +119,7 @@ def test_upload_and_delete_file(tmp_path, dummy_client, monkeypatch):
 
 def test_upload_files_skips_existing(tmp_path, dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("batch-store", client=dummy_client)
+    storage = VectorStorage(store_name="batch-store", client=dummy_client)
 
     first = tmp_path / "a.txt"
     first.write_text("first")
@@ -136,7 +136,7 @@ def test_upload_files_skips_existing(tmp_path, dummy_client, monkeypatch):
 
 def test_summarize_handles_empty_results(dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("search-store", client=dummy_client)
+    storage = VectorStorage(store_name="search-store", client=dummy_client)
 
     summary = storage.summarize("query")
     assert summary is None
@@ -144,7 +144,7 @@ def test_summarize_handles_empty_results(dummy_client, monkeypatch):
 
 def test_download_files(tmp_path, dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("download-store", client=dummy_client)
+    storage = VectorStorage(store_name="download-store", client=dummy_client)
 
     file_path = tmp_path / "download_me.txt"
     file_path.write_text("content to download")
@@ -162,7 +162,7 @@ def test_download_files(tmp_path, dummy_client, monkeypatch):
 
 def test_delete_files_and_store_cleanup(tmp_path, dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("cleanup-store", client=dummy_client)
+    storage = VectorStorage(store_name="cleanup-store", client=dummy_client)
 
     file_path = tmp_path / "delete_me.txt"
     file_path.write_text("bye")
@@ -177,7 +177,7 @@ def test_delete_files_and_store_cleanup(tmp_path, dummy_client, monkeypatch):
 
 def test_summarize_raises_when_results_exist(dummy_client, monkeypatch):
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
-    storage = VectorStorage("summary-store", client=dummy_client)
+    storage = VectorStorage(store_name="summary-store", client=dummy_client)
 
     def _search_with_results(*, vector_store_id: str, query: str, max_num_results: int):
         return SimpleNamespace(data=[{"id": 1}])

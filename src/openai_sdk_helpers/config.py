@@ -116,7 +116,7 @@ class OpenAISettings(BaseModel):
 
     @classmethod
     def from_env(
-        cls, dotenv_path: Path | None = None, **overrides: Any
+        cls, *, dotenv_path: Path | None = None, **overrides: Any
     ) -> OpenAISettings:
         """Load settings from the environment and optional overrides.
 

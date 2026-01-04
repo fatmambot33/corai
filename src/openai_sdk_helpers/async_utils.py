@@ -21,6 +21,7 @@ THREAD_JOIN_TIMEOUT = 5.0  # 5 seconds
 
 def run_coroutine_thread_safe(
     coro: Coroutine[Any, Any, T],
+    *,
     timeout: float = DEFAULT_COROUTINE_TIMEOUT,
 ) -> T:
     """Run a coroutine in a thread-safe manner from a sync context.

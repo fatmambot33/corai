@@ -28,6 +28,7 @@ class _DummyResponse(BaseResponse[BaseStructure]):
 
     def __init__(self) -> None:
         super().__init__(
+            name="dummy",
             instructions="hi",
             tools=[],
             output_structure=None,
@@ -53,6 +54,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             
@@ -135,6 +137,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             
@@ -169,6 +172,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             
@@ -220,6 +224,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             
@@ -251,6 +256,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             
@@ -284,6 +290,7 @@ from openai_sdk_helpers.config import OpenAISettings
 class TempResponse(BaseResponse[BaseStructure]):
     def __init__(self) -> None:
         super().__init__(
+            name="temp",
             instructions="hi",
             tools=[],
             

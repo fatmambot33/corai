@@ -17,6 +17,7 @@ from openai_sdk_helpers.async_utils import run_coroutine_with_fallback
 async def run_async(
     agent: Agent,
     input: str,
+    *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> Any:
@@ -57,6 +58,7 @@ async def run_async(
 def run_sync(
     agent: Agent,
     input: str,
+    *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> Any:
@@ -103,6 +105,7 @@ def run_sync(
 def run_streamed(
     agent: Agent,
     input: str,
+    *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
 ) -> RunResultStreaming:

@@ -233,7 +233,7 @@ class BaseStructure(BaseModel):
         return prompt_lines
 
     @classmethod
-    def assistant_tool_definition(cls, name: str, description: str) -> dict:
+    def assistant_tool_definition(cls, name: str, *, description: str) -> dict:
         """Build an Assistant API function tool definition for this structure.
 
         Creates a tool definition compatible with the OpenAI Assistant API,
@@ -255,7 +255,7 @@ class BaseStructure(BaseModel):
         --------
         >>> tool = MyStructure.assistant_tool_definition(
         ...     "analyze_data",
-        ...     "Analyze the provided data"
+        ...     description="Analyze the provided data"
         ... )
         """
         from .responses import assistant_tool_definition
@@ -283,7 +283,7 @@ class BaseStructure(BaseModel):
         return assistant_format(cls)
 
     @classmethod
-    def response_tool_definition(cls, tool_name: str, tool_description: str) -> dict:
+    def response_tool_definition(cls, tool_name: str, *, tool_description: str) -> dict:
         """Build a chat completion tool definition for this structure.
 
         Creates a function tool definition compatible with the chat
@@ -305,7 +305,7 @@ class BaseStructure(BaseModel):
         --------
         >>> tool = MyStructure.response_tool_definition(
         ...     "process_data",
-        ...     "Process the input data"
+        ...     tool_description="Process the input data"
         ... )
         """
         from .responses import response_tool_definition
@@ -725,7 +725,7 @@ class BaseStructure(BaseModel):
         return cls.from_raw_input(structured_data)
 
     @staticmethod
-    def format_output(label: str, value: Any) -> str:
+    def format_output(label: str, *, value: Any) -> str:
         """
         Format a label and value for string output.
 
@@ -772,7 +772,7 @@ class BaseStructure(BaseModel):
         """
         return "\n".join(
             [
-                BaseStructure.format_output(field, value)
+                BaseStructure.format_output(field, value=value)
                 for field, value in self.model_dump().items()
             ]
         )

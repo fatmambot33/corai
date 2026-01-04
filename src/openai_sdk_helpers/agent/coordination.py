@@ -49,6 +49,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
 
     def __init__(
         self,
+        *,
         prompt_fn: PromptFn,
         build_plan_fn: BuildPlanFn,
         execute_plan_fn: ExecutePlanFn,

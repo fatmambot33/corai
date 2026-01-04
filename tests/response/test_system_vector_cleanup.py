@@ -34,14 +34,13 @@ def test_close_cleans_system_vector_storage(monkeypatch):
 
     settings = OpenAISettings(api_key="sk-dummy", default_model="gpt-3.5-turbo")
     base = BaseResponse(
+        name="mod",
         instructions="hi",
         tools=[],
         output_structure=None,
         tool_handlers={},
         openai_settings=settings,
         system_vector_store=["dummy"],
-        name="mod",
-        data_path_fn=lambda m: Path("/tmp"),
     )
     # Should always clean system vector storage
     # Simulate close and check no error (system vector store cleanup is now implicit)

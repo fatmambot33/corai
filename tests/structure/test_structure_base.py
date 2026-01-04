@@ -105,14 +105,22 @@ def test_get_schema_with_nullable_default():
 def test_convenience_wrappers_for_response_helpers():
     """Ensure BaseStructure wraps the response helper utilities."""
 
-    assistant_tool = DummyStructure.assistant_tool_definition("demo", "desc")
-    assert assistant_tool == assistant_tool_definition(DummyStructure, "demo", "desc")
+    assistant_tool = DummyStructure.assistant_tool_definition(
+        "demo", description="desc"
+    )
+    assert assistant_tool == assistant_tool_definition(
+        DummyStructure, "demo", description="desc"
+    )
 
     assistant_schema = DummyStructure.assistant_format()
     assert assistant_schema == assistant_format(DummyStructure)
 
-    completion_tool = DummyStructure.response_tool_definition("demo", "desc")
-    assert completion_tool == response_tool_definition(DummyStructure, "demo", "desc")
+    completion_tool = DummyStructure.response_tool_definition(
+        "demo", tool_description="desc"
+    )
+    assert completion_tool == response_tool_definition(
+        DummyStructure, "demo", tool_description="desc"
+    )
 
     completion_format = DummyStructure.response_format()
     expected_format = response_format(DummyStructure)

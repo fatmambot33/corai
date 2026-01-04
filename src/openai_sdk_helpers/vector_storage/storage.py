@@ -96,6 +96,7 @@ class VectorStorage:
 
     def __init__(
         self,
+        *,
         store_name: str,
         client: OpenAIClient | None = None,
         model: str | None = None,
@@ -228,6 +229,7 @@ class VectorStorage:
     def upload_file(
         self,
         file_path: str,
+        *,
         purpose: str = "assistants",
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
@@ -316,6 +318,7 @@ class VectorStorage:
     def upload_files(
         self,
         file_patterns: str | list[str],
+        *,
         purpose: str = "assistants",
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
@@ -369,10 +372,10 @@ class VectorStorage:
                 executor.submit(
                     self.upload_file,
                     path,
-                    purpose,
-                    attributes,
-                    overwrite,
-                    False,
+                    purpose=purpose,
+                    attributes=attributes,
+                    overwrite=overwrite,
+                    refresh_cache=False,
                 ): path
                 for path in all_paths
             }
@@ -552,7 +555,7 @@ class VectorStorage:
         return stats
 
     def search(
-        self, query: str, top_k: int = 5
+        self, query: str, *, top_k: int = 5
     ) -> SyncPage[VectorStoreSearchResponse] | None:
         """Perform a semantic search within the vector store.
 
@@ -583,7 +586,7 @@ class VectorStorage:
             log(f"Error searching vector store: {str(exc)}", level=logging.ERROR)
             return None
 
-    def summarize(self, query: str, top_k: int = 15) -> str | None:
+    def summarize(self, query: str, *, top_k: int = 15) -> str | None:
         """Perform a semantic search and summarize results by topic.
 
         Retrieves top search results and generates a summary. This method

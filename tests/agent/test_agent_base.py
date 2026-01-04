@@ -6,7 +6,7 @@ import asyncio
 import warnings
 from pathlib import Path
 from typing import Any, Dict
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import AsyncMock, MagicMock, patch, Mock
 
 import pytest
 from agents import RunContextWrapper
@@ -95,9 +95,9 @@ def test_get_agent(mock_agent, mock_config):
     )
 
 
-@patch("openai_sdk_helpers.agent.base.Runner")
+@patch("openai_sdk_helpers.agent.base.Runner.run", new_callable=AsyncMock)
 @patch("asyncio.run")
-def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner, mock_config):
+def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner_run, mock_config):
     """Test that _run_agent_sync creates a new event loop when none is running."""
     agent = AgentBase(config=mock_config)
     agent.run_sync("test_input")

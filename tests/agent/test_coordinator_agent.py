@@ -134,7 +134,10 @@ def test_file_path(coordinator_agent):
 def test_run_task(coordinator_agent):
     """Test running a single task."""
     task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
-    agent_callable = MagicMock(return_value="test output")
+
+    def agent_callable(*args, **kwargs):
+        return "test output"
+
     result = coordinator_agent._run_task(task, agent_callable, [])
     assert result == "test output"
 
@@ -142,7 +145,10 @@ def test_run_task(coordinator_agent):
 def test_run_task_in_thread(coordinator_agent):
     """Test running a task in a thread."""
     task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)
-    agent_callable = MagicMock(return_value="test output")
+
+    def agent_callable(*args, **kwargs):
+        return "test output"
+
     result = coordinator_agent._run_task_in_thread(task, agent_callable, [])
     assert result == "test output"
 

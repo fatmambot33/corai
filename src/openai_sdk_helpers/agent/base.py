@@ -146,6 +146,7 @@ class AgentBase:
     def from_config(
         cls,
         config: AgentConfigLike,
+        *,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
@@ -213,7 +214,7 @@ class AgentBase:
         return self._template.render(context)
 
     def get_prompt(
-        self, run_context_wrapper: RunContextWrapper[Dict[str, Any]], _: Agent
+        self, run_context_wrapper: RunContextWrapper[Dict[str, Any]], *, _: Agent
     ) -> str:
         """Render the agent prompt using the provided run context.
 
@@ -257,6 +258,7 @@ class AgentBase:
     async def run_async(
         self,
         input: str,
+        *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> Any:
@@ -288,6 +290,7 @@ class AgentBase:
     def run_sync(
         self,
         input: str,
+        *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> Any:
@@ -317,6 +320,7 @@ class AgentBase:
     def run_streamed(
         self,
         input: str,
+        *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
     ) -> RunResultStreaming:

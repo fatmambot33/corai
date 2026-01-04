@@ -140,13 +140,13 @@ class TaskStructure(BaseStructure):
         """
         return "\n".join(
             [
-                BaseStructure.format_output("Task type", self.task_type),
-                BaseStructure.format_output("Prompt", self.prompt),
-                BaseStructure.format_output("Context", self.context),
-                BaseStructure.format_output("Status", self.status),
-                BaseStructure.format_output("Start date", self.start_date),
-                BaseStructure.format_output("End date", self.end_date),
-                BaseStructure.format_output("Results", self.results),
+                BaseStructure.format_output("Task type", value=self.task_type),
+                BaseStructure.format_output("Prompt", value=self.prompt),
+                BaseStructure.format_output("Context", value=self.context),
+                BaseStructure.format_output("Status", value=self.status),
+                BaseStructure.format_output("Start date", value=self.start_date),
+                BaseStructure.format_output("End date", value=self.end_date),
+                BaseStructure.format_output("Results", value=self.results),
             ]
         )
 

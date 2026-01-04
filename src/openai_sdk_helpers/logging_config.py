@@ -40,6 +40,7 @@ class LoggerFactory:
     @classmethod
     def configure(
         cls,
+        *,
         level: int = logging.INFO,
         handlers: list[logging.Handler] | None = None,
     ) -> None:

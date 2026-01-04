@@ -122,6 +122,7 @@ def execute_task(
 def execute_plan(
     plan: PlanStructure,
     agent_registry: AgentRegistry,
+    *,
     halt_on_error: bool = True,
 ) -> list[str]:
     """Execute a plan using registered agent callables.

@@ -16,7 +16,7 @@ V = TypeVar("V")
 U = TypeVar("U")
 
 
-def validate_non_empty_string(value: str, field_name: str) -> str:
+def validate_non_empty_string(value: str, *, field_name: str) -> str:
     """Validate that a string is non-empty.
 
     Parameters
@@ -46,7 +46,7 @@ def validate_non_empty_string(value: str, field_name: str) -> str:
     return stripped
 
 
-def validate_max_length(value: str, max_len: int, field_name: str) -> str:
+def validate_max_length(value: str, max_len: int, *, field_name: str) -> str:
     """Validate that a string doesn't exceed maximum length.
 
     Parameters
@@ -76,7 +76,7 @@ def validate_max_length(value: str, max_len: int, field_name: str) -> str:
     return value
 
 
-def validate_url_format(url: str, field_name: str = "URL") -> str:
+def validate_url_format(url: str, *, field_name: str = "URL") -> str:
     """Validate that a string is a valid URL.
 
     Parameters
@@ -106,6 +106,7 @@ def validate_url_format(url: str, field_name: str = "URL") -> str:
 def validate_dict_mapping(
     mapping: Mapping[K, V],
     expected_keys: set[K],
+    *,
     field_name: str,
     allow_extra: bool = False,
 ) -> dict[K, V]:
@@ -156,6 +157,7 @@ def validate_dict_mapping(
 def validate_list_items(
     items: list[U],
     item_validator: Callable[[U], T],
+    *,
     field_name: str,
     allow_empty: bool = False,
 ) -> list[T]:
@@ -203,6 +205,7 @@ def validate_list_items(
 def validate_choice(
     value: U,
     allowed_values: set[U],
+    *,
     field_name: str,
 ) -> U:
     """Validate that a value is one of allowed choices.
@@ -235,6 +238,7 @@ def validate_choice(
 
 def validate_safe_path(
     path: Path | str,
+    *,
     base_dir: Path | None = None,
     field_name: str = "path",
 ) -> Path:

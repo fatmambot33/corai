@@ -24,6 +24,7 @@ class StreamlitWebSearch(BaseResponse[WebSearchStructure]):
         if not settings.default_model:
             settings = settings.model_copy(update={"default_model": DEFAULT_MODEL})
         super().__init__(
+            name="streamlit_web_search",
             instructions="Perform web searches and generate reports.",
             tools=[
                 PromptStructure.response_tool_definition(

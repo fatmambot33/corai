@@ -20,6 +20,7 @@ class DummyOutputStructure(BaseStructure):
 def test_schema_auto_generated_from_output_structure(openai_settings):
     """Test that schema is auto-generated from output_structure."""
     instance = BaseResponse(
+        name="test",
         instructions="Test instructions",
         tools=None,
         output_structure=DummyOutputStructure,
@@ -39,6 +40,7 @@ def test_schema_auto_generated_from_output_structure(openai_settings):
 def test_schema_auto_generated_even_with_tools(openai_settings):
     """Test that output_structure is stored even when tools are present."""
     instance = BaseResponse(
+        name="test",
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],
         output_structure=DummyOutputStructure,
@@ -58,6 +60,7 @@ def test_schema_auto_generated_even_with_tools(openai_settings):
 def test_schema_none_when_no_output_structure(openai_settings):
     """Test that output_structure is None when not provided."""
     instance = BaseResponse(
+        name="test",
         instructions="Test instructions",
         tools=None,
         output_structure=None,
@@ -93,6 +96,7 @@ def test_schema_used_only_when_no_tools(openai_settings):
     """Test that schema is only sent to API when no tools are present."""
     # Case 1: No tools, with output_structure -> schema should be used
     instance = BaseResponse(
+        name="test",
         instructions="Test instructions",
         tools=None,
         output_structure=DummyOutputStructure,
@@ -113,6 +117,7 @@ def test_schema_used_only_when_no_tools(openai_settings):
 
     # Case 2: With tools, with output_structure -> schema should NOT be used
     instance_with_tools = BaseResponse(
+        name="test_with_tools",
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],
         output_structure=DummyOutputStructure,
