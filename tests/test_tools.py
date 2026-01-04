@@ -95,7 +95,7 @@ def test_parse_tool_arguments_error_includes_tool_name():
 def test_parse_tool_arguments_truncates_long_payload():
     """Test that long payloads are truncated in error messages."""
     # Create an invalid payload longer than 100 characters
-    long_payload = '{"key": invalid_value_' + "x" * 200 + '}'
+    long_payload = '{"key": invalid_value_' + "x" * 200 + "}"
 
     with pytest.raises(ValueError) as exc_info:
         parse_tool_arguments(long_payload, tool_name="test")
@@ -187,7 +187,7 @@ def test_tool_handler_factory_argument_parsing_error():
     handler = tool_handler_factory(simple_tool)
 
     # Invalid JSON
-    tool_call = MockToolCall('invalid json', name="my_tool")
+    tool_call = MockToolCall("invalid json", name="my_tool")
 
     with pytest.raises(ValueError) as exc_info:
         handler(tool_call)
@@ -204,7 +204,7 @@ def test_tool_handler_factory_returns_string():
 
     handler = tool_handler_factory(tool_returning_list)
 
-    tool_call = MockToolCall('{}')
+    tool_call = MockToolCall("{}")
     result = handler(tool_call)
 
     # Should be a string
