@@ -233,8 +233,12 @@ def example_comparison():
     print("Inline approach: tools defined directly in list")
     print("ToolSpec approach: explicit named structures")
     print(f"\nBoth produce {len(inline_tools)} tool definitions")
-    print(f"Tool 1 name matches: {inline_tools[0]['name'] == toolspec_tools[0]['name']}")
-    print(f"Tool 2 name matches: {inline_tools[1]['name'] == toolspec_tools[1]['name']}")
+    print(
+        f"Tool 1 name matches: {inline_tools[0]['name'] == toolspec_tools[0]['name']}"
+    )
+    print(
+        f"Tool 2 name matches: {inline_tools[1]['name'] == toolspec_tools[1]['name']}"
+    )
 
     print("\nBenefits of ToolSpec approach:")
     print("  ✓ Named fields (no tuple ordering issues)")
