@@ -78,6 +78,9 @@ from .response import (
 from .tools import (
     serialize_tool_result,
     tool_handler_factory,
+    StructureType,
+    ToolSpec,
+    build_tool_definitions,
 )
 from .utils import (
     build_openai_settings,
@@ -154,6 +157,9 @@ __all__ = [
     "attach_vector_store",
     "serialize_tool_result",
     "tool_handler_factory",
+    "StructureType",
+    "ToolSpec",
+    "build_tool_definitions",
     "build_openai_settings",
     "create_plan",
     "execute_task",

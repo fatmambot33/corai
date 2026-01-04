@@ -3,19 +3,25 @@
 This module provides generic tool handling infrastructure including argument
 parsing, Pydantic validation, function execution, and result serialization.
 These utilities reduce boilerplate and ensure consistent tool behavior.
+
+Also provides declarative tool specification helpers for building tool
+definitions from named metadata structures.
 """
 
 from __future__ import annotations
 
 import inspect
 import json
-from typing import Any, Callable, TypeVar
+from dataclasses import dataclass
+from typing import Any, Callable, TypeAlias, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
+from openai_sdk_helpers.structure.base import BaseStructure
 
 T = TypeVar("T", bound=BaseModel)
+StructureType: TypeAlias = type[BaseStructure]
 
 
 def serialize_tool_result(result: Any) -> str:
@@ -187,7 +193,111 @@ def tool_handler_factory(
     return handler
 
 
+@dataclass(frozen=True)
+class ToolSpec:
+    """Capture tool metadata for response configuration.
+
+    Provides a named structure for representing tool specifications, making
+    tool definitions explicit and eliminating ambiguous tuple ordering.
+
+    Supports tools with separate input and output structures, where the input
+    structure defines the tool's parameter schema and the output structure
+    documents the expected return type (for reference only).
+
+    Attributes
+    ----------
+    structure : StructureType
+        The BaseStructure class that defines the tool's input parameter schema.
+        Used to generate the OpenAI tool definition.
+    tool_name : str
+        Name identifier for the tool.
+    tool_description : str
+        Human-readable description of what the tool does.
+    output_structure : StructureType or None, default=None
+        Optional BaseStructure class that defines the tool's output schema.
+        This is for documentation/reference only and is not sent to OpenAI.
+        Useful when a tool accepts one type of input but returns a different
+        structured output.
+
+    Examples
+    --------
+    Define a tool with same input/output structure:
+
+    >>> from openai_sdk_helpers import ToolSpec
+    >>> from openai_sdk_helpers.structure import PromptStructure
+    >>> spec = ToolSpec(
+    ...     structure=PromptStructure,
+    ...     tool_name="web_agent",
+    ...     tool_description="Run a web research workflow"
+    ... )
+
+    Define a tool with different input and output structures:
+
+    >>> from openai_sdk_helpers.structure import PromptStructure, SummaryStructure
+    >>> spec = ToolSpec(
+    ...     structure=PromptStructure,
+    ...     tool_name="summarizer",
+    ...     tool_description="Summarize the provided prompt",
+    ...     output_structure=SummaryStructure
+    ... )
+    """
+
+    structure: StructureType
+    tool_name: str
+    tool_description: str
+    output_structure: StructureType | None = None
+
+
+def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
+    """Build tool definitions from named tool specs.
+
+    Converts a list of ToolSpec objects into OpenAI-compatible tool
+    definitions for use in response configurations. Each ToolSpec is
+    transformed into a tool definition using the structure's
+    response_tool_definition method.
+
+    Parameters
+    ----------
+    tool_specs : list[ToolSpec]
+        List of tool specifications to convert.
+
+    Returns
+    -------
+    list[dict]
+        List of tool definition dictionaries ready for OpenAI API.
+
+    Examples
+    --------
+    Build multiple tool definitions:
+
+    >>> from openai_sdk_helpers import ToolSpec, build_tool_definitions
+    >>> from openai_sdk_helpers.structure import PromptStructure
+    >>> tools = build_tool_definitions([
+    ...     ToolSpec(
+    ...         structure=PromptStructure,
+    ...         tool_name="web_agent",
+    ...         tool_description="Run a web research workflow"
+    ...     ),
+    ...     ToolSpec(
+    ...         structure=PromptStructure,
+    ...         tool_name="vector_agent",
+    ...         tool_description="Run a vector search workflow"
+    ...     ),
+    ... ])
+    """
+    return [
+        spec.structure.response_tool_definition(
+            tool_name=spec.tool_name,
+            tool_description=spec.tool_description,
+        )
+        for spec in tool_specs
+    ]
+
+
 __all__ = [
     "serialize_tool_result",
     "tool_handler_factory",
+    "StructureType",
+    "ToolSpec",
+    "build_tool_definitions",
 ]
