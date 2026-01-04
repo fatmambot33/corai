@@ -7,10 +7,12 @@ provide value over inline tool definitions:
 3. Dynamic tool composition
 """
 
-from openai_sdk_helpers import ResponseConfiguration
-from openai_sdk_helpers.structure import (
+from openai_sdk_helpers import (
+    ResponseConfiguration,
     ToolSpec,
     build_tool_definitions,
+)
+from openai_sdk_helpers.structure import (
     PromptStructure,
     SummaryStructure,
     ValidationResultStructure,
