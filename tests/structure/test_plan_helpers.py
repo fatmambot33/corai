@@ -62,20 +62,19 @@ def test_execute_task_basic():
     assert task.end_date is not None
 
 
-def test_execute_task_with_context():
-    """Test execute_task passes context correctly."""
+def test_execute_task_basic_functionality():
+    """Test execute_task basic execution."""
 
     def mock_agent(prompt, context=None):
-        if context:
-            return f"Prompt: {prompt}, Context: {','.join(context)}"
-        return f"Prompt: {prompt}"
+        return f"Result for: {prompt}"
 
     task = TaskStructure(task_type=AgentEnum.SUMMARIZER, prompt="Summarize")
 
-    results = execute_task(task, mock_agent, context=["prev result 1", "prev result 2"])
+    results = execute_task(task, mock_agent)
 
-    # Results should include context information
+    # Results should be returned
     assert len(results) > 0
+    assert task.status == "done"
 
 
 def test_execute_task_error_handling():
@@ -86,11 +85,11 @@ def test_execute_task_error_handling():
 
     task = TaskStructure(task_type=AgentEnum.WEB_SEARCH, prompt="Will fail")
 
-    # The error should be raised after being recorded in task
-    with pytest.raises(ValueError, match="Agent failed"):
+    # The error should be raised as RuntimeError after being recorded in task
+    with pytest.raises(RuntimeError, match="Task execution error"):
         execute_task(task, failing_agent)
 
-    # Task should be marked as error even though exception was raised
+    # Task should be marked as error
     assert task.status == "error"
     assert len(task.results) > 0
 

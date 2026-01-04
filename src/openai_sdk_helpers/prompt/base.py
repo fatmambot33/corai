@@ -109,19 +109,20 @@ class PromptRenderer:
         )
 
     @lru_cache(maxsize=128)
-    def _compile_template(self, template_text: str) -> Template:
-        """Compile a template string with LRU caching.
+    def _compile_template(self, template_path_str: str) -> Template:
+        """Compile a template by path with LRU caching.
 
         Parameters
         ----------
-        template_text : str
-            Raw template content to compile.
+        template_path_str : str
+            Absolute path to the template file.
 
         Returns
         -------
         Template
             Compiled Jinja2 template ready for rendering.
         """
+        template_text = Path(template_path_str).read_text()
         return Template(template_text)
 
     def render(self, template_path: str, context: dict[str, Any] | None = None) -> str:
@@ -196,9 +197,8 @@ class PromptRenderer:
                 f"Ensure the template exists in {self.base_dir} or provide an absolute path."
             )
 
-        # Read and cache-compile template
-        template_path_text = template_path_.read_text()
-        template = self._compile_template(template_path_text)
+        # Cache-compile template by path (not by content)
+        template = self._compile_template(str(template_path_))
         return template.render(context or {})
 
     def clear_cache(self) -> None:

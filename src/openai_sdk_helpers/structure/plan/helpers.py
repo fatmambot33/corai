@@ -51,13 +51,12 @@ def create_plan(*tasks: TaskStructure) -> PlanStructure:
 def execute_task(
     task: TaskStructure,
     agent_callable: Callable[..., object | Coroutine[Any, Any, object]],
-    context: list[str] | None = None,
 ) -> list[str]:
-    """Execute a single task with an agent callable and optional context.
+    """Execute a single task with an agent callable.
 
-    Runs one task using the provided agent function, optionally passing
-    accumulated context from previous tasks. Updates task status, timing,
-    and results.
+    Runs one task using the provided agent function. Updates task status,
+    timing, and results. Context from previous tasks is not supported in this
+    helper - use execute_plan() for multi-task execution with context passing.
 
     Parameters
     ----------
@@ -65,9 +64,7 @@ def execute_task(
         Task definition containing prompt and metadata.
     agent_callable : Callable[..., object | Coroutine[Any, Any, object]]
         Synchronous or asynchronous callable responsible for executing the task.
-        Should accept the task prompt and optional context keyword argument.
-    context : list[str] or None, default None
-        Optional context accumulated from previous tasks.
+        Should accept the task prompt and an optional context keyword argument.
 
     Returns
     -------
@@ -113,12 +110,9 @@ def execute_task(
     if task.status == "error":
         # Extract error message from results
         error_msg = task.results[0] if task.results else "Task execution failed"
-        # Try to extract original exception message
-        if "Task error:" in error_msg:
-            # Strip the "Task error: " prefix
-            original_msg = error_msg.replace("Task error: ", "").strip('"')
-            raise ValueError(original_msg)
-        raise RuntimeError(error_msg)
+        # Raise RuntimeError with the error message
+        # The original exception type information is lost but the message is preserved
+        raise RuntimeError(f"Task execution error: {error_msg}")
 
     return aggregated
 

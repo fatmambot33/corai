@@ -157,8 +157,8 @@ def tool_handler_factory(
         ValidationError
             If Pydantic validation fails (when input_model is provided).
         """
-        # Extract tool name for error context
-        tool_name = getattr(tool_call, "name", None)
+        # Extract tool name for error context (required)
+        tool_name = getattr(tool_call, "name", "unknown")
 
         # Parse arguments with error context
         parsed_args = parse_tool_arguments(tool_call.arguments, tool_name=tool_name)

@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from openai_sdk_helpers import (
     # Registry and configuration
-    ResponseRegistry,
     ResponseConfiguration,
     get_default_registry,
     # Tool utilities

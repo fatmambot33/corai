@@ -94,7 +94,7 @@ class ResponseToolCall:
         return function_call, function_call_output
 
 
-def parse_tool_arguments(arguments: str, tool_name: str | None = None) -> dict:
+def parse_tool_arguments(arguments: str, tool_name: str) -> dict:
     """Parse tool call arguments with fallback for malformed JSON.
 
     Attempts to parse arguments as JSON first, then falls back to
@@ -106,8 +106,8 @@ def parse_tool_arguments(arguments: str, tool_name: str | None = None) -> dict:
     ----------
     arguments : str
         Raw argument string from a tool call, expected to be JSON.
-    tool_name : str or None, default None
-        Optional tool name for improved error context.
+    tool_name : str
+        Tool name for improved error context (required).
 
     Returns
     -------
@@ -122,13 +122,10 @@ def parse_tool_arguments(arguments: str, tool_name: str | None = None) -> dict:
 
     Examples
     --------
-    >>> parse_tool_arguments('{"key": "value"}')
-    {'key': 'value'}
-
-    >>> parse_tool_arguments("{'key': 'value'}")
-    {'key': 'value'}
-
     >>> parse_tool_arguments('{"key": "value"}', tool_name="search")
+    {'key': 'value'}
+
+    >>> parse_tool_arguments("{'key': 'value'}", tool_name="search")
     {'key': 'value'}
     """
     try:
@@ -138,9 +135,10 @@ def parse_tool_arguments(arguments: str, tool_name: str | None = None) -> dict:
             return ast.literal_eval(arguments)
         except Exception as exc:  # noqa: BLE001
             # Build informative error message with context
-            payload_preview = arguments[:100] + "..." if len(arguments) > 100 else arguments
-            tool_context = f" for tool '{tool_name}'" if tool_name else ""
+            payload_preview = (
+                arguments[:100] + "..." if len(arguments) > 100 else arguments
+            )
             raise ValueError(
-                f"Failed to parse tool arguments{tool_context}. "
+                f"Failed to parse tool arguments for tool '{tool_name}'. "
                 f"Raw payload: {payload_preview}"
             ) from exc
