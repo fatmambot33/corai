@@ -136,9 +136,9 @@ def example_reusable_tools():
         output_structure=None,
     )
 
-    print(f"Research config has {len(research_config.tools)} tools")
-    print(f"Analysis config has {len(analysis_config.tools)} tools")
-    print(f"Full pipeline config has {len(full_config.tools)} tools")
+    print(f"Research config has {len(research_config.tools or [])} tools")
+    print(f"Analysis config has {len(analysis_config.tools or [])} tools")
+    print(f"Full pipeline config has {len(full_config.tools or [])} tools")
 
 
 # Example 3: Dynamic Tool Composition
@@ -191,9 +191,9 @@ def example_dynamic_tools():
         "full", ["web", "vector", "summarize", "validate"]
     )
 
-    print(f"Basic config: {len(basic_config.tools)} tool(s)")
-    print(f"Research config: {len(research_config.tools)} tool(s)")
-    print(f"Full config: {len(full_config.tools)} tool(s)")
+    print(f"Basic config: {len(basic_config.tools or [])} tool(s)")
+    print(f"Research config: {len(research_config.tools or [])} tool(s)")
+    print(f"Full config: {len(full_config.tools or [])} tool(s)")
 
 
 # Example 4: Comparing Approaches
