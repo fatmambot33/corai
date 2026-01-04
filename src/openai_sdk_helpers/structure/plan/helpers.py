@@ -7,12 +7,10 @@ execution, and result aggregation.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Coroutine
-from collections.abc import Mapping
-
 from .enum import AgentEnum
 from .plan import PlanStructure
 from .task import TaskStructure
+from .types import AgentCallable, AgentRegistry
 
 
 def create_plan(*tasks: TaskStructure) -> PlanStructure:
@@ -50,7 +48,7 @@ def create_plan(*tasks: TaskStructure) -> PlanStructure:
 
 def execute_task(
     task: TaskStructure,
-    agent_callable: Callable[..., object | Coroutine[Any, Any, object]],
+    agent_callable: AgentCallable,
 ) -> list[str]:
     """Execute a single task with an agent callable.
 
@@ -62,7 +60,7 @@ def execute_task(
     ----------
     task : TaskStructure
         Task definition containing prompt and metadata.
-    agent_callable : Callable[..., object | Coroutine[Any, Any, object]]
+    agent_callable : AgentCallable
         Synchronous or asynchronous callable responsible for executing the task.
         Should accept the task prompt and an optional context keyword argument.
 
@@ -100,9 +98,7 @@ def execute_task(
         if isinstance(task.task_type, AgentEnum)
         else task.task_type
     )
-    registry: dict[
-        AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]
-    ] = {
+    registry: dict[str, AgentCallable] = {
         registry_key: agent_callable,
     }
 
@@ -125,9 +121,7 @@ def execute_task(
 
 def execute_plan(
     plan: PlanStructure,
-    agent_registry: Mapping[
-        AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]
-    ],
+    agent_registry: AgentRegistry,
     halt_on_error: bool = True,
 ) -> list[str]:
     """Execute a plan using registered agent callables.
@@ -139,7 +133,7 @@ def execute_plan(
     ----------
     plan : PlanStructure
         Plan containing ordered tasks to execute.
-    agent_registry : Mapping[AgentEnum | str, Callable[..., Any]]
+    agent_registry : AgentRegistry
         Lookup of agent identifiers to callables. Keys may be AgentEnum
         instances or their string values.
     halt_on_error : bool, default True

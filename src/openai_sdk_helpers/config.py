@@ -141,39 +141,37 @@ class OpenAISettings(BaseModel):
         ValueError
             If OPENAI_API_KEY is not found in environment or dotenv file.
         """
-        env_file_values: Mapping[str, str | None]
+        env_file_values: Mapping[str, str | None] = {}
         if dotenv_path is not None:
             env_file_values = dotenv_values(dotenv_path)
-        else:
-            env_file_values = dotenv_values()
 
-        timeout_raw = (
-            overrides.get("timeout")
-            or env_file_values.get("OPENAI_TIMEOUT")
-            or os.getenv("OPENAI_TIMEOUT")
-        )
-        max_retries_raw = (
-            overrides.get("max_retries")
-            or env_file_values.get("OPENAI_MAX_RETRIES")
-            or os.getenv("OPENAI_MAX_RETRIES")
-        )
+        def first_non_none(*candidates: Any) -> Any:
+            for candidate in candidates:
+                if candidate is not None:
+                    return candidate
+            return None
+
+        def resolve_value(override_key: str, env_var: str) -> Any:
+            if dotenv_path is not None:
+                return first_non_none(
+                    overrides.get(override_key),
+                    env_file_values.get(env_var),
+                    os.getenv(env_var),
+                )
+            return first_non_none(
+                overrides.get(override_key),
+                os.getenv(env_var),
+            )
+
+        timeout_raw = resolve_value("timeout", "OPENAI_TIMEOUT")
+        max_retries_raw = resolve_value("max_retries", "OPENAI_MAX_RETRIES")
 
         values: dict[str, Any] = {
-            "api_key": overrides.get("api_key")
-            or env_file_values.get("OPENAI_API_KEY")
-            or os.getenv("OPENAI_API_KEY"),
-            "org_id": overrides.get("org_id")
-            or env_file_values.get("OPENAI_ORG_ID")
-            or os.getenv("OPENAI_ORG_ID"),
-            "project_id": overrides.get("project_id")
-            or env_file_values.get("OPENAI_PROJECT_ID")
-            or os.getenv("OPENAI_PROJECT_ID"),
-            "base_url": overrides.get("base_url")
-            or env_file_values.get("OPENAI_BASE_URL")
-            or os.getenv("OPENAI_BASE_URL"),
-            "default_model": overrides.get("default_model")
-            or env_file_values.get("OPENAI_MODEL")
-            or os.getenv("OPENAI_MODEL"),
+            "api_key": resolve_value("api_key", "OPENAI_API_KEY"),
+            "org_id": resolve_value("org_id", "OPENAI_ORG_ID"),
+            "project_id": resolve_value("project_id", "OPENAI_PROJECT_ID"),
+            "base_url": resolve_value("base_url", "OPENAI_BASE_URL"),
+            "default_model": resolve_value("default_model", "OPENAI_MODEL"),
             "timeout": coerce_optional_float(timeout_raw),
             "max_retries": coerce_optional_int(max_retries_raw),
             "extra_client_kwargs": coerce_dict(overrides.get("extra_client_kwargs")),

@@ -10,12 +10,13 @@ import asyncio
 import inspect
 import threading
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, Coroutine, cast
+from typing import Any, Awaitable, Coroutine, cast
 from collections.abc import Mapping
 
 from .enum import AgentEnum
 from ..base import BaseStructure, spec_field
 from .task import TaskStructure
+from .types import AgentCallable, AgentRegistry
 
 
 class PlanStructure(BaseStructure):
@@ -108,9 +109,7 @@ class PlanStructure(BaseStructure):
 
     def execute(
         self,
-        agent_registry: Mapping[
-            AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]
-        ],
+        agent_registry: AgentRegistry,
         *,
         halt_on_error: bool = True,
     ) -> list[str]:
@@ -121,7 +120,7 @@ class PlanStructure(BaseStructure):
 
         Parameters
         ----------
-        agent_registry : Mapping[AgentEnum | str, Callable[..., Any]]
+        agent_registry : AgentRegistry
             Lookup of agent identifiers to callables. Keys may be AgentEnum
             instances or their string values. Each callable receives the task
             prompt (augmented with prior context) and an optional context
@@ -147,13 +146,18 @@ class PlanStructure(BaseStructure):
         >>> plan = PlanStructure(tasks=[TaskStructure(prompt="Test")])
         >>> results = plan.execute(registry)  # doctest: +SKIP
         """
+        normalized_registry: dict[str, AgentCallable] = {
+            self._resolve_registry_key(key): value
+            for key, value in agent_registry.items()
+        }
+
         aggregated_results: list[str] = []
         for task in self.tasks:
             callable_key = self._resolve_registry_key(task.task_type)
-            if callable_key not in agent_registry:
+            if callable_key not in normalized_registry:
                 raise KeyError(f"No agent registered for '{callable_key}'.")
 
-            agent_callable = agent_registry[callable_key]
+            agent_callable = normalized_registry[callable_key]
             task.start_date = datetime.now(timezone.utc)
             task.status = "running"
 
@@ -207,7 +211,7 @@ class PlanStructure(BaseStructure):
     def _run_task(
         task: TaskStructure,
         *,
-        agent_callable: Callable[..., object | Coroutine[Any, Any, object]],
+        agent_callable: AgentCallable,
         aggregated_context: list[str],
     ) -> object | Coroutine[Any, Any, object]:
         """Execute a single task using the supplied callable.
@@ -219,7 +223,7 @@ class PlanStructure(BaseStructure):
         ----------
         task : TaskStructure
             Task definition containing inputs and metadata.
-        agent_callable : Callable[..., Any]
+        agent_callable : AgentCallable
             Function responsible for performing the task.
         aggregated_context : list[str]
             Accumulated results from previously executed tasks.
