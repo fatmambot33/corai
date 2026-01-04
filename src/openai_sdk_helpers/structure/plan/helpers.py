@@ -92,12 +92,18 @@ def execute_task(
     task.status = "running"
 
     # Build plan with single task and execute
-    # Use the actual enum directly as key to match the callable
+    # Normalize task_type to string value for registry key to match PlanStructure.execute lookup
     plan = PlanStructure(tasks=[task])
+    # Convert AgentEnum to its string value for registry key
+    registry_key = (
+        task.task_type.value
+        if isinstance(task.task_type, AgentEnum)
+        else task.task_type
+    )
     registry: dict[
         AgentEnum | str, Callable[..., object | Coroutine[Any, Any, object]]
     ] = {
-        task.task_type: agent_callable,  # Use the enum directly
+        registry_key: agent_callable,
     }
 
     # Execute the plan - it will update task status
