@@ -200,18 +200,28 @@ class ToolSpec:
     Provides a named structure for representing tool specifications, making
     tool definitions explicit and eliminating ambiguous tuple ordering.
 
+    Supports tools with separate input and output structures, where the input
+    structure defines the tool's parameter schema and the output structure
+    documents the expected return type (for reference only).
+
     Attributes
     ----------
     structure : StructureType
-        The BaseStructure class that defines the tool schema.
+        The BaseStructure class that defines the tool's input parameter schema.
+        Used to generate the OpenAI tool definition.
     tool_name : str
         Name identifier for the tool.
     tool_description : str
         Human-readable description of what the tool does.
+    output_structure : StructureType or None, default=None
+        Optional BaseStructure class that defines the tool's output schema.
+        This is for documentation/reference only and is not sent to OpenAI.
+        Useful when a tool accepts one type of input but returns a different
+        structured output.
 
     Examples
     --------
-    Define a tool specification:
+    Define a tool with same input/output structure:
 
     >>> from openai_sdk_helpers import ToolSpec
     >>> from openai_sdk_helpers.structure import PromptStructure
@@ -220,11 +230,22 @@ class ToolSpec:
     ...     tool_name="web_agent",
     ...     tool_description="Run a web research workflow"
     ... )
+
+    Define a tool with different input and output structures:
+
+    >>> from openai_sdk_helpers.structure import PromptStructure, SummaryStructure
+    >>> spec = ToolSpec(
+    ...     structure=PromptStructure,
+    ...     tool_name="summarizer",
+    ...     tool_description="Summarize the provided prompt",
+    ...     output_structure=SummaryStructure
+    ... )
     """
 
     structure: StructureType
     tool_name: str
     tool_description: str
+    output_structure: StructureType | None = None
 
 
 def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:

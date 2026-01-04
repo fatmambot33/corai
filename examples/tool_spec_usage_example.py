@@ -242,6 +242,57 @@ def example_comparison():
     print("  ✓ Type-safe with StructureType")
     print("  ✓ Cleaner for multi-tool scenarios")
     print("  ✓ Better for dynamic composition")
+    print("  ✓ Supports separate input/output structures")
+
+
+# Example 5: Tools with Different Input/Output Structures
+# ========================================================
+
+
+def example_different_io_structures():
+    """Demonstrate tools with different input and output structures."""
+    print("\n=== Example 5: Different Input/Output Structures ===")
+
+    # Some tools accept one type and return another
+    tool_specs = [
+        # Tool that accepts a prompt and returns a summary
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="summarizer",
+            tool_description="Generate a summary from the provided prompt",
+            output_structure=SummaryStructure,
+        ),
+        # Tool that accepts a prompt and validates it
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="validator",
+            tool_description="Validate the provided prompt",
+            output_structure=ValidationResultStructure,
+        ),
+        # Tool that accepts and returns the same type
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="processor",
+            tool_description="Process the prompt",
+            # output_structure not specified - same as input
+        ),
+    ]
+
+    tools = build_tool_definitions(tool_specs)
+
+    print(f"\nBuilt {len(tools)} tools with mixed I/O structures:")
+    for i, (spec, tool) in enumerate(zip(tool_specs, tools), 1):
+        input_type = spec.structure.__name__
+        output_type = (
+            spec.output_structure.__name__ if spec.output_structure else input_type
+        )
+        print(f"\n{i}. {tool['name']}")
+        print(f"   Input:  {input_type}")
+        print(f"   Output: {output_type}")
+        print(f"   {tool['description']}")
+
+    print("\nNote: output_structure is for documentation/reference.")
+    print("OpenAI tool definitions only use the input structure (parameters).")
 
 
 # Main execution
@@ -258,6 +309,7 @@ def main():
     example_reusable_tools()
     example_dynamic_tools()
     example_comparison()
+    example_different_io_structures()
 
     print("\n" + "=" * 70)
     print("All examples completed!")

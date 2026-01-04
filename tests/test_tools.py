@@ -440,3 +440,74 @@ def test_tool_spec_equality():
 
     assert spec1 == spec2
     assert spec1 != spec3
+
+
+def test_tool_spec_with_output_structure():
+    """Test ToolSpec with separate input and output structures."""
+    spec = ToolSpec(
+        structure=PromptStructure,
+        tool_name="summarizer",
+        tool_description="Summarize the provided prompt",
+        output_structure=SummaryStructure,
+    )
+
+    assert spec.structure == PromptStructure
+    assert spec.output_structure == SummaryStructure
+    assert spec.tool_name == "summarizer"
+
+    # The tool definition should still use the input structure
+    tools = build_tool_definitions([spec])
+    tool = tools[0]
+
+    # Verify it uses the input structure (PromptStructure) for parameters
+    assert tool["name"] == "summarizer"
+    schema = tool["parameters"]
+    assert "properties" in schema
+    # PromptStructure has "prompt" field
+    assert "prompt" in schema["properties"]
+    # SummaryStructure fields should NOT be in the tool parameters
+    assert "topics" not in schema["properties"]
+
+
+def test_tool_spec_output_structure_optional():
+    """Test that output_structure is optional and defaults to None."""
+    spec = ToolSpec(
+        structure=PromptStructure,
+        tool_name="test_tool",
+        tool_description="Test tool",
+    )
+
+    assert spec.output_structure is None
+
+
+def test_tool_spec_with_different_io_structures():
+    """Test multiple tools with different input/output combinations."""
+    specs = [
+        # Tool with same input/output (implicit)
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="echo",
+            tool_description="Echo the prompt",
+        ),
+        # Tool with explicit different output
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="summarize",
+            tool_description="Summarize the prompt",
+            output_structure=SummaryStructure,
+        ),
+        # Tool with explicit different output
+        ToolSpec(
+            structure=PromptStructure,
+            tool_name="validate",
+            tool_description="Validate the prompt",
+            output_structure=ValidationResultStructure,
+        ),
+    ]
+
+    tools = build_tool_definitions(specs)
+
+    assert len(tools) == 3
+    # All should use PromptStructure as input (have "prompt" field)
+    for tool in tools:
+        assert "prompt" in tool["parameters"]["properties"]
