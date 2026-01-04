@@ -11,6 +11,8 @@ BaseStructure
     Base class for all structured output models with schema generation.
 SchemaOptions
     Configuration options for schema generation behavior.
+ToolSpec
+    Named tool specification for response configuration.
 AgentBlueprint
     Structure for designing and planning new agents.
 AgentEnum
@@ -52,10 +54,17 @@ VectorSearchReportStructure
 ValidationResultStructure
     Validation results with pass/fail status.
 
+Types
+-----
+StructureType
+    Type alias for BaseStructure classes.
+
 Functions
 ---------
 spec_field
     Create a Pydantic Field with standard documentation formatting.
+build_tool_definitions
+    Build tool definitions from named tool specs.
 assistant_tool_definition
     Build function tool definition for Assistant APIs.
 assistant_format
@@ -74,6 +83,7 @@ from .plan import *
 from .prompt import PromptStructure
 from .responses import *
 from .summary import *
+from .tool_spec import StructureType, ToolSpec, build_tool_definitions
 from .validation import ValidationResultStructure
 from .vector_search import *
 from .web_search import *
@@ -82,6 +92,9 @@ __all__ = [
     "BaseStructure",
     "SchemaOptions",
     "spec_field",
+    "StructureType",
+    "ToolSpec",
+    "build_tool_definitions",
     "AgentBlueprint",
     "AgentEnum",
     "TaskStructure",
