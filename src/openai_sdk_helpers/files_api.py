@@ -1,0 +1,330 @@
+"""Comprehensive OpenAI Files API wrapper.
+
+This module provides a complete, professional implementation of the OpenAI Files API
+with automatic file tracking, lifecycle management, and cleanup capabilities.
+
+References
+----------
+OpenAI Files API: https://platform.openai.com/docs/api-reference/files
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Any, BinaryIO, Literal
+
+from openai import OpenAI
+from openai.types import FileDeleted, FileObject
+from openai.pagination import SyncPage
+
+from .utils import log
+
+# Valid purposes for file uploads
+FilePurpose = Literal[
+    "assistants",
+    "batch",
+    "fine-tune",
+    "user_data",
+    "vision",
+]
+
+
+class FilesAPIManager:
+    """Comprehensive manager for OpenAI Files API operations.
+
+    Provides full access to the OpenAI Files API with automatic file tracking,
+    lifecycle management, and cleanup capabilities. Tracks all uploaded files
+    and ensures proper deletion on cleanup.
+
+    Parameters
+    ----------
+    client : OpenAI
+        OpenAI client instance for API calls.
+    auto_track : bool, default True
+        Automatically track uploaded files for cleanup.
+
+    Attributes
+    ----------
+    tracked_files : dict[str, FileObject]
+        Dictionary of tracked file IDs to FileObject instances.
+
+    Methods
+    -------
+    create(file, purpose)
+        Upload a file to OpenAI Files API.
+    retrieve(file_id)
+        Retrieve information about a specific file.
+    list(purpose, limit)
+        List files, optionally filtered by purpose.
+    delete(file_id)
+        Delete a specific file.
+    retrieve_content(file_id)
+        Download file content.
+    cleanup()
+        Delete all tracked files.
+
+    Examples
+    --------
+    >>> from openai import OpenAI
+    >>> from openai_sdk_helpers.files_api import FilesAPIManager
+    >>>
+    >>> client = OpenAI()
+    >>> files_manager = FilesAPIManager(client)
+    >>>
+    >>> # Upload a file
+    >>> with open("document.pdf", "rb") as f:
+    ...     file_obj = files_manager.create(f, purpose="user_data")
+    >>>
+    >>> # List all user data files
+    >>> user_files = files_manager.list(purpose="user_data")
+    >>>
+    >>> # Retrieve file content
+    >>> content = files_manager.retrieve_content(file_obj.id)
+    >>>
+    >>> # Clean up all tracked files
+    >>> files_manager.cleanup()
+    """
+
+    def __init__(self, client: OpenAI, auto_track: bool = True):
+        """Initialize the Files API manager.
+
+        Parameters
+        ----------
+        client : OpenAI
+            OpenAI client instance.
+        auto_track : bool, default True
+            Automatically track uploaded files for cleanup.
+        """
+        self._client = client
+        self._auto_track = auto_track
+        self.tracked_files: dict[str, FileObject] = {}
+
+    def create(
+        self,
+        file: BinaryIO | Path | str,
+        purpose: FilePurpose,
+        track: bool | None = None,
+    ) -> FileObject:
+        """Upload a file to the OpenAI Files API.
+
+        Parameters
+        ----------
+        file : BinaryIO, Path, or str
+            File-like object, path to file, or file path string.
+        purpose : FilePurpose
+            The intended purpose of the uploaded file.
+            Options: "assistants", "batch", "fine-tune", "user_data", "vision"
+        track : bool or None, default None
+            Override auto_track for this file. If None, uses instance setting.
+
+        Returns
+        -------
+        FileObject
+            Information about the uploaded file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If file path doesn't exist.
+        ValueError
+            If purpose is invalid.
+
+        Examples
+        --------
+        >>> # Upload from file path
+        >>> file_obj = manager.create("data.jsonl", purpose="fine-tune")
+        >>>
+        >>> # Upload from file handle
+        >>> with open("image.png", "rb") as f:
+        ...     file_obj = manager.create(f, purpose="vision")
+        >>>
+        >>> # Upload without tracking
+        >>> file_obj = manager.create("temp.txt", purpose="user_data", track=False)
+        """
+        should_track = track if track is not None else self._auto_track
+
+        # Handle different file input types
+        if isinstance(file, (Path, str)):
+            file_path = Path(file).resolve()
+            if not file_path.exists():
+                raise FileNotFoundError(f"File not found: {file}")
+            with open(file_path, "rb") as f:
+                file_obj = self._client.files.create(file=f, purpose=purpose)
+        else:
+            # Assume it's a BinaryIO
+            file_obj = self._client.files.create(file=file, purpose=purpose)
+
+        if should_track:
+            self.tracked_files[file_obj.id] = file_obj
+            log(
+                f"Uploaded and tracking file {file_obj.id} ({file_obj.filename}) "
+                f"with purpose '{purpose}'"
+            )
+        else:
+            log(
+                f"Uploaded file {file_obj.id} ({file_obj.filename}) "
+                f"with purpose '{purpose}' (not tracked)"
+            )
+
+        return file_obj
+
+    def retrieve(self, file_id: str) -> FileObject:
+        """Retrieve information about a specific file.
+
+        Parameters
+        ----------
+        file_id : str
+            The ID of the file to retrieve.
+
+        Returns
+        -------
+        FileObject
+            Information about the file.
+
+        Examples
+        --------
+        >>> file_info = manager.retrieve("file-abc123")
+        >>> print(f"Filename: {file_info.filename}")
+        >>> print(f"Size: {file_info.bytes} bytes")
+        """
+        return self._client.files.retrieve(file_id)
+
+    def list(
+        self,
+        purpose: FilePurpose | None = None,
+        limit: int | None = None,
+    ) -> SyncPage[FileObject]:
+        """List files, optionally filtered by purpose.
+
+        Parameters
+        ----------
+        purpose : FilePurpose or None, default None
+            Filter files by purpose. If None, returns all files.
+        limit : int or None, default None
+            Maximum number of files to return. If None, returns all.
+
+        Returns
+        -------
+        SyncPage[FileObject]
+            Page of file objects matching the criteria.
+
+        Examples
+        --------
+        >>> # List all files
+        >>> all_files = manager.list()
+        >>>
+        >>> # List user data files
+        >>> user_files = manager.list(purpose="user_data")
+        >>>
+        >>> # List up to 10 files
+        >>> recent_files = manager.list(limit=10)
+        """
+        if purpose is not None:
+            return self._client.files.list(purpose=purpose, limit=limit)
+        return self._client.files.list(limit=limit)
+
+    def delete(self, file_id: str, untrack: bool = True) -> FileDeleted:
+        """Delete a specific file from OpenAI Files API.
+
+        Parameters
+        ----------
+        file_id : str
+            The ID of the file to delete.
+        untrack : bool, default True
+            Remove from tracked files after deletion.
+
+        Returns
+        -------
+        FileDeleted
+            Confirmation of file deletion.
+
+        Examples
+        --------
+        >>> result = manager.delete("file-abc123")
+        >>> print(f"Deleted: {result.deleted}")
+        """
+        result = self._client.files.delete(file_id)
+
+        if untrack and file_id in self.tracked_files:
+            del self.tracked_files[file_id]
+            log(f"Deleted and untracked file {file_id}")
+        else:
+            log(f"Deleted file {file_id}")
+
+        return result
+
+    def retrieve_content(self, file_id: str) -> bytes:
+        """Download and retrieve the content of a file.
+
+        Parameters
+        ----------
+        file_id : str
+            The ID of the file to download.
+
+        Returns
+        -------
+        bytes
+            The raw bytes of the file content.
+
+        Examples
+        --------
+        >>> content = manager.retrieve_content("file-abc123")
+        >>> with open("downloaded.pdf", "wb") as f:
+        ...     f.write(content)
+        """
+        return self._client.files.content(file_id).read()
+
+    def cleanup(self) -> dict[str, bool]:
+        """Delete all tracked files.
+
+        Returns
+        -------
+        dict[str, bool]
+            Dictionary mapping file IDs to deletion success status.
+
+        Examples
+        --------
+        >>> results = manager.cleanup()
+        >>> print(f"Deleted {sum(results.values())} files")
+        """
+        results = {}
+        file_ids = list(self.tracked_files.keys())
+
+        for file_id in file_ids:
+            try:
+                self.delete(file_id, untrack=True)
+                results[file_id] = True
+            except Exception as exc:
+                log(
+                    f"Error deleting tracked file {file_id}: {exc}",
+                    level=logging.WARNING,
+                )
+                results[file_id] = False
+
+        if results:
+            successful = sum(results.values())
+            log(f"Cleanup complete: {successful}/{len(results)} files deleted")
+        else:
+            log("No tracked files to clean up")
+
+        return results
+
+    def __enter__(self) -> FilesAPIManager:
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Context manager exit with automatic cleanup."""
+        self.cleanup()
+
+    def __len__(self) -> int:
+        """Return number of tracked files."""
+        return len(self.tracked_files)
+
+    def __repr__(self) -> str:
+        """String representation."""
+        return f"FilesAPIManager(tracked_files={len(self.tracked_files)})"
+
+
+__all__ = ["FilesAPIManager", "FilePurpose"]

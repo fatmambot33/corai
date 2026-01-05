@@ -228,6 +228,11 @@ class BaseResponse(Generic[T]):
 
         self._user_vector_storage: Any | None = None
 
+        # Initialize Files API manager for tracking uploaded files
+        from ..files_api import FilesAPIManager
+
+        self._files_manager = FilesAPIManager(self._client, auto_track=True)
+
         # New logic: system_vector_store is a list of vector store names to attach
         if system_vector_store:
             from .vector_store import attach_vector_store
@@ -762,11 +767,11 @@ class BaseResponse(Generic[T]):
         self.close()
 
     def close(self) -> None:
-        """Clean up session resources including vector stores.
+        """Clean up session resources including vector stores and uploaded files.
 
-        Saves the current message history and deletes managed vector stores.
-        User vector stores are always cleaned up. System vector store cleanup
-        is handled via tool configuration.
+        Saves the current message history, deletes managed vector stores, and
+        cleans up all tracked Files API uploads. User vector stores are always
+        cleaned up. System vector store cleanup is handled via tool configuration.
 
         Notes
         -----
@@ -784,6 +789,19 @@ class BaseResponse(Generic[T]):
         """
         log(f"Closing session {self.uuid} for {self.__class__.__name__}")
         self.save()
+
+        # Clean up tracked Files API uploads
+        try:
+            if hasattr(self, "_files_manager") and self._files_manager:
+                cleanup_results = self._files_manager.cleanup()
+                if cleanup_results:
+                    successful = sum(cleanup_results.values())
+                    log(
+                        f"Files API cleanup: {successful}/{len(cleanup_results)} files deleted"
+                    )
+        except Exception as exc:
+            log(f"Error cleaning up Files API uploads: {exc}", level=logging.WARNING)
+
         # Always clean user vector storage if it exists
         try:
             if self._user_vector_storage:

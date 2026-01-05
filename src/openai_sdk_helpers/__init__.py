@@ -51,6 +51,7 @@ from .structure import (
 )
 from .prompt import PromptRenderer
 from .config import OpenAISettings
+from .files_api import FilesAPIManager, FilePurpose
 from .vector_storage import VectorStorage, VectorStorageFileInfo, VectorStorageFileStats
 from .agent import (
     AgentBase,
@@ -138,6 +139,8 @@ __all__ = [
     "spec_field",
     "PromptRenderer",
     "OpenAISettings",
+    "FilesAPIManager",
+    "FilePurpose",
     "VectorStorage",
     "VectorStorageFileInfo",
     "VectorStorageFileStats",
