@@ -170,10 +170,13 @@ class FilesAPIManager:
                     file_obj = self._client.files.create(
                         file=(filename, f),
                         purpose=purpose,
-                        expires_after={
-                            "days": expires_after // 86400,
-                            "hours": (expires_after % 86400) // 3600,
-                        },
+                        expires_after=cast(
+                            Any,
+                            {
+                                "days": expires_after // 86400,
+                                "hours": (expires_after % 86400) // 3600,
+                            },
+                        ),
                     )
                 else:
                     file_obj = self._client.files.create(
@@ -185,10 +188,13 @@ class FilesAPIManager:
                 file_obj = self._client.files.create(
                     file=file,
                     purpose=purpose,
-                    expires_after={
-                        "days": expires_after // 86400,
-                        "hours": (expires_after % 86400) // 3600,
-                    },
+                    expires_after=cast(
+                        Any,
+                        {
+                            "days": expires_after // 86400,
+                            "hours": (expires_after % 86400) // 3600,
+                        },
+                    ),
                 )
             else:
                 file_obj = self._client.files.create(file=file, purpose=purpose)
@@ -259,7 +265,7 @@ class FilesAPIManager:
         >>> # List up to 10 files
         >>> recent_files = manager.list(limit=10)
         """
-        limit_param = limit if limit is not None else NOT_GIVEN
+        limit_param = NOT_GIVEN if limit is None else limit
         if purpose is not None:
             return self._client.files.list(purpose=purpose, limit=limit_param)
         return self._client.files.list(limit=limit_param)
