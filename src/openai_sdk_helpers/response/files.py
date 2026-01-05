@@ -167,6 +167,19 @@ def _upload_to_vector_store(
             ResponseInputFileParam(type="input_file", file_id=uploaded_file.id)
         )
 
+        # Best-effort tracking with FilesAPIManager (if available on the response)
+        files_manager = getattr(response, "_files_manager", None)
+        if files_manager is not None:
+            # Prefer tracking by file ID; fall back to full object if needed.
+            try:
+                files_manager.track_file(uploaded_file.id)
+            except AttributeError:
+                try:
+                    files_manager.track_file(uploaded_file)
+                except AttributeError:
+                    # If the manager does not support tracking in either form,
+                    # silently skip to avoid breaking existing behavior.
+                    pass
     return file_refs
 
 
