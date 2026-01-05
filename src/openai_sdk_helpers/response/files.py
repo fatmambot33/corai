@@ -117,6 +117,9 @@ def _upload_to_vector_store(
 ) -> list[ResponseInputFileParam]:
     """Upload documents to vector store and return file references.
 
+    Uploads user files with purpose="user_data" for proper categorization
+    and cleanup according to OpenAI Files API conventions.
+
     Parameters
     ----------
     response : BaseResponse[Any]
@@ -128,6 +131,12 @@ def _upload_to_vector_store(
     -------
     list[ResponseInputFileParam]
         List of file references for vector store files.
+
+    Notes
+    -----
+    Files are uploaded with purpose="user_data" to distinguish them
+    from assistant files. All user files are automatically deleted
+    when the response is closed via the vector store cleanup.
     """
     file_refs: list[ResponseInputFileParam] = []
 
@@ -151,7 +160,8 @@ def _upload_to_vector_store(
 
     user_vector_storage = cast(Any, response._user_vector_storage)
     for file_path in document_files:
-        uploaded_file = user_vector_storage.upload_file(file_path)
+        # Upload with purpose="user_data" for user-uploaded files
+        uploaded_file = user_vector_storage.upload_file(file_path, purpose="user_data")
         file_refs.append(
             ResponseInputFileParam(type="input_file", file_id=uploaded_file.id)
         )
