@@ -49,11 +49,8 @@ from ..types import OpenAIClient
 from ..utils import (
     check_filepath,
     coerce_jsonable,
-    create_file_data_url,
-    create_image_data_url,
     customJSONEncoder,
     ensure_list,
-    is_image_file,
     log,
 )
 
@@ -306,74 +303,15 @@ class BaseResponse(Generic[T]):
         ...     use_vector_store=True
         ... )
         """
+        from .files import process_files
+
         contents = ensure_list(content)
         all_files = files or []
 
-        # Categorize files by type
-        image_files: list[str] = []
-        document_files: list[str] = []
-
-        for file_path in all_files:
-            if is_image_file(file_path):
-                image_files.append(file_path)
-            else:
-                document_files.append(file_path)
-
-        # Handle document files (vector store or base64)
-        file_ids: list[str] = []
-        base64_files: list[ResponseInputFileContentParam] = []
-
-        if document_files:
-            if use_vector_store:
-                # Upload to vector store for RAG
-                if self._user_vector_storage is None:
-                    from openai_sdk_helpers.vector_storage import VectorStorage
-
-                    store_name = f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
-                    self._user_vector_storage = VectorStorage(
-                        store_name=store_name,
-                        client=self._client,
-                        model=self._model,
-                    )
-                    user_vector_storage = cast(Any, self._user_vector_storage)
-                    if not any(
-                        tool.get("type") == "file_search" for tool in self._tools
-                    ):
-                        self._tools.append(
-                            {
-                                "type": "file_search",
-                                "vector_store_ids": [user_vector_storage.id],
-                            }
-                        )
-
-                user_vector_storage = cast(Any, self._user_vector_storage)
-                for file_path in document_files:
-                    uploaded_file = user_vector_storage.upload_file(file_path)
-                    file_ids.append(uploaded_file.id)
-            else:
-                # Use base64 encoding for inline documents
-                for file_path in document_files:
-                    file_data_url = create_file_data_url(file_path)
-                    filename = Path(file_path).name
-                    base64_files.append(
-                        ResponseInputFileContentParam(
-                            type="input_file",
-                            file_data=file_data_url,
-                            filename=filename,
-                        )
-                    )
-
-        # Handle images (always base64)
-        image_contents: list[ResponseInputImageContentParam] = []
-        for image_path in image_files:
-            image_url, detail = create_image_data_url(image_path, detail="auto")
-            image_contents.append(
-                ResponseInputImageContentParam(
-                    type="input_image",
-                    image_url=image_url,
-                    detail=detail,
-                )
-            )
+        # Process files using the dedicated files module
+        vector_file_refs, base64_files, image_contents = process_files(
+            self, all_files, use_vector_store
+        )
 
         # Add each content as a separate message with the same attachments
         for raw_content in contents:
@@ -385,11 +323,8 @@ class BaseResponse(Generic[T]):
                 | ResponseInputImageContentParam
             ] = [ResponseInputTextParam(type="input_text", text=processed_text)]
 
-            # Add vector store file IDs
-            for file_id in file_ids:
-                input_content.append(
-                    ResponseInputFileParam(type="input_file", file_id=file_id)
-                )
+            # Add vector store file references
+            input_content.extend(vector_file_refs)
 
             # Add base64 files
             input_content.extend(base64_files)

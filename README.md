@@ -319,6 +319,22 @@ with BaseResponse(
 - **Images** (jpg, png, gif, etc.) are automatically sent as base64-encoded images
 - **Documents** (pdf, txt, xlsx, etc.) are sent as base64-encoded file data by default
 - **Vector Stores** can optionally be used for documents when `use_vector_store=True`
+- **Batch Processing** is automatically used for multiple files (>3) for efficient encoding
+
+**Advanced File Processing:**
+
+```python
+from openai_sdk_helpers.response import process_files
+
+# Process files directly with the dedicated module
+vector_files, base64_files, images = process_files(
+    response,
+    files=["photo1.jpg", "photo2.jpg", "doc1.pdf", "doc2.pdf"],
+    use_vector_store=False,
+    batch_size=20,      # Files per batch
+    max_workers=10,     # Concurrent workers
+)
+```
 
 **Base64 Encoding Utilities:**
 
