@@ -26,7 +26,13 @@ from typing import (
 )
 
 from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
+from openai.types.responses.response_input_file_content_param import (
+    ResponseInputFileContentParam,
+)
 from openai.types.responses.response_input_file_param import ResponseInputFileParam
+from openai.types.responses.response_input_image_content_param import (
+    ResponseInputImageContentParam,
+)
 from openai.types.responses.response_input_message_content_list_param import (
     ResponseInputMessageContentListParam,
 )
@@ -248,67 +254,145 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         attachments: list[str] | None = None,
+        images: list[str] | None = None,
+        file_data: list[str] | None = None,
+        use_base64: bool = False,
     ) -> None:
         """Construct input messages for the OpenAI API request.
 
-        Uploads any file attachments to vector stores and adds all messages
-        to the conversation history.
+        Supports multiple attachment methods:
+        1. Vector store uploads (default for file attachments)
+        2. Base64-encoded images via image URLs
+        3. Base64-encoded file data
 
         Parameters
         ----------
         content : str or list[str]
             String or list of strings to include as user messages.
         attachments : list[str] or None, default None
-            Optional list of file paths to upload and attach to all messages.
+            Optional list of file paths to upload and attach via vector stores.
+        images : list[str] or None, default None
+            Optional list of image file paths to attach as base64-encoded images.
+        file_data : list[str] or None, default None
+            Optional list of file paths to attach as base64-encoded file data.
+        use_base64 : bool, default False
+            If True, treat attachments as base64-encoded files instead of
+            uploading to vector stores.
 
         Notes
         -----
-        If attachments are provided and no user vector storage exists, this
-        method automatically creates one and adds a file_search tool to
-        the tools list.
+        If attachments are provided and use_base64 is False, this method
+        automatically creates a vector store and adds a file_search tool.
+        Images and file_data always use base64 encoding.
+
+        Examples
+        --------
+        >>> # Use base64-encoded image
+        >>> response._build_input("What's in this image?", images=["photo.jpg"])
+        
+        >>> # Use base64-encoded file data
+        >>> response._build_input("Analyze this PDF", file_data=["doc.pdf"])
         """
+        from ..utils import create_file_data_url, create_image_data_url
+
         contents = ensure_list(content)
         all_attachments = attachments or []
+        all_images = images or []
+        all_file_data = file_data or []
 
-        # Upload files once and collect their IDs
+        # Handle file attachments (vector store or base64)
         file_ids: list[str] = []
+        base64_files: list[ResponseInputFileContentParam] = []
+        
         if all_attachments:
-            if self._user_vector_storage is None:
-                from openai_sdk_helpers.vector_storage import VectorStorage
-
-                store_name = (
-                    f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
-                )
-                self._user_vector_storage = VectorStorage(
-                    store_name=store_name,
-                    client=self._client,
-                    model=self._model,
-                )
-                user_vector_storage = cast(Any, self._user_vector_storage)
-                if not any(tool.get("type") == "file_search" for tool in self._tools):
-                    self._tools.append(
-                        {
-                            "type": "file_search",
-                            "vector_store_ids": [user_vector_storage.id],
-                        }
+            if use_base64:
+                # Use base64 encoding for file attachments
+                from pathlib import Path
+                
+                for file_path in all_attachments:
+                    file_data_url = create_file_data_url(file_path)
+                    filename = Path(file_path).name
+                    base64_files.append(
+                        ResponseInputFileContentParam(
+                            type="input_file",
+                            file_data=file_data_url,
+                            filename=filename,
+                        )
                     )
+            else:
+                # Upload to vector store
+                if self._user_vector_storage is None:
+                    from openai_sdk_helpers.vector_storage import VectorStorage
 
-            user_vector_storage = cast(Any, self._user_vector_storage)
-            for file_path in all_attachments:
-                uploaded_file = user_vector_storage.upload_file(file_path)
-                file_ids.append(uploaded_file.id)
+                    store_name = (
+                        f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
+                    )
+                    self._user_vector_storage = VectorStorage(
+                        store_name=store_name,
+                        client=self._client,
+                        model=self._model,
+                    )
+                    user_vector_storage = cast(Any, self._user_vector_storage)
+                    if not any(tool.get("type") == "file_search" for tool in self._tools):
+                        self._tools.append(
+                            {
+                                "type": "file_search",
+                                "vector_store_ids": [user_vector_storage.id],
+                            }
+                        )
+
+                user_vector_storage = cast(Any, self._user_vector_storage)
+                for file_path in all_attachments:
+                    uploaded_file = user_vector_storage.upload_file(file_path)
+                    file_ids.append(uploaded_file.id)
+
+        # Handle file_data parameter (always base64)
+        for file_path in all_file_data:
+            from pathlib import Path
+            
+            file_data_url = create_file_data_url(file_path)
+            filename = Path(file_path).name
+            base64_files.append(
+                ResponseInputFileContentParam(
+                    type="input_file",
+                    file_data=file_data_url,
+                    filename=filename,
+                )
+            )
+
+        # Handle images (always base64)
+        image_contents: list[ResponseInputImageContentParam] = []
+        for image_path in all_images:
+            image_url, detail = create_image_data_url(image_path, detail="auto")
+            image_contents.append(
+                ResponseInputImageContentParam(
+                    type="input_image",
+                    image_url=image_url,
+                    detail=detail,
+                )
+            )
 
         # Add each content as a separate message with the same attachments
         for raw_content in contents:
             processed_text = raw_content.strip()
-            input_content: list[ResponseInputTextParam | ResponseInputFileParam] = [
-                ResponseInputTextParam(type="input_text", text=processed_text)
-            ]
+            input_content: list[
+                ResponseInputTextParam
+                | ResponseInputFileParam
+                | ResponseInputFileContentParam
+                | ResponseInputImageContentParam
+            ] = [ResponseInputTextParam(type="input_text", text=processed_text)]
 
+            # Add vector store file IDs
             for file_id in file_ids:
                 input_content.append(
                     ResponseInputFileParam(type="input_file", file_id=file_id)
                 )
+
+            # Add base64 files
+            input_content.extend(base64_files)
+
+            # Add images
+            input_content.extend(image_contents)
 
             message = cast(
                 ResponseInputItemParam,
@@ -320,6 +404,9 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         attachments: str | list[str] | None = None,
+        images: str | list[str] | None = None,
+        file_data: str | list[str] | None = None,
+        use_base64: bool = False,
     ) -> T | None:
         """Generate a response asynchronously from the OpenAI API.
 
@@ -333,6 +420,15 @@ class BaseResponse(Generic[T]):
             Prompt text or list of prompt texts to send.
         attachments : str, list[str], or None, default None
             Optional file path or list of file paths to upload and attach.
+        images : str, list[str], or None, default None
+            Optional image file path or list of image file paths to attach
+            as base64-encoded images.
+        file_data : str, list[str], or None, default None
+            Optional file path or list of file paths to attach as
+            base64-encoded file data.
+        use_base64 : bool, default False
+            If True, treat attachments as base64-encoded files instead of
+            uploading to vector stores.
 
         Returns
         -------
@@ -350,8 +446,17 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> result = await response.run_async("Analyze this text")
-        >>> print(result)
+        >>> # Use with image
+        >>> result = await response.run_async(
+        ...     "What's in this image?",
+        ...     images="photo.jpg"
+        ... )
+        
+        >>> # Use with base64 file data
+        >>> result = await response.run_async(
+        ...     "Analyze this document",
+        ...     file_data="document.pdf"
+        ... )
         """
         log(f"{self.__class__.__name__}::run_response")
         parsed_result: T | None = None
@@ -359,6 +464,9 @@ class BaseResponse(Generic[T]):
         self._build_input(
             content=content,
             attachments=(ensure_list(attachments) if attachments else None),
+            images=(ensure_list(images) if images else None),
+            file_data=(ensure_list(file_data) if file_data else None),
+            use_base64=use_base64,
         )
 
         kwargs = {
@@ -446,6 +554,9 @@ class BaseResponse(Generic[T]):
         content: str | list[str],
         *,
         attachments: str | list[str] | None = None,
+        images: str | list[str] | None = None,
+        file_data: str | list[str] | None = None,
+        use_base64: bool = False,
     ) -> T | None:
         """Execute run_async synchronously with proper event loop handling.
 
@@ -459,6 +570,15 @@ class BaseResponse(Generic[T]):
             Prompt text or list of prompt texts to send.
         attachments : str, list[str], or None, default None
             Optional file path or list of file paths to upload and attach.
+        images : str, list[str], or None, default None
+            Optional image file path or list of image file paths to attach
+            as base64-encoded images.
+        file_data : str, list[str], or None, default None
+            Optional file path or list of file paths to attach as
+            base64-encoded file data.
+        use_base64 : bool, default False
+            If True, treat attachments as base64-encoded files instead of
+            uploading to vector stores.
 
         Returns
         -------
@@ -467,12 +587,27 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> result = response.run_sync("Summarize this document")
-        >>> print(result)
+        >>> # Use with image
+        >>> result = response.run_sync(
+        ...     "What's in this image?",
+        ...     images="photo.jpg"
+        ... )
+        
+        >>> # Use with base64 file data
+        >>> result = response.run_sync(
+        ...     "Analyze this document",
+        ...     file_data="document.pdf"
+        ... )
         """
 
         async def runner() -> T | None:
-            return await self.run_async(content=content, attachments=attachments)
+            return await self.run_async(
+                content=content,
+                attachments=attachments,
+                images=images,
+                file_data=file_data,
+                use_base64=use_base64,
+            )
 
         try:
             asyncio.get_running_loop()
@@ -494,6 +629,9 @@ class BaseResponse(Generic[T]):
         content: str | list[str],
         *,
         attachments: str | list[str] | None = None,
+        images: str | list[str] | None = None,
+        file_data: str | list[str] | None = None,
+        use_base64: bool = False,
     ) -> T | None:
         """Execute run_async and await the result.
 
@@ -507,6 +645,15 @@ class BaseResponse(Generic[T]):
             Prompt text or list of prompt texts to send.
         attachments : str, list[str], or None, default None
             Optional file path or list of file paths to upload and attach.
+        images : str, list[str], or None, default None
+            Optional image file path or list of image file paths to attach
+            as base64-encoded images.
+        file_data : str, list[str], or None, default None
+            Optional file path or list of file paths to attach as
+            base64-encoded file data.
+        use_base64 : bool, default False
+            If True, treat attachments as base64-encoded files instead of
+            uploading to vector stores.
 
         Returns
         -------
@@ -518,7 +665,15 @@ class BaseResponse(Generic[T]):
         This method exists for API consistency but does not currently
         provide true streaming functionality.
         """
-        return asyncio.run(self.run_async(content=content, attachments=attachments))
+        return asyncio.run(
+            self.run_async(
+                content=content,
+                attachments=attachments,
+                images=images,
+                file_data=file_data,
+                use_base64=use_base64,
+            )
+        )
 
     def get_last_tool_message(self) -> ResponseMessage | None:
         """Return the most recent tool message from conversation history.

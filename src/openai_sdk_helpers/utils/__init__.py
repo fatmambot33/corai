@@ -7,6 +7,7 @@ The utils package collects cross-cutting helpers used across the project:
 * Concurrency: async bridging helpers.
 * Output validation: JSON Schema and semantic validators.
 * Instrumentation helpers: deprecation utilities.
+* Encoding: base64 encoding for images and files.
 
 Import style
 ------------
@@ -32,6 +33,8 @@ output_validation
     JSON Schema and semantic output validation utilities.
 deprecation
     Deprecation helpers and warning utilities.
+encoding
+    Base64 encoding helpers for images and files.
 """
 
 from __future__ import annotations
@@ -69,6 +72,13 @@ from .output_validation import (
     validate_output,
 )
 from .deprecation import DeprecationHelper, deprecated, warn_deprecated
+from .encoding import (
+    create_file_data_url,
+    create_image_data_url,
+    encode_file,
+    encode_image,
+    get_mime_type,
+)
 
 __all__ = [
     "ensure_list",
@@ -104,4 +114,10 @@ __all__ = [
     "deprecated",
     "warn_deprecated",
     "DeprecationHelper",
+    # Encoding
+    "encode_image",
+    "encode_file",
+    "get_mime_type",
+    "create_image_data_url",
+    "create_file_data_url",
 ]
