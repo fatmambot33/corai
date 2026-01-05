@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, BinaryIO, Literal
+from typing import Any, BinaryIO, Literal, cast
 
-from openai import OpenAI
+from openai import OpenAI, NOT_GIVEN
 from openai.types import FileDeleted, FileObject
-from openai.pagination import SyncPage
+from openai.pagination import SyncCursorPage
 
 from .utils import log
 
@@ -170,7 +170,7 @@ class FilesAPIManager:
                     file_obj = self._client.files.create(
                         file=(filename, f),
                         purpose=purpose,
-                        expires_after=expires_after,
+                        expires_after={"days": expires_after // 86400, "hours": (expires_after % 86400) // 3600},
                     )
                 else:
                     file_obj = self._client.files.create(
@@ -180,7 +180,7 @@ class FilesAPIManager:
             # Assume it's a BinaryIO
             if expires_after is not None:
                 file_obj = self._client.files.create(
-                    file=file, purpose=purpose, expires_after=expires_after
+                    file=file, purpose=purpose, expires_after={"days": expires_after // 86400, "hours": (expires_after % 86400) // 3600}
                 )
             else:
                 file_obj = self._client.files.create(file=file, purpose=purpose)
@@ -225,7 +225,7 @@ class FilesAPIManager:
         self,
         purpose: FilePurpose | None = None,
         limit: int | None = None,
-    ) -> SyncPage[FileObject]:
+    ) -> SyncCursorPage[FileObject]:
         """List files, optionally filtered by purpose.
 
         Parameters
@@ -237,7 +237,7 @@ class FilesAPIManager:
 
         Returns
         -------
-        SyncPage[FileObject]
+        SyncCursorPage[FileObject]
             Page of file objects matching the criteria.
 
         Examples
@@ -251,9 +251,10 @@ class FilesAPIManager:
         >>> # List up to 10 files
         >>> recent_files = manager.list(limit=10)
         """
+        limit_param = limit if limit is not None else NOT_GIVEN
         if purpose is not None:
-            return self._client.files.list(purpose=purpose, limit=limit)
-        return self._client.files.list(limit=limit)
+            return self._client.files.list(purpose=purpose, limit=limit_param)
+        return self._client.files.list(limit=limit_param)
 
     def delete(self, file_id: str, untrack: bool = True) -> FileDeleted:
         """Delete a specific file from OpenAI Files API.

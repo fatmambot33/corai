@@ -13,7 +13,7 @@ import mimetypes
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from openai import OpenAI
 from openai.pagination import SyncPage
@@ -300,7 +300,7 @@ class VectorStorage:
 
             file = self._client.files.create(
                 file=(file_name, file_data),
-                purpose=purpose,
+                purpose=cast(Any, purpose),  # Cast to avoid type error
                 expires_after=expires_after if expires_after is not None else None,  # type: ignore
             )
 
