@@ -176,7 +176,7 @@ class PromptRenderer:
         ...     context={"key": "value"}
         ... )
         """
-        from openai_sdk_helpers.validation import validate_safe_path
+        from openai_sdk_helpers.utils.validation import validate_safe_path
 
         path = Path(template_path)
         if path.is_absolute():

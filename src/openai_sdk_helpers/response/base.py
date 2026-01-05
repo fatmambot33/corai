@@ -36,10 +36,9 @@ from openai.types.responses.response_output_message import ResponseOutputMessage
 
 from .messages import ResponseMessage, ResponseMessages
 from ..config import OpenAISettings
-from ..environment import get_data_path
 from ..structure import BaseStructure
 from ..types import OpenAIClient
-from ..utils import ensure_list, log
+from ..utils import check_filepath, coerce_jsonable, customJSONEncoder, ensure_list, log
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
@@ -183,6 +182,8 @@ class BaseResponse(Generic[T]):
             else:
                 self._data_path = data_path_obj / class_name
         else:
+            from ..environment import get_data_path
+
             self._data_path = get_data_path(class_name)
 
         self._instructions = instructions
@@ -402,8 +403,8 @@ class BaseResponse(Generic[T]):
                         tool_result = json.loads(tool_result_json)
                         tool_output = tool_result_json
                     else:
-                        tool_result = tool_result_json
-                        tool_output = json.dumps(tool_result)
+                        tool_result = coerce_jsonable(tool_result_json)
+                        tool_output = json.dumps(tool_result, cls=customJSONEncoder)
                     self.messages.add_tool_message(
                         content=response_output, output=tool_output
                     )
@@ -636,9 +637,8 @@ class BaseResponse(Generic[T]):
             filename = f"{str(self.uuid).lower()}.json"
             target = self._data_path / self._name / filename
 
-        # Ensure parent directory exists
-        target.parent.mkdir(parents=True, exist_ok=True)
-        self.messages.to_json_file(str(target))
+        checked = check_filepath(filepath=target)
+        self.messages.to_json_file(str(checked))
         log(f"Saved messages to {target}")
 
     def __repr__(self) -> str:

@@ -15,7 +15,7 @@ from typing import Any, Callable, ParamSpec, TypeVar
 from openai import APIError, RateLimitError
 
 from openai_sdk_helpers.errors import AsyncExecutionError
-from openai_sdk_helpers.utils.core import log
+from openai_sdk_helpers.logging_config import log
 
 P = ParamSpec("P")
 T = TypeVar("T")

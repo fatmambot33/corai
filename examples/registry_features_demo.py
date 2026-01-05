@@ -171,8 +171,12 @@ def example_settings_builder():
             max_retries="3",  # String parsed to int
         )
 
-        print(f"API Key: {settings.api_key[:10]}...")
-        print(f"Model: {settings.default_model}")
+        api_key_display = (
+            settings.api_key[:10] + "..." if settings.api_key else "<missing>"
+        )
+        model_display = settings.default_model or "<unset>"
+        print(f"API Key: {api_key_display}")
+        print(f"Model: {model_display}")
         print(f"Timeout: {settings.timeout} (type: {type(settings.timeout).__name__})")
         print(
             f"Max Retries: {settings.max_retries} (type: {type(settings.max_retries).__name__})"

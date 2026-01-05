@@ -8,36 +8,16 @@ from pathlib import Path
 
 import pytest
 
-# Load modules directly from src to avoid executing openai-sdk-helpers/__init__.py
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC_OPENAI_SDK_HELPERS = os.path.join(ROOT, "src", "openai_sdk_helpers")
-
-
-def _load_module(name: str, filename: str):
-    path = os.path.join(SRC_OPENAI_SDK_HELPERS, filename)
-    spec = importlib.util.spec_from_file_location(name, path)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    # register module in sys.modules so decorators (dataclass) can resolve module
-    import sys
-
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-env_mod = _load_module("openai_sdk_helpers.environment", "environment.py")
-utils_mod = _load_module(
-    "openai_sdk_helpers.utils.core", os.path.join("utils", "core.py")
+# Import normally instead of dynamic loading
+from openai_sdk_helpers.environment import get_data_path
+from openai_sdk_helpers.utils.coercion import ensure_list
+from openai_sdk_helpers.utils.json_utils import (
+    JSONSerializable,
+    customJSONEncoder,
+    coerce_jsonable,
 )
-
-get_data_path = env_mod.get_data_path
-JSONSerializable = utils_mod.JSONSerializable
-check_filepath = utils_mod.check_filepath
-customJSONEncoder = utils_mod.customJSONEncoder
-ensure_list = utils_mod.ensure_list
-log = utils_mod.log
-coerce_jsonable = utils_mod.coerce_jsonable
+from openai_sdk_helpers.utils.path_utils import check_filepath
+from openai_sdk_helpers.logging_config import log
 
 
 def test_ensure_list_behavior():
@@ -80,7 +60,7 @@ def test_json_serializable_and_encoder(tmp_path):
 
 def test_get_data_path_monkeypatched(monkeypatch, tmp_path):
     # override home to avoid writing to real user home
-    monkeypatch.setattr(env_mod.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
     p = get_data_path("mymod")
     assert p.exists()
     assert p.name == "mymod"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from openai_sdk_helpers.utils import build_openai_settings
+from openai_sdk_helpers.config import build_openai_settings
 
 
 def test_build_openai_settings_from_params(monkeypatch):

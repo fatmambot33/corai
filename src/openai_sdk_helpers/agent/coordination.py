@@ -12,8 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 
 from ..structure import TaskStructure, PlanStructure, PromptStructure
-from ..environment import DATETIME_FMT
-from ..utils import JSONSerializable, log
+from ..utils import JSONSerializable, ensure_directory, log
 from .base import AgentBase
 from .config import AgentConfig
 from ..structure.plan.enum import AgentEnum
@@ -208,7 +207,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
         """
         if not self.start_date:
             self.start_date = datetime.now(timezone.utc)
-        start_date_str = self.start_date.strftime(DATETIME_FMT)
+        start_date_str = self.start_date.strftime("%Y%m%d_%H%M%S")
         return self._module_data_path / self._name / f"{start_date_str}.json"
 
     def save(self) -> Path:
@@ -448,8 +447,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
                 / "coordinator_agent"
                 / timestamp
             )
-        self._run_directory.mkdir(parents=True, exist_ok=True)
-        return self._run_directory
+        return ensure_directory(self._run_directory)
 
     @staticmethod
     def _task_label(task: TaskStructure) -> str:

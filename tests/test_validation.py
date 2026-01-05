@@ -4,7 +4,7 @@ import pytest
 from typing import Any
 
 from openai_sdk_helpers.errors import InputValidationError
-from openai_sdk_helpers.validation import (
+from openai_sdk_helpers.utils.validation import (
     validate_choice,
     validate_dict_mapping,
     validate_list_items,

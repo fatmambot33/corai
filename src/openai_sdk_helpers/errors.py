@@ -4,10 +4,7 @@ Provides specific exception types for different error scenarios,
 improving error handling and debugging capabilities.
 """
 
-import logging
 from collections.abc import Mapping
-
-from openai_sdk_helpers.utils.core import log
 
 
 class OpenAISDKError(Exception):
@@ -40,15 +37,6 @@ class OpenAISDKError(Exception):
         """Initialize the exception with message and optional context."""
         super().__init__(message)
         self.context = dict(context) if context is not None else {}
-        self._log_context()
-
-    def _log_context(self) -> None:
-        """Log error with context for debugging."""
-        context_str = f"\nContext: {self.context}" if self.context else ""
-        log(
-            f"{self.__class__.__name__}: {str(self)}{context_str}",
-            level=logging.ERROR,
-        )
 
 
 class ConfigurationError(OpenAISDKError):

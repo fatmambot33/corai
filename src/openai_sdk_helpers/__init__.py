@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .async_utils import run_coroutine_thread_safe, run_coroutine_with_fallback
+from .utils.async_utils import run_coroutine_thread_safe, run_coroutine_with_fallback
 from .context_manager import (
     AsyncManagedResource,
     ManagedResource,
@@ -22,9 +22,8 @@ from .errors import (
     AsyncExecutionError,
     ResourceCleanupError,
 )
-from .logging_config import LoggerFactory
 from .retry import with_exponential_backoff
-from .validation import (
+from .utils.validation import (
     validate_choice,
     validate_dict_mapping,
     validate_list_items,
@@ -82,8 +81,24 @@ from .tools import (
     ToolSpec,
     build_tool_definitions,
 )
-from .utils import (
-    build_openai_settings,
+from .config import build_openai_settings
+from .utils.deprecation import (
+    deprecated,
+    warn_deprecated,
+    DeprecationHelper,
+)
+from .utils.output_validation import (
+    ValidationResult,
+    ValidationRule,
+    JSONSchemaValidator,
+    SemanticValidator,
+    LengthValidator,
+    OutputValidator,
+    validate_output,
+)
+from .types import (
+    SupportsOpenAIClient,
+    OpenAIClient,
 )
 
 __all__ = [
@@ -101,8 +116,6 @@ __all__ = [
     "InputValidationError",
     "AsyncExecutionError",
     "ResourceCleanupError",
-    # Logging
-    "LoggerFactory",
     # Retry utilities
     "with_exponential_backoff",
     # Context managers
@@ -164,4 +177,19 @@ __all__ = [
     "create_plan",
     "execute_task",
     "execute_plan",
+    # Type definitions
+    "SupportsOpenAIClient",
+    "OpenAIClient",
+    # Deprecation utilities
+    "deprecated",
+    "warn_deprecated",
+    "DeprecationHelper",
+    # Output validation
+    "ValidationResult",
+    "ValidationRule",
+    "JSONSchemaValidator",
+    "SemanticValidator",
+    "LengthValidator",
+    "OutputValidator",
+    "validate_output",
 ]

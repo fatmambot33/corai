@@ -65,6 +65,26 @@ The `agent` module provides a higher-level abstraction for building agents, whil
 - **Tool execution framework** with custom handlers and structured outputs
 - **Session persistence** for saving and restoring conversation history
 
+#### Infrastructure & Utilities
+- **Centralized logger factory** for consistent application logging
+- **Retry patterns** with exponential backoff and jitter
+- **Output validation** framework with JSON schema, semantic, and length validators
+- **CLI tool** for testing agents, validating templates, and inspecting registries
+- **Deprecation utilities** for managing API changes
+
+#### Shared Components
+- **Typed structures** using Pydantic for prompts, responses, and search workflows 
+  to ensure predictable inputs and outputs
+- **OpenAI configuration management** with environment variable and `.env` file support
+- **Vector storage abstraction** for seamless integration with OpenAI vector stores
+- **Type-safe interfaces** with full type hints and `py.typed` marker for external projects
+  - **ValidatorAgent**: Check inputs and outputs against safety guardrails
+
+#### Response Module (Built on `openai` SDK)
+- **Response handling utilities** for direct API control with fine-grained message management
+- **Tool execution framework** with custom handlers and structured outputs
+- **Session persistence** for saving and restoring conversation history
+
 #### Shared Components
 - **Typed structures** using Pydantic for prompts, responses, and search workflows 
   to ensure predictable inputs and outputs
@@ -477,6 +497,31 @@ See `AGENTS.md` for detailed contributing guidelines and conventions.
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 for details.
 
+## CLI Tool
+
+The package includes a command-line tool for development and testing:
+
+```bash
+# List all registered response configurations
+openai-helpers registry list
+
+# Inspect a specific configuration
+openai-helpers registry inspect my_config
+
+# Validate Jinja2 templates
+openai-helpers template validate ./templates
+
+# Test an agent (coming soon)
+openai-helpers agent test MyAgent --input "test input"
+```
+
+### CLI Commands
+
+- **registry list** - Show all registered response configurations
+- **registry inspect** - Display details of a configuration
+- **template validate** - Check template syntax and structure
+- **agent test** - Test agents locally with sample inputs
+
 ## Troubleshooting
 
 ### Common Issues
@@ -498,6 +543,7 @@ OPENAI_API_KEY=your-api-key-here
 Vector search workflows require custom prompt templates. Either:
 1. Create the required `.jinja` files in your `prompt_dir`
 2. Omit the `prompt_dir` parameter to use built-in defaults (for text agents only)
+3. Use the CLI to validate templates: `openai-helpers template validate ./templates`
 
 **Import errors after installation**
 

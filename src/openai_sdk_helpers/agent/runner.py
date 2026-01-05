@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 
 from agents import Agent, RunResult, RunResultStreaming, Runner
 
-from openai_sdk_helpers.async_utils import run_coroutine_with_fallback
+from openai_sdk_helpers.utils.async_utils import run_coroutine_with_fallback
 
 
 async def run_async(

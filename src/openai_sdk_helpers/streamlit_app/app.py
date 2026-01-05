@@ -22,7 +22,12 @@ from openai_sdk_helpers.streamlit_app import (
     _load_configuration,
 )
 from openai_sdk_helpers.structure.base import BaseStructure
-from openai_sdk_helpers.utils import coerce_jsonable, ensure_list, log
+from openai_sdk_helpers.utils import (
+    coerce_jsonable,
+    customJSONEncoder,
+    ensure_list,
+    log,
+)
 
 
 def _extract_assistant_text(response: BaseResponse[Any]) -> str:
@@ -90,10 +95,16 @@ def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
     """
     if isinstance(result, BaseStructure):
         return result.print()
+    if isinstance(result, str):
+        return result
     if isinstance(result, dict):
-        return json.dumps(result, indent=2)
+        return json.dumps(coerce_jsonable(result), indent=2, cls=customJSONEncoder)
     if result:
-        return str(result)
+        coerced = coerce_jsonable(result)
+        try:
+            return json.dumps(coerced, indent=2, cls=customJSONEncoder)
+        except TypeError:
+            return str(result)
 
     fallback_text = _extract_assistant_text(response)
     if fallback_text:

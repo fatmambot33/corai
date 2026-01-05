@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from types import TracebackType
 from typing import Any, AsyncIterator, Generic, Optional, TypeVar
 
-from openai_sdk_helpers.utils.core import log
+from openai_sdk_helpers.logging_config import log
 
 T = TypeVar("T")
 

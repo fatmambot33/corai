@@ -1,54 +1,79 @@
 """Utility helpers for openai-sdk-helpers.
 
-This package provides common utility functions for type coercion, file
-handling, JSON serialization, logging, and OpenAI settings construction.
-These utilities are used throughout the openai_sdk_helpers package.
+The utils package collects cross-cutting helpers used across the project:
 
-Functions
----------
-ensure_list(value)
-    Normalize a single item or iterable into a list.
-check_filepath(filepath, fullfilepath)
-    Ensure the parent directory for a file path exists.
-coerce_optional_float(value)
-    Convert a value to float or None.
-coerce_optional_int(value)
-    Convert a value to int or None.
-coerce_dict(value)
-    Convert a value to a string-keyed dictionary.
-coerce_jsonable(value)
-    Convert a value into a JSON-serializable representation.
-log(message, level)
-    Log a message with basic configuration.
-build_openai_settings(**kwargs)
-    Build OpenAI settings from environment with validation.
+* Core helpers: coercion, path handling, JSON encoding, and logging basics.
+* Validation: input validation helpers for strings, choices, URLs, etc.
+* Concurrency: async bridging helpers.
+* Output validation: JSON Schema and semantic validators.
+* Instrumentation helpers: deprecation utilities.
 
-Classes
--------
-JSONSerializable
-    Mixin for classes that can be serialized to JSON.
-customJSONEncoder
-    JSON encoder for common helper types like enums and paths.
+Import style
+------------
+Public helpers are re-exported from ``openai_sdk_helpers.utils`` for a
+consistent import surface. You can import from submodules when you need a
+smaller surface area, but top-level imports remain stable.
+
+Submodules
+----------
+coercion
+    Numeric coercion helpers and list normalization.
+path_utils
+    File and path helpers.
+json_utils
+    JSON encoding helpers and mixins.
+logging_config
+    Centralized logger factory and convenience log helper.
+validation
+    Input validation helpers for strings, URLs, collections, and paths.
+async_utils
+    Async-to-sync bridging helpers.
+output_validation
+    JSON Schema and semantic output validation utilities.
+deprecation
+    Deprecation helpers and warning utilities.
 """
 
 from __future__ import annotations
 
-from .core import (
-    JSONSerializable,
-    build_openai_settings,
-    check_filepath,
-    coerce_jsonable,
+from .coercion import (
     coerce_dict,
     coerce_optional_float,
     coerce_optional_int,
-    customJSONEncoder,
     ensure_list,
-    log,
 )
+from .json_utils import (
+    JSONSerializable,
+    coerce_jsonable,
+    customJSONEncoder,
+)
+from .path_utils import check_filepath, ensure_directory
+from openai_sdk_helpers.logging_config import log
+from .validation import (
+    validate_choice,
+    validate_dict_mapping,
+    validate_list_items,
+    validate_max_length,
+    validate_non_empty_string,
+    validate_safe_path,
+    validate_url_format,
+)
+from .async_utils import run_coroutine_thread_safe, run_coroutine_with_fallback
+from .output_validation import (
+    JSONSchemaValidator,
+    LengthValidator,
+    OutputValidator,
+    SemanticValidator,
+    ValidationResult,
+    ValidationRule,
+    validate_output,
+)
+from .deprecation import DeprecationHelper, deprecated, warn_deprecated
 
 __all__ = [
     "ensure_list",
     "check_filepath",
+    "ensure_directory",
     "coerce_optional_float",
     "coerce_optional_int",
     "coerce_dict",
@@ -56,5 +81,27 @@ __all__ = [
     "JSONSerializable",
     "customJSONEncoder",
     "log",
-    "build_openai_settings",
+    # Validation helpers
+    "validate_non_empty_string",
+    "validate_max_length",
+    "validate_url_format",
+    "validate_dict_mapping",
+    "validate_list_items",
+    "validate_choice",
+    "validate_safe_path",
+    # Async helpers
+    "run_coroutine_thread_safe",
+    "run_coroutine_with_fallback",
+    # Output validation
+    "ValidationResult",
+    "ValidationRule",
+    "JSONSchemaValidator",
+    "SemanticValidator",
+    "LengthValidator",
+    "OutputValidator",
+    "validate_output",
+    # Deprecation
+    "deprecated",
+    "warn_deprecated",
+    "DeprecationHelper",
 ]

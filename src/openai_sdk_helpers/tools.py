@@ -11,7 +11,6 @@ definitions from named metadata structures.
 from __future__ import annotations
 
 import inspect
-import json
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias, TypeVar
 
@@ -19,6 +18,8 @@ from pydantic import BaseModel, ValidationError
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
 from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.utils import coerce_jsonable, customJSONEncoder
+import json
 
 T = TypeVar("T", bound=BaseModel)
 StructureType: TypeAlias = type[BaseStructure]
@@ -59,20 +60,11 @@ def serialize_tool_result(result: Any) -> str:
     >>> serialize_tool_result({"key": "value"})
     '{"key": "value"}'
     """
-    # Handle Pydantic models
     if isinstance(result, BaseModel):
         return result.model_dump_json()
 
-    # Handle strings - wrap in JSON string format
-    if isinstance(result, str):
-        return json.dumps(result)
-
-    # Handle other JSON-serializable types (lists, dicts, primitives)
-    try:
-        return json.dumps(result)
-    except (TypeError, ValueError):
-        # Fallback to string representation for non-JSON types
-        return json.dumps(str(result))
+    payload = coerce_jsonable(result)
+    return json.dumps(payload, cls=customJSONEncoder)
 
 
 def tool_handler_factory(

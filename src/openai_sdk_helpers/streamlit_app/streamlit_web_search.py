@@ -7,7 +7,7 @@ from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.web_search import WebSearchStructure
 from openai_sdk_helpers.structure.prompt import PromptStructure
 from openai_sdk_helpers.tools import ToolSpec, build_tool_definitions
-from openai_sdk_helpers.utils.core import customJSONEncoder
+from openai_sdk_helpers.utils import coerce_jsonable, customJSONEncoder
 from openai_sdk_helpers.environment import DEFAULT_MODEL
 
 
@@ -49,7 +49,8 @@ async def perform_search(tool) -> str:
     web_result = await WebAgentSearch(default_model=DEFAULT_MODEL).run_web_agent_async(
         structured_data.prompt
     )
-    return json.dumps(web_result.to_json(), cls=customJSONEncoder)
+    payload = coerce_jsonable(web_result)
+    return json.dumps(payload, cls=customJSONEncoder)
 
 
 APP_CONFIG = {

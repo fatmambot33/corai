@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from openai_sdk_helpers.utils import ensure_directory
+
 DATETIME_FMT = "%Y%m%d_%H%M%S"
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -50,5 +52,4 @@ def get_data_path(name: str) -> Path:
     """
     base = Path.home() / ".openai-sdk-helpers"
     path = base / name
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return ensure_directory(path)

@@ -33,9 +33,9 @@ dependencies = [
     "python-dotenv",
 
 
-    # OpenAI functionality
-    "openai",
-    "openai-agents",
+    # OpenAI functionality (tested with openai==2.14.0, openai-agents==0.6.4)
+    "openai>=2.14.0,<3.0.0",
+    "openai-agents>=0.6.4,<1.0.0",
 
 
     # Web UI
@@ -78,3 +78,9 @@ extraPaths = ["src"]
 
 [tool.pydocstyle]
 convention = "numpy"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[project.scripts]
+openai-helpers = "openai_sdk_helpers.cli:main"

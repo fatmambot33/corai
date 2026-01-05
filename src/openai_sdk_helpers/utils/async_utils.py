@@ -10,13 +10,12 @@ import threading
 from typing import Any, Coroutine, Generic, TypeVar
 
 from openai_sdk_helpers.errors import AsyncExecutionError
-from openai_sdk_helpers.utils.core import log
 
 T = TypeVar("T")
 
 # Default timeout constants
 DEFAULT_COROUTINE_TIMEOUT = 300.0  # 5 minutes
-THREAD_JOIN_TIMEOUT = 5.0  # 5 seconds
+THREAD_JOIN_TIMEOUT = 0.5  # 0.5 seconds
 
 
 def run_coroutine_thread_safe(
@@ -81,10 +80,9 @@ def run_coroutine_thread_safe(
         # Ensure thread is cleaned up
         thread.join(timeout=THREAD_JOIN_TIMEOUT)
         if thread.is_alive():
-            log(
-                f"Thread {thread.name} did not terminate within {THREAD_JOIN_TIMEOUT} seconds",
-                level=20,  # logging.INFO
-            )
+            # Thread did not terminate, likely still running async operation
+            # This is expected for timeout scenarios, so we don't log here
+            pass
 
 
 def run_coroutine_with_fallback(
