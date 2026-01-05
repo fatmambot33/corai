@@ -291,6 +291,7 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         self,
         openai_settings: OpenAISettings,
         tool_handlers: dict[str, ToolHandler] = {},
+        add_output_instructions: bool = True,
     ) -> BaseResponse[TOut]:
         """Generate a BaseResponse instance based on the configuration.
 
@@ -302,15 +303,25 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         tool_handlers : dict[str, Callable], optional
             Mapping of tool names to handler callables. Defaults to an empty
             dictionary when not provided.
+        add_output_instructions : bool, default=True
+            Whether to append the structured output prompt to the instructions.
 
         Returns
         -------
         BaseResponse[TOut]
             An instance of BaseResponse configured with ``openai_settings``.
         """
+        output_instructions = ""
+        if self.output_structure is not None and add_output_instructions:
+            output_instructions = self.output_structure.get_prompt(
+                add_enum_values=False
+            )
+
+        instructions = f"{self.instructions_text}\n{output_instructions}"
+
         return BaseResponse[TOut](
             name=self.name,
-            instructions=self.instructions_text,
+            instructions=instructions,
             tools=self.tools,
             output_structure=self.output_structure,
             tool_handlers=tool_handlers,

@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from pydantic import Field
 
 from openai_sdk_helpers.response.config import ResponseConfiguration
+from openai_sdk_helpers.structure.base import BaseStructure
 
 
 def _build_config(instructions: str | Path) -> ResponseConfiguration:
@@ -54,3 +56,44 @@ def test_invalid_instruction_type_raises_type_error() -> None:
             input_structure=None,
             output_structure=None,
         )
+
+
+class _SampleOutput(BaseStructure):
+    """Sample output structure for instruction generation tests."""
+
+    summary: str = Field(description="Brief summary of the content")
+
+
+def test_output_instructions_are_appended(openai_settings) -> None:
+    config = ResponseConfiguration(
+        name="unit",
+        instructions="Base instructions",
+        tools=None,
+        input_structure=None,
+        output_structure=_SampleOutput,
+    )
+
+    response = config.gen_response(openai_settings=openai_settings)
+
+    expected_output = _SampleOutput.get_prompt(add_enum_values=False)
+    expected_instructions = f"{config.instructions_text}\n{expected_output}"
+
+    assert response._instructions == expected_instructions
+
+
+def test_output_instructions_can_be_skipped(openai_settings) -> None:
+    config = ResponseConfiguration(
+        name="unit",
+        instructions="Base instructions",
+        tools=None,
+        input_structure=None,
+        output_structure=_SampleOutput,
+    )
+
+    response = config.gen_response(
+        openai_settings=openai_settings, add_output_instructions=False
+    )
+
+    expected_instructions = f"{config.instructions_text}\n"
+
+    assert response._instructions == expected_instructions
