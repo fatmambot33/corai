@@ -232,6 +232,7 @@ class VectorStorage:
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
         refresh_cache: bool = False,
+        expires_after: int | None = None,
     ) -> VectorStorageFileInfo:
         """Upload a single file to the vector store.
 
@@ -253,6 +254,9 @@ class VectorStorage:
         refresh_cache : bool, optional
             When True, refresh the local cache of existing files before
             checking for duplicates, by default False.
+        expires_after : int or None, optional
+            Number of seconds after which the file expires and is deleted.
+            If None and purpose is "user_data", defaults to 86400 (24 hours).
 
         Returns
         -------
@@ -262,6 +266,10 @@ class VectorStorage:
         file_name = os.path.basename(file_path)
         attributes = dict(attributes or {})
         attributes["file_name"] = file_name
+
+        # Default to 24 hours expiration for user_data files
+        if expires_after is None and purpose == "user_data":
+            expires_after = 86400  # 24 hours in seconds
 
         if refresh_cache:
             self._existing_files = self._load_existing_files()
@@ -291,7 +299,9 @@ class VectorStorage:
                     file_data = handle.read()
 
             file = self._client.files.create(
-                file=(file_name, file_data), purpose=purpose  # type: ignore
+                file=(file_name, file_data),
+                purpose=purpose,
+                expires_after=expires_after if expires_after is not None else None,  # type: ignore
             )
 
             self._client.vector_stores.files.create(
@@ -320,6 +330,7 @@ class VectorStorage:
         purpose: str = "assistants",
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
+        expires_after: int | None = None,
     ) -> VectorStorageFileStats:
         """Upload files matching glob patterns using a thread pool.
 
@@ -338,6 +349,9 @@ class VectorStorage:
         overwrite : bool, optional
             When True, re-upload files even if files with the same name
             exist, by default False.
+        expires_after : int or None, optional
+            Number of seconds after which files expire and are deleted.
+            If None and purpose is "user_data", defaults to 86400 (24 hours).
 
         Returns
         -------
@@ -374,6 +388,7 @@ class VectorStorage:
                     attributes=attributes,
                     overwrite=overwrite,
                     refresh_cache=False,
+                    expires_after=expires_after,
                 ): path
                 for path in all_paths
             }

@@ -105,6 +105,7 @@ class FilesAPIManager:
         file: BinaryIO | Path | str,
         purpose: FilePurpose,
         track: bool | None = None,
+        expires_after: int | None = None,
     ) -> FileObject:
         """Upload a file to the OpenAI Files API.
 
@@ -117,6 +118,10 @@ class FilesAPIManager:
             Options: "assistants", "batch", "fine-tune", "user_data", "vision"
         track : bool or None, default None
             Override auto_track for this file. If None, uses instance setting.
+        expires_after : int or None, default None
+            Number of seconds after which the file expires and is deleted.
+            If None and purpose is "user_data", defaults to 86400 (24 hours).
+            For other purposes, files don't expire unless explicitly set.
 
         Returns
         -------
@@ -132,8 +137,11 @@ class FilesAPIManager:
 
         Examples
         --------
-        >>> # Upload from file path
-        >>> file_obj = manager.create("data.jsonl", purpose="fine-tune")
+        >>> # Upload from file path (user_data expires in 24h by default)
+        >>> file_obj = manager.create("data.jsonl", purpose="user_data")
+        >>>
+        >>> # Upload with custom expiration (1 hour)
+        >>> file_obj = manager.create("temp.txt", purpose="user_data", expires_after=3600)
         >>>
         >>> # Upload from file handle
         >>> with open("image.png", "rb") as f:
@@ -144,28 +152,45 @@ class FilesAPIManager:
         """
         should_track = track if track is not None else self._auto_track
 
+        # Default to 24 hours expiration for user_data files
+        if expires_after is None and purpose == "user_data":
+            expires_after = 86400  # 24 hours in seconds
+
         # Handle different file input types
         if isinstance(file, (Path, str)):
             file_path = Path(file).resolve()
             if not file_path.exists():
                 raise FileNotFoundError(f"File not found: {file}")
-            
+
             # Use only the basename as filename (remove path)
             filename = file_path.name
             with open(file_path, "rb") as f:
                 # Pass tuple (filename, file_data) to set custom filename
-                file_obj = self._client.files.create(
-                    file=(filename, f), purpose=purpose
-                )
+                if expires_after is not None:
+                    file_obj = self._client.files.create(
+                        file=(filename, f),
+                        purpose=purpose,
+                        expires_after=expires_after,
+                    )
+                else:
+                    file_obj = self._client.files.create(
+                        file=(filename, f), purpose=purpose
+                    )
         else:
             # Assume it's a BinaryIO
-            file_obj = self._client.files.create(file=file, purpose=purpose)
+            if expires_after is not None:
+                file_obj = self._client.files.create(
+                    file=file, purpose=purpose, expires_after=expires_after
+                )
+            else:
+                file_obj = self._client.files.create(file=file, purpose=purpose)
 
         if should_track:
             self.tracked_files[file_obj.id] = file_obj
+            expiry_msg = f" (expires in {expires_after}s)" if expires_after else ""
             log(
                 f"Uploaded and tracking file {file_obj.id} ({file_obj.filename}) "
-                f"with purpose '{purpose}'"
+                f"with purpose '{purpose}'{expiry_msg}"
             )
         else:
             log(
@@ -329,7 +354,7 @@ class FilesAPIManager:
         return len(self.tracked_files)
 
     def __repr__(self) -> str:
-        """String representation."""
+        """Return string representation of the manager."""
         return f"FilesAPIManager(tracked_files={len(self.tracked_files)})"
 
 
