@@ -273,12 +273,12 @@ def test_create_with_expires_after(files_manager, mock_client, tmp_path):
     # Create file with 24h expiration (86400 seconds)
     result = files_manager.create(test_file, purpose="user_data", expires_after=86400)
 
-    # Verify the expires_after was converted to days and hours
+    # Verify the expires_after was converted to OpenAI API format
     call_kwargs = mock_client.files.create.call_args[1]
     assert "expires_after" in call_kwargs
     expires_dict = call_kwargs["expires_after"]
-    assert expires_dict["days"] == 1  # 86400 seconds = 1 day
-    assert expires_dict["hours"] == 0
+    assert expires_dict["anchor"] == "created_at"
+    assert expires_dict["seconds"] == 86400  # 86400 seconds = 24 hours
 
     # Verify result
     assert result.id == "file-123"
@@ -288,7 +288,7 @@ def test_create_with_expires_after(files_manager, mock_client, tmp_path):
 def test_create_with_expires_after_hours_conversion(
     files_manager, mock_client, tmp_path
 ):
-    """Test expires_after conversion for non-full-day values."""
+    """Test expires_after conversion for hour-based values."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("test content")
 
@@ -299,11 +299,11 @@ def test_create_with_expires_after_hours_conversion(
     # Create file with 1 hour expiration (3600 seconds)
     result = files_manager.create(test_file, purpose="user_data", expires_after=3600)
 
-    # Verify conversion
+    # Verify conversion to OpenAI API format
     call_kwargs = mock_client.files.create.call_args[1]
     expires_dict = call_kwargs["expires_after"]
-    assert expires_dict["days"] == 0
-    assert expires_dict["hours"] == 1  # 3600 seconds = 1 hour
+    assert expires_dict["anchor"] == "created_at"
+    assert expires_dict["seconds"] == 3600  # 3600 seconds = 1 hour
 
     assert result.id == "file-456"
 
