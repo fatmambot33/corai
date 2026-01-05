@@ -111,7 +111,7 @@ def test_retrieve(files_manager, mock_client):
 def test_list_all(files_manager, mock_client):
     """Test listing all files."""
     from openai import NOT_GIVEN
-    
+
     mock_page = Mock()
     mock_client.files.list.return_value = mock_page
 
