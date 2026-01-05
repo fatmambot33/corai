@@ -124,4 +124,3 @@ def test_no_output_structure_ignores_add_output_instructions(
     # Both should produce the same result: just the base instructions
     assert response_with_flag._instructions == config.instructions_text
     assert response_without_flag._instructions == config.instructions_text
-
