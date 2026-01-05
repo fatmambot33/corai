@@ -271,6 +271,83 @@ response.close()
 
 ## Advanced Usage
 
+### Image and File Analysis
+
+The `response` module supports base64-encoded images and files for direct analysis without vector stores:
+
+```python
+from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers import OpenAISettings
+
+settings = OpenAISettings.from_env()
+
+with BaseResponse(
+    name="vision_demo",
+    instructions="You are a helpful assistant that can analyze images and documents.",
+    tools=None,
+    output_structure=None,
+    tool_handlers={},
+    openai_settings=settings,
+) as response:
+    # Analyze an image
+    result = response.run_sync(
+        "What's in this image?",
+        images="path_to_image.jpg"  # Automatically base64-encoded
+    )
+    print(result)
+    
+    # Analyze a document with inline base64 encoding
+    result = response.run_sync(
+        "What is the main topic of this document?",
+        file_data="document.pdf"  # Automatically base64-encoded
+    )
+    print(result)
+    
+    # Analyze both together
+    result = response.run_sync(
+        "Compare the image and document",
+        images="photo.jpg",
+        file_data="report.pdf"
+    )
+    print(result)
+```
+
+**Base64 Encoding Utilities:**
+
+```python
+from openai_sdk_helpers.utils import (
+    encode_image,
+    encode_file,
+    create_image_data_url,
+    create_file_data_url,
+)
+
+# Encode an image to base64
+base64_image = encode_image("photo.jpg")
+
+# Create a data URL for an image
+image_url, detail = create_image_data_url("photo.jpg", detail="high")
+
+# Encode a file to base64
+base64_file = encode_file("document.pdf")
+
+# Create a data URL for a file
+file_data = create_file_data_url("document.pdf")
+```
+
+**Note on File Attachments:**
+
+By default, file attachments use vector stores for RAG (Retrieval-Augmented Generation). To use inline base64 encoding instead:
+
+```python
+# Use base64 encoding for attachments (alternative to vector stores)
+result = response.run_sync(
+    "Analyze this document",
+    attachments="document.pdf",
+    use_base64=True  # Force base64 encoding instead of vector store
+)
+```
+
 ### Custom Prompt Templates
 
 Create custom Jinja2 templates for specialized agent behaviors:
