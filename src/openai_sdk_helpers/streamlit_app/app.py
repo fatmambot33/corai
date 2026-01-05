@@ -287,7 +287,9 @@ def _render_chat_history() -> None:
                 st.markdown(message.get("content", ""))
                 attachments = message.get("attachments", [])
                 if attachments:
-                    st.caption(f"📎 {len(attachments)} file(s) attached: {', '.join(attachments)}")
+                    st.caption(
+                        f"📎 {len(attachments)} file(s) attached: {', '.join(attachments)}"
+                    )
 
 
 def _handle_user_message(
@@ -407,7 +409,7 @@ def main(config_path: Path) -> None:
             ) as tmp_file:
                 tmp_file.write(uploaded_file.getbuffer())
                 attachment_paths.append(tmp_file.name)
-        
+
         if invalid_files:
             st.warning(
                 f"⚠️ Unsupported file types skipped: {', '.join(invalid_files)}. "
@@ -418,7 +420,9 @@ def main(config_path: Path) -> None:
 
     prompt = st.chat_input("Message the assistant")
     if prompt:
-        _handle_user_message(prompt, config, attachment_paths if attachment_paths else None)
+        _handle_user_message(
+            prompt, config, attachment_paths if attachment_paths else None
+        )
 
 
 if __name__ == "__main__":
