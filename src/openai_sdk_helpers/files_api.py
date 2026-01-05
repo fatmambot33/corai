@@ -157,6 +157,13 @@ class FilesAPIManager:
             expires_after = 86400  # 24 hours in seconds
 
         # Handle different file input types
+        # Prepare expires_after in OpenAI API format if provided
+        expires_after_param = None
+        if expires_after is not None:
+            expires_after_param = cast(
+                Any, {"anchor": "created_at", "seconds": expires_after}
+            )
+
         if isinstance(file, (Path, str)):
             file_path = Path(file).resolve()
             if not file_path.exists():
@@ -166,17 +173,11 @@ class FilesAPIManager:
             filename = file_path.name
             with open(file_path, "rb") as f:
                 # Pass tuple (filename, file_data) to set custom filename
-                if expires_after is not None:
+                if expires_after_param is not None:
                     file_obj = self._client.files.create(
                         file=(filename, f),
                         purpose=purpose,
-                        expires_after=cast(
-                            Any,
-                            {
-                                "days": expires_after // 86400,
-                                "hours": (expires_after % 86400) // 3600,
-                            },
-                        ),
+                        expires_after=expires_after_param,
                     )
                 else:
                     file_obj = self._client.files.create(
@@ -184,17 +185,11 @@ class FilesAPIManager:
                     )
         else:
             # Assume it's a BinaryIO
-            if expires_after is not None:
+            if expires_after_param is not None:
                 file_obj = self._client.files.create(
                     file=file,
                     purpose=purpose,
-                    expires_after=cast(
-                        Any,
-                        {
-                            "days": expires_after // 86400,
-                            "hours": (expires_after % 86400) // 3600,
-                        },
-                    ),
+                    expires_after=expires_after_param,
                 )
             else:
                 file_obj = self._client.files.create(file=file, purpose=purpose)
