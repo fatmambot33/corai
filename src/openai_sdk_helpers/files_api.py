@@ -267,8 +267,10 @@ class FilesAPIManager:
         """
         limit_param = NOT_GIVEN if limit is None else limit
         if purpose is not None:
-            return self._client.files.list(purpose=purpose, limit=limit_param)
-        return self._client.files.list(limit=limit_param)
+            return self._client.files.list(
+                purpose=purpose, limit=cast(Any, limit_param)
+            )
+        return self._client.files.list(limit=cast(Any, limit_param))
 
     def delete(self, file_id: str, untrack: bool = True) -> FileDeleted:
         """Delete a specific file from OpenAI Files API.
