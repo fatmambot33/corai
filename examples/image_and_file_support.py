@@ -8,9 +8,6 @@ from openai_sdk_helpers import OpenAISettings
 from openai_sdk_helpers.response import BaseResponse
 from openai_sdk_helpers.utils import (
     encode_image,
-    encode_file,
-    create_image_data_url,
-    create_file_data_url,
 )
 
 
