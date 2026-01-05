@@ -94,6 +94,34 @@ def test_output_instructions_can_be_skipped(openai_settings) -> None:
         openai_settings=openai_settings, add_output_instructions=False
     )
 
-    expected_instructions = f"{config.instructions_text}\n"
+    expected_instructions = config.instructions_text
 
     assert response._instructions == expected_instructions
+
+
+def test_no_output_structure_ignores_add_output_instructions(
+    openai_settings,
+) -> None:
+    """Test that when output_structure is None, add_output_instructions has no effect."""
+    config = ResponseConfiguration(
+        name="unit",
+        instructions="Base instructions",
+        tools=None,
+        input_structure=None,
+        output_structure=None,
+    )
+
+    # Test with add_output_instructions=True (default)
+    response_with_flag = config.gen_response(
+        openai_settings=openai_settings, add_output_instructions=True
+    )
+
+    # Test with add_output_instructions=False
+    response_without_flag = config.gen_response(
+        openai_settings=openai_settings, add_output_instructions=False
+    )
+
+    # Both should produce the same result: just the base instructions
+    assert response_with_flag._instructions == config.instructions_text
+    assert response_without_flag._instructions == config.instructions_text
+

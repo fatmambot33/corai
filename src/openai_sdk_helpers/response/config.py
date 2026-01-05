@@ -317,7 +317,11 @@ class ResponseConfiguration(Generic[TIn, TOut]):
                 add_enum_values=False
             )
 
-        instructions = f"{self.instructions_text}\n{output_instructions}"
+        instructions = (
+            f"{self.instructions_text}\n{output_instructions}"
+            if output_instructions
+            else self.instructions_text
+        )
 
         return BaseResponse[TOut](
             name=self.name,
