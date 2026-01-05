@@ -90,13 +90,15 @@ def dummy_client():
 def test_vector_storage_requires_api_key(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_MODEL", raising=False)
-    with pytest.raises(ValueError):
+    from openai_sdk_helpers import ConfigurationError
+    with pytest.raises(ConfigurationError):
         VectorStorage(store_name="missing", client=None)
 
 
 def test_vector_storage_requires_model(monkeypatch, dummy_client):
     monkeypatch.delenv("OPENAI_MODEL", raising=False)
-    with pytest.raises(ValueError):
+    from openai_sdk_helpers import ConfigurationError
+    with pytest.raises(ConfigurationError):
         VectorStorage(store_name="missing-model", client=dummy_client)
 
 

@@ -12,6 +12,7 @@ import logging
 import mimetypes
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import cast
 
 from openai import OpenAI
@@ -20,8 +21,10 @@ from openai.types.vector_store import VectorStore
 from openai.types.vector_store_search_response import VectorStoreSearchResponse
 from tqdm import tqdm
 
+from ..config import OpenAISettings
+from ..errors import ConfigurationError, VectorStorageError
 from ..types import OpenAIClient
-from ..utils import ensure_list, log
+from ..utils import ensure_list, ensure_directory, log
 from .types import VectorStorageFileInfo, VectorStorageFileStats
 
 TEXT_MIME_PREFIXES = ("text/",)
@@ -119,26 +122,21 @@ class VectorStorage:
 
         Raises
         ------
-        ValueError
+        ConfigurationError
             If no API key or embedding model can be resolved.
-        RuntimeError
-            If the OpenAI client cannot be initialized.
         """
-        self._client: OpenAIClient
         if client is None:
-            api_key = os.getenv("OPENAI_API_KEY")
-            if api_key is None:
-                raise ValueError("OpenAI API key is required")
             try:
-                self._client = OpenAI(api_key=api_key)
-            except Exception as exc:
-                raise RuntimeError("Failed to initialize OpenAI client") from exc
+                settings = OpenAISettings.from_env()
+                self._client = settings.create_client()
+            except ValueError as exc:
+                raise ConfigurationError(str(exc)) from exc
         else:
             self._client = client
 
         self._model = model or os.getenv("OPENAI_MODEL")
         if self._model is None:
-            raise ValueError("OpenAI model is required")
+            raise ConfigurationError("OpenAI model is required")
 
         self._vector_storage = self._get_or_create_vector_storage(store_name)
         self._existing_files: dict[str, str] | None = {}
@@ -505,7 +503,7 @@ class VectorStorage:
         VectorStorageFileStats
             Aggregated statistics describing the download results.
         """
-        os.makedirs(output_dir, exist_ok=True)
+        ensure_directory(Path(output_dir))
 
         try:
             files = self._client.vector_stores.files.list(

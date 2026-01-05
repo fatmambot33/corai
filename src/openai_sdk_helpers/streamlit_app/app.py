@@ -8,6 +8,7 @@ rendering, response execution, and resource cleanup.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,36 @@ from openai_sdk_helpers.utils import (
     ensure_list,
     log,
 )
+
+# Supported file extensions for OpenAI Assistants file search
+SUPPORTED_FILE_EXTENSIONS = (
+    ".csv",
+    ".docx",
+    ".html",
+    ".json",
+    ".md",
+    ".pdf",
+    ".pptx",
+    ".txt",
+    ".xlsx",
+)
+
+
+def _validate_file_type(filename: str) -> bool:
+    """Check if a file has a supported extension for vector storage.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file to validate.
+
+    Returns
+    -------
+    bool
+        True if the file extension is supported, False otherwise.
+    """
+    file_ext = Path(filename).suffix.lower()
+    return file_ext in SUPPORTED_FILE_EXTENSIONS
 
 
 def _extract_assistant_text(response: BaseResponse[Any]) -> str:
@@ -227,6 +258,8 @@ def _init_session_state() -> None:
     """
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
+    if "uploaded_files" not in st.session_state:
+        st.session_state["uploaded_files"] = []
 
 
 def _render_chat_history() -> None:
@@ -252,9 +285,14 @@ def _render_chat_history() -> None:
                         st.json(raw_output)
             else:
                 st.markdown(message.get("content", ""))
+                attachments = message.get("attachments", [])
+                if attachments:
+                    st.caption(f"📎 {len(attachments)} file(s) attached: {', '.join(attachments)}")
 
 
-def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
+def _handle_user_message(
+    prompt: str, config: StreamlitAppConfig, attachment_paths: list[str] | None = None
+) -> None:
     """Process user input and generate assistant response.
 
     Appends the user message to chat history, executes the response
@@ -267,6 +305,8 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
         User-entered text to send to the assistant.
     config : StreamlitAppConfig
         Loaded configuration with response handler definition.
+    attachment_paths : list[str] or None, default None
+        Optional list of file paths to attach to the message.
 
     Notes
     -----
@@ -274,7 +314,12 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
     chat transcript rather than crashing the application. The function
     triggers a Streamlit rerun after successful response generation.
     """
-    st.session_state["chat_history"].append({"role": "user", "content": prompt})
+    attachment_names = (
+        [Path(p).name for p in attachment_paths] if attachment_paths else []
+    )
+    st.session_state["chat_history"].append(
+        {"role": "user", "content": prompt, "attachments": attachment_names}
+    )
     try:
         response = _get_response_instance(config)
     except Exception as exc:  # pragma: no cover - surfaced in UI
@@ -283,7 +328,7 @@ def _handle_user_message(prompt: str, config: StreamlitAppConfig) -> None:
 
     try:
         with st.spinner("Thinking..."):
-            result = response.run_sync(content=prompt)
+            result = response.run_sync(content=prompt, attachments=attachment_paths)
         summary = _render_summary(result, response)
         raw_output = _build_raw_output(result, response)
         st.session_state["chat_history"].append(
@@ -341,9 +386,39 @@ def main(config_path: Path) -> None:
 
     _render_chat_history()
 
+    # File uploader for attachments
+    uploaded_files = st.file_uploader(
+        "Attach files (optional)",
+        accept_multiple_files=True,
+        key="file_uploader",
+        help=f"Supported formats: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}",
+    )
+
+    # Save uploaded files to temporary directory and track paths
+    attachment_paths: list[str] = []
+    if uploaded_files:
+        invalid_files = []
+        for uploaded_file in uploaded_files:
+            if not _validate_file_type(uploaded_file.name):
+                invalid_files.append(uploaded_file.name)
+                continue
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=Path(uploaded_file.name).suffix
+            ) as tmp_file:
+                tmp_file.write(uploaded_file.getbuffer())
+                attachment_paths.append(tmp_file.name)
+        
+        if invalid_files:
+            st.warning(
+                f"⚠️ Unsupported file types skipped: {', '.join(invalid_files)}. "
+                f"Supported formats: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}"
+            )
+        if attachment_paths:
+            st.caption(f"📎 {len(attachment_paths)} file(s) ready to attach")
+
     prompt = st.chat_input("Message the assistant")
     if prompt:
-        _handle_user_message(prompt, config)
+        _handle_user_message(prompt, config, attachment_paths if attachment_paths else None)
 
 
 if __name__ == "__main__":
