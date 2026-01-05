@@ -25,7 +25,9 @@ from typing import (
     cast,
 )
 
-from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
+from openai.types.responses.response_function_tool_call import (
+    ResponseFunctionToolCall,
+)
 from openai.types.responses.response_input_file_content_param import (
     ResponseInputFileContentParam,
 )
@@ -44,7 +46,15 @@ from .messages import ResponseMessage, ResponseMessages
 from ..config import OpenAISettings
 from ..structure import BaseStructure
 from ..types import OpenAIClient
-from ..utils import check_filepath, coerce_jsonable, customJSONEncoder, ensure_list, log
+from ..utils import (
+    check_filepath,
+    coerce_jsonable,
+    create_file_data_url,
+    create_image_data_url,
+    customJSONEncoder,
+    ensure_list,
+    log,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
@@ -293,8 +303,6 @@ class BaseResponse(Generic[T]):
         >>> # Use base64-encoded file data
         >>> response._build_input("Analyze this PDF", file_data=["doc.pdf"])
         """
-        from ..utils import create_file_data_url, create_image_data_url
-
         contents = ensure_list(content)
         all_attachments = attachments or []
         all_images = images or []
@@ -307,8 +315,6 @@ class BaseResponse(Generic[T]):
         if all_attachments:
             if use_base64:
                 # Use base64 encoding for file attachments
-                from pathlib import Path
-
                 for file_path in all_attachments:
                     file_data_url = create_file_data_url(file_path)
                     filename = Path(file_path).name
@@ -348,8 +354,6 @@ class BaseResponse(Generic[T]):
 
         # Handle file_data parameter (always base64)
         for file_path in all_file_data:
-            from pathlib import Path
-
             file_data_url = create_file_data_url(file_path)
             filename = Path(file_path).name
             base64_files.append(
