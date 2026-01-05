@@ -70,7 +70,7 @@ class DummyClient:
     def _search(self, *, vector_store_id: str, query: str, max_num_results: int):
         return SimpleNamespace(data=[])
 
-    def _create_file(self, file, purpose: str):
+    def _create_file(self, file, purpose: str, expires_after=None):
         file_path, _file_data = file
         new_file = DummyFile(id=f"file-{len(self.files_created)}", path=file_path)
         self.file_contents[new_file.id] = _file_data

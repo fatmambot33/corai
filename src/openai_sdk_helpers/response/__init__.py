@@ -1,9 +1,9 @@
 """Response handling for OpenAI API interactions.
 
 This module provides comprehensive support for managing OpenAI API responses,
-including message handling, tool execution, vector store attachments, and
-structured output parsing. It serves as the foundation for building
-sophisticated AI agents with persistent conversation state.
+including message handling, tool execution, vector store attachments, file
+processing, and structured output parsing. It serves as the foundation for
+building sophisticated AI agents with persistent conversation state.
 
 Classes
 -------
@@ -28,12 +28,15 @@ run_streamed
     Execute a response workflow and return the asynchronous result.
 attach_vector_store
     Attach vector stores to a response's file_search tool.
+process_files
+    Process file attachments with automatic type detection.
 """
 
 from __future__ import annotations
 
 from .base import BaseResponse
 from .config import ResponseConfiguration, ResponseRegistry, get_default_registry
+from .files import process_files
 from .messages import ResponseMessage, ResponseMessages
 from .runner import run_async, run_streamed, run_sync
 from .tool_call import ResponseToolCall, parse_tool_arguments
@@ -52,4 +55,5 @@ __all__ = [
     "ResponseToolCall",
     "parse_tool_arguments",
     "attach_vector_store",
+    "process_files",
 ]

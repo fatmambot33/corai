@@ -25,8 +25,16 @@ from typing import (
     cast,
 )
 
-from openai.types.responses.response_function_tool_call import ResponseFunctionToolCall
+from openai.types.responses.response_function_tool_call import (
+    ResponseFunctionToolCall,
+)
+from openai.types.responses.response_input_file_content_param import (
+    ResponseInputFileContentParam,
+)
 from openai.types.responses.response_input_file_param import ResponseInputFileParam
+from openai.types.responses.response_input_image_content_param import (
+    ResponseInputImageContentParam,
+)
 from openai.types.responses.response_input_message_content_list_param import (
     ResponseInputMessageContentListParam,
 )
@@ -38,7 +46,13 @@ from .messages import ResponseMessage, ResponseMessages
 from ..config import OpenAISettings
 from ..structure import BaseStructure
 from ..types import OpenAIClient
-from ..utils import check_filepath, coerce_jsonable, customJSONEncoder, ensure_list, log
+from ..utils import (
+    check_filepath,
+    coerce_jsonable,
+    customJSONEncoder,
+    ensure_list,
+    log,
+)
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
@@ -214,6 +228,11 @@ class BaseResponse(Generic[T]):
 
         self._user_vector_storage: Any | None = None
 
+        # Initialize Files API manager for tracking uploaded files
+        from ..files_api import FilesAPIManager
+
+        self._files_manager = FilesAPIManager(self._client, auto_track=True)
+
         # New logic: system_vector_store is a list of vector store names to attach
         if system_vector_store:
             from .vector_store import attach_vector_store
@@ -247,68 +266,76 @@ class BaseResponse(Generic[T]):
     def _build_input(
         self,
         content: str | list[str],
-        attachments: list[str] | None = None,
+        files: list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> None:
         """Construct input messages for the OpenAI API request.
 
-        Uploads any file attachments to vector stores and adds all messages
-        to the conversation history.
+        Automatically detects file types and handles them appropriately:
+        - Images (jpg, png, gif, etc.) are sent as base64-encoded images
+        - Documents are sent as base64-encoded file data by default
+        - Documents can optionally be uploaded to vector stores for RAG
 
         Parameters
         ----------
         content : str or list[str]
             String or list of strings to include as user messages.
-        attachments : list[str] or None, default None
-            Optional list of file paths to upload and attach to all messages.
+        files : list[str] or None, default None
+            Optional list of file paths. Each file is automatically processed
+            based on its type:
+            - Images are base64-encoded as input_image
+            - Documents are base64-encoded as input_file (default)
+            - Documents can be uploaded to vector stores if use_vector_store=True
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store for
+            RAG-enabled file search instead of inline base64 encoding.
 
         Notes
         -----
-        If attachments are provided and no user vector storage exists, this
-        method automatically creates one and adds a file_search tool to
-        the tools list.
+        When use_vector_store is True, this method automatically creates
+        a vector store and adds a file_search tool for document retrieval.
+        Images are always base64-encoded regardless of this setting.
+
+        Examples
+        --------
+        >>> # Automatic handling - images as base64, docs inline
+        >>> response._build_input("Analyze these", files=["photo.jpg", "doc.pdf"])
+
+        >>> # Use vector store for documents (RAG)
+        >>> response._build_input(
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
+        ... )
         """
+        from .files import process_files
+
         contents = ensure_list(content)
-        all_attachments = attachments or []
+        all_files = files or []
 
-        # Upload files once and collect their IDs
-        file_ids: list[str] = []
-        if all_attachments:
-            if self._user_vector_storage is None:
-                from openai_sdk_helpers.vector_storage import VectorStorage
-
-                store_name = (
-                    f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
-                )
-                self._user_vector_storage = VectorStorage(
-                    store_name=store_name,
-                    client=self._client,
-                    model=self._model,
-                )
-                user_vector_storage = cast(Any, self._user_vector_storage)
-                if not any(tool.get("type") == "file_search" for tool in self._tools):
-                    self._tools.append(
-                        {
-                            "type": "file_search",
-                            "vector_store_ids": [user_vector_storage.id],
-                        }
-                    )
-
-            user_vector_storage = cast(Any, self._user_vector_storage)
-            for file_path in all_attachments:
-                uploaded_file = user_vector_storage.upload_file(file_path)
-                file_ids.append(uploaded_file.id)
+        # Process files using the dedicated files module
+        vector_file_refs, base64_files, image_contents = process_files(
+            self, all_files, use_vector_store
+        )
 
         # Add each content as a separate message with the same attachments
         for raw_content in contents:
             processed_text = raw_content.strip()
-            input_content: list[ResponseInputTextParam | ResponseInputFileParam] = [
-                ResponseInputTextParam(type="input_text", text=processed_text)
-            ]
+            input_content: list[
+                ResponseInputTextParam
+                | ResponseInputFileParam
+                | ResponseInputFileContentParam
+                | ResponseInputImageContentParam
+            ] = [ResponseInputTextParam(type="input_text", text=processed_text)]
 
-            for file_id in file_ids:
-                input_content.append(
-                    ResponseInputFileParam(type="input_file", file_id=file_id)
-                )
+            # Add vector store file references
+            input_content.extend(vector_file_refs)
+
+            # Add base64 files
+            input_content.extend(base64_files)
+
+            # Add images
+            input_content.extend(image_contents)
 
             message = cast(
                 ResponseInputItemParam,
@@ -319,7 +346,8 @@ class BaseResponse(Generic[T]):
     async def run_async(
         self,
         content: str | list[str],
-        attachments: str | list[str] | None = None,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Generate a response asynchronously from the OpenAI API.
 
@@ -327,12 +355,21 @@ class BaseResponse(Generic[T]):
         tool calls with registered handlers, and optionally parses the
         result into the configured output_structure.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -350,15 +387,26 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> result = await response.run_async("Analyze this text")
-        >>> print(result)
+        >>> # Automatic type detection
+        >>> result = await response.run_async(
+        ...     "Analyze these files",
+        ...     files=["photo.jpg", "document.pdf"]
+        ... )
+
+        >>> # Use vector store for documents
+        >>> result = await response.run_async(
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
+        ... )
         """
         log(f"{self.__class__.__name__}::run_response")
         parsed_result: T | None = None
 
         self._build_input(
             content=content,
-            attachments=(ensure_list(attachments) if attachments else None),
+            files=(ensure_list(files) if files else None),
+            use_vector_store=use_vector_store,
         )
 
         kwargs = {
@@ -445,7 +493,8 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         *,
-        attachments: str | list[str] | None = None,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Execute run_async synchronously with proper event loop handling.
 
@@ -453,12 +502,21 @@ class BaseResponse(Generic[T]):
         a separate thread if necessary. This enables safe usage in both
         synchronous and asynchronous contexts.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -467,12 +525,26 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> result = response.run_sync("Summarize this document")
-        >>> print(result)
+        >>> # Automatic type detection
+        >>> result = response.run_sync(
+        ...     "Analyze these files",
+        ...     files=["photo.jpg", "document.pdf"]
+        ... )
+
+        >>> # Use vector store for documents
+        >>> result = response.run_sync(
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
+        ... )
         """
 
         async def runner() -> T | None:
-            return await self.run_async(content=content, attachments=attachments)
+            return await self.run_async(
+                content=content,
+                files=files,
+                use_vector_store=use_vector_store,
+            )
 
         try:
             asyncio.get_running_loop()
@@ -493,7 +565,8 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         *,
-        attachments: str | list[str] | None = None,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Execute run_async and await the result.
 
@@ -501,12 +574,21 @@ class BaseResponse(Generic[T]):
         simply awaits run_async to provide API compatibility with agent
         interfaces.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -518,7 +600,13 @@ class BaseResponse(Generic[T]):
         This method exists for API consistency but does not currently
         provide true streaming functionality.
         """
-        return asyncio.run(self.run_async(content=content, attachments=attachments))
+        return asyncio.run(
+            self.run_async(
+                content=content,
+                files=files,
+                use_vector_store=use_vector_store,
+            )
+        )
 
     def get_last_tool_message(self) -> ResponseMessage | None:
         """Return the most recent tool message from conversation history.
@@ -679,11 +767,11 @@ class BaseResponse(Generic[T]):
         self.close()
 
     def close(self) -> None:
-        """Clean up session resources including vector stores.
+        """Clean up session resources including vector stores and uploaded files.
 
-        Saves the current message history and deletes managed vector stores.
-        User vector stores are always cleaned up. System vector store cleanup
-        is handled via tool configuration.
+        Saves the current message history, deletes managed vector stores, and
+        cleans up all tracked Files API uploads. User vector stores are always
+        cleaned up. System vector store cleanup is handled via tool configuration.
 
         Notes
         -----
@@ -701,6 +789,19 @@ class BaseResponse(Generic[T]):
         """
         log(f"Closing session {self.uuid} for {self.__class__.__name__}")
         self.save()
+
+        # Clean up tracked Files API uploads
+        try:
+            if hasattr(self, "_files_manager") and self._files_manager:
+                cleanup_results = self._files_manager.cleanup()
+                if cleanup_results:
+                    successful = sum(cleanup_results.values())
+                    log(
+                        f"Files API cleanup: {successful}/{len(cleanup_results)} files deleted"
+                    )
+        except Exception as exc:
+            log(f"Error cleaning up Files API uploads: {exc}", level=logging.WARNING)
+
         # Always clean user vector storage if it exists
         try:
             if self._user_vector_storage:

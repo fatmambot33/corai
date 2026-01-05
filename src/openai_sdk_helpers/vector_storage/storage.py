@@ -13,7 +13,7 @@ import mimetypes
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from openai import OpenAI
 from openai.pagination import SyncPage
@@ -232,6 +232,7 @@ class VectorStorage:
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
         refresh_cache: bool = False,
+        expires_after: int | None = None,
     ) -> VectorStorageFileInfo:
         """Upload a single file to the vector store.
 
@@ -253,6 +254,9 @@ class VectorStorage:
         refresh_cache : bool, optional
             When True, refresh the local cache of existing files before
             checking for duplicates, by default False.
+        expires_after : int or None, optional
+            Number of seconds after which the file expires and is deleted.
+            If None and purpose is "user_data", defaults to 86400 (24 hours).
 
         Returns
         -------
@@ -262,6 +266,10 @@ class VectorStorage:
         file_name = os.path.basename(file_path)
         attributes = dict(attributes or {})
         attributes["file_name"] = file_name
+
+        # Default to 24 hours expiration for user_data files
+        if expires_after is None and purpose == "user_data":
+            expires_after = 86400  # 24 hours in seconds
 
         if refresh_cache:
             self._existing_files = self._load_existing_files()
@@ -291,7 +299,9 @@ class VectorStorage:
                     file_data = handle.read()
 
             file = self._client.files.create(
-                file=(file_path, file_data), purpose=purpose  # type: ignore
+                file=(file_name, file_data),
+                purpose=cast(Any, purpose),  # Cast to avoid type error
+                expires_after=expires_after,  # type: ignore
             )
 
             self._client.vector_stores.files.create(
@@ -320,6 +330,7 @@ class VectorStorage:
         purpose: str = "assistants",
         attributes: dict[str, str | float | bool] | None = None,
         overwrite: bool = False,
+        expires_after: int | None = None,
     ) -> VectorStorageFileStats:
         """Upload files matching glob patterns using a thread pool.
 
@@ -338,6 +349,9 @@ class VectorStorage:
         overwrite : bool, optional
             When True, re-upload files even if files with the same name
             exist, by default False.
+        expires_after : int or None, optional
+            Number of seconds after which files expire and are deleted.
+            If None and purpose is "user_data", defaults to 86400 (24 hours).
 
         Returns
         -------
@@ -374,6 +388,7 @@ class VectorStorage:
                     attributes=attributes,
                     overwrite=overwrite,
                     refresh_cache=False,
+                    expires_after=expires_after,
                 ): path
                 for path in all_paths
             }
@@ -391,10 +406,10 @@ class VectorStorage:
         return stats
 
     def delete_file(self, file_id: str) -> VectorStorageFileInfo:
-        """Delete a specific file from the vector store.
+        """Delete a specific file from the vector store and OpenAI Files API.
 
-        Removes the file from the vector store and updates the local cache.
-        The operation is irreversible.
+        Removes the file from the vector store, then deletes it from OpenAI's
+        Files API storage. Updates the local cache. The operation is irreversible.
 
         Parameters
         ----------
@@ -408,9 +423,21 @@ class VectorStorage:
             "success" or "failed".
         """
         try:
+            # First remove from vector store
             self._client.vector_stores.files.delete(
                 vector_store_id=self._vector_storage.id, file_id=file_id
             )
+
+            # Then delete the actual file from OpenAI storage
+            try:
+                self._client.files.delete(file_id)
+                log(f"Deleted file {file_id} from OpenAI Files API")
+            except Exception as file_delete_exc:
+                # Log but don't fail if file doesn't exist or can't be deleted
+                log(
+                    f"Warning: Could not delete file {file_id} from Files API: {file_delete_exc}",
+                    level=logging.WARNING,
+                )
 
             to_remove = [k for k, v in self.existing_files.items() if v == file_id]
             for key in to_remove:
@@ -464,16 +491,19 @@ class VectorStorage:
     def delete(self) -> None:
         """Delete the entire vector store and all associated files.
 
-        Removes each file individually before deleting the store itself.
-        The local cache is cleared after deletion.
+        Removes each file from the vector store and deletes it from OpenAI's
+        Files API storage before deleting the store itself. The local cache
+        is cleared after deletion.
 
         Warning: This operation is irreversible and will permanently delete
-        the vector store and all its files.
+        the vector store and all its files from OpenAI storage.
         """
         try:
             existing_files = list(self.existing_files.items())
             for file_name, file_id in existing_files:
-                log(f"Deleting file {file_id} ({file_name}) from vector store")
+                log(
+                    f"Deleting file {file_id} ({file_name}) from vector store and Files API"
+                )
                 self.delete_file(file_id)
 
             self._client.vector_stores.delete(self._vector_storage.id)

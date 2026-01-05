@@ -271,6 +271,99 @@ response.close()
 
 ## Advanced Usage
 
+### Image and File Analysis
+
+The `response` module automatically detects file types and handles them appropriately:
+
+```python
+from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers import OpenAISettings
+
+settings = OpenAISettings.from_env()
+
+with BaseResponse(
+    name="analyzer",
+    instructions="You are a helpful assistant that can analyze files.",
+    tools=None,
+    output_structure=None,
+    tool_handlers={},
+    openai_settings=settings,
+) as response:
+    # Automatic type detection - single files parameter
+    # Images are sent as base64-encoded images
+    # Documents are sent as base64-encoded file data
+    result = response.run_sync(
+        "Analyze these files",
+        files=["photo.jpg", "document.pdf"]
+    )
+    print(result)
+    
+    # Single file - automatically detected
+    result = response.run_sync(
+        "What's in this image?",
+        files="photo.jpg"  # Automatically detected as image
+    )
+    print(result)
+    
+    # Use vector store for RAG (Retrieval-Augmented Generation)
+    result = response.run_sync(
+        "Search these documents",
+        files=["doc1.pdf", "doc2.pdf"],
+        use_vector_store=True  # Enable RAG with vector stores
+    )
+    print(result)
+```
+
+**How It Works:**
+
+- **Images** (jpg, png, gif, etc.) are automatically sent as base64-encoded images
+- **Documents** (pdf, txt, xlsx, etc.) are sent as base64-encoded file data by default
+- **Vector Stores** can optionally be used for documents when `use_vector_store=True`
+- **Batch Processing** is automatically used for multiple files (>3) for efficient encoding
+
+**Advanced File Processing:**
+
+```python
+from openai_sdk_helpers.response import process_files
+
+# Process files directly with the dedicated module
+vector_files, base64_files, images = process_files(
+    response,
+    files=["photo1.jpg", "photo2.jpg", "doc1.pdf", "doc2.pdf"],
+    use_vector_store=False,
+    batch_size=20,      # Files per batch
+    max_workers=10,     # Concurrent workers
+)
+```
+
+**Base64 Encoding Utilities:**
+
+```python
+from openai_sdk_helpers.utils import (
+    encode_image,
+    encode_file,
+    is_image_file,
+    create_image_data_url,
+    create_file_data_url,
+)
+
+# Check if a file is an image
+is_image_file("photo.jpg")  # True
+is_image_file("document.pdf")  # False
+
+# Encode an image to base64
+base64_image = encode_image("photo.jpg")
+
+# Create a data URL for an image
+image_url, detail = create_image_data_url("photo.jpg", detail="high")
+
+# Encode a file to base64
+base64_file = encode_file("document.pdf")
+
+# Create a data URL for a file
+file_data = create_file_data_url("document.pdf")
+```
+
 ### Custom Prompt Templates
 
 Create custom Jinja2 templates for specialized agent behaviors:

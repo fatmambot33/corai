@@ -330,7 +330,7 @@ def _handle_user_message(
 
     try:
         with st.spinner("Thinking..."):
-            result = response.run_sync(content=prompt, attachments=attachment_paths)
+            result = response.run_sync(content=prompt, files=attachment_paths)
         summary = _render_summary(result, response)
         raw_output = _build_raw_output(result, response)
         st.session_state["chat_history"].append(
