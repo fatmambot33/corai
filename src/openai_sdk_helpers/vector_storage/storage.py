@@ -391,10 +391,10 @@ class VectorStorage:
         return stats
 
     def delete_file(self, file_id: str) -> VectorStorageFileInfo:
-        """Delete a specific file from the vector store.
+        """Delete a specific file from the vector store and OpenAI Files API.
 
-        Removes the file from the vector store and updates the local cache.
-        The operation is irreversible.
+        Removes the file from the vector store, then deletes it from OpenAI's
+        Files API storage. Updates the local cache. The operation is irreversible.
 
         Parameters
         ----------
@@ -408,9 +408,21 @@ class VectorStorage:
             "success" or "failed".
         """
         try:
+            # First remove from vector store
             self._client.vector_stores.files.delete(
                 vector_store_id=self._vector_storage.id, file_id=file_id
             )
+
+            # Then delete the actual file from OpenAI storage
+            try:
+                self._client.files.delete(file_id)
+                log(f"Deleted file {file_id} from OpenAI Files API")
+            except Exception as file_delete_exc:
+                # Log but don't fail if file doesn't exist or can't be deleted
+                log(
+                    f"Warning: Could not delete file {file_id} from Files API: {file_delete_exc}",
+                    level=logging.WARNING,
+                )
 
             to_remove = [k for k, v in self.existing_files.items() if v == file_id]
             for key in to_remove:
@@ -464,16 +476,19 @@ class VectorStorage:
     def delete(self) -> None:
         """Delete the entire vector store and all associated files.
 
-        Removes each file individually before deleting the store itself.
-        The local cache is cleared after deletion.
+        Removes each file from the vector store and deletes it from OpenAI's
+        Files API storage before deleting the store itself. The local cache
+        is cleared after deletion.
 
         Warning: This operation is irreversible and will permanently delete
-        the vector store and all its files.
+        the vector store and all its files from OpenAI storage.
         """
         try:
             existing_files = list(self.existing_files.items())
             for file_name, file_id in existing_files:
-                log(f"Deleting file {file_id} ({file_name}) from vector store")
+                log(
+                    f"Deleting file {file_id} ({file_name}) from vector store and Files API"
+                )
                 self.delete_file(file_id)
 
             self._client.vector_stores.delete(self._vector_storage.id)
