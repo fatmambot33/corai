@@ -1,7 +1,6 @@
 """Unit tests for encoding utilities."""
 
 import base64
-from unittest.mock import mock_open, patch
 
 import pytest
 
