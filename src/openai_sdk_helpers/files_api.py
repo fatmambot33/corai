@@ -170,7 +170,10 @@ class FilesAPIManager:
                     file_obj = self._client.files.create(
                         file=(filename, f),
                         purpose=purpose,
-                        expires_after={"days": expires_after // 86400, "hours": (expires_after % 86400) // 3600},
+                        expires_after={
+                            "days": expires_after // 86400,
+                            "hours": (expires_after % 86400) // 3600,
+                        },
                     )
                 else:
                     file_obj = self._client.files.create(
@@ -180,7 +183,12 @@ class FilesAPIManager:
             # Assume it's a BinaryIO
             if expires_after is not None:
                 file_obj = self._client.files.create(
-                    file=file, purpose=purpose, expires_after={"days": expires_after // 86400, "hours": (expires_after % 86400) // 3600}
+                    file=file,
+                    purpose=purpose,
+                    expires_after={
+                        "days": expires_after // 86400,
+                        "hours": (expires_after % 86400) // 3600,
+                    },
                 )
             else:
                 file_obj = self._client.files.create(file=file, purpose=purpose)

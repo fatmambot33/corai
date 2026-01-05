@@ -110,13 +110,15 @@ def test_retrieve(files_manager, mock_client):
 
 def test_list_all(files_manager, mock_client):
     """Test listing all files."""
+    from openai import NOT_GIVEN
+    
     mock_page = Mock()
     mock_client.files.list.return_value = mock_page
 
     result = files_manager.list()
 
     assert result == mock_page
-    mock_client.files.list.assert_called_once_with(limit=None)
+    mock_client.files.list.assert_called_once_with(limit=NOT_GIVEN)
 
 
 def test_list_with_purpose(files_manager, mock_client):
