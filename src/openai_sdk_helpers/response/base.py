@@ -289,7 +289,7 @@ class BaseResponse(Generic[T]):
         --------
         >>> # Use base64-encoded image
         >>> response._build_input("What's in this image?", images=["photo.jpg"])
-        
+
         >>> # Use base64-encoded file data
         >>> response._build_input("Analyze this PDF", file_data=["doc.pdf"])
         """
@@ -303,12 +303,12 @@ class BaseResponse(Generic[T]):
         # Handle file attachments (vector store or base64)
         file_ids: list[str] = []
         base64_files: list[ResponseInputFileContentParam] = []
-        
+
         if all_attachments:
             if use_base64:
                 # Use base64 encoding for file attachments
                 from pathlib import Path
-                
+
                 for file_path in all_attachments:
                     file_data_url = create_file_data_url(file_path)
                     filename = Path(file_path).name
@@ -324,16 +324,16 @@ class BaseResponse(Generic[T]):
                 if self._user_vector_storage is None:
                     from openai_sdk_helpers.vector_storage import VectorStorage
 
-                    store_name = (
-                        f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
-                    )
+                    store_name = f"{self.__class__.__name__.lower()}_{self._name}_{self.uuid}_user"
                     self._user_vector_storage = VectorStorage(
                         store_name=store_name,
                         client=self._client,
                         model=self._model,
                     )
                     user_vector_storage = cast(Any, self._user_vector_storage)
-                    if not any(tool.get("type") == "file_search" for tool in self._tools):
+                    if not any(
+                        tool.get("type") == "file_search" for tool in self._tools
+                    ):
                         self._tools.append(
                             {
                                 "type": "file_search",
@@ -349,7 +349,7 @@ class BaseResponse(Generic[T]):
         # Handle file_data parameter (always base64)
         for file_path in all_file_data:
             from pathlib import Path
-            
+
             file_data_url = create_file_data_url(file_path)
             filename = Path(file_path).name
             base64_files.append(
@@ -451,7 +451,7 @@ class BaseResponse(Generic[T]):
         ...     "What's in this image?",
         ...     images="photo.jpg"
         ... )
-        
+
         >>> # Use with base64 file data
         >>> result = await response.run_async(
         ...     "Analyze this document",
@@ -592,7 +592,7 @@ class BaseResponse(Generic[T]):
         ...     "What's in this image?",
         ...     images="photo.jpg"
         ... )
-        
+
         >>> # Use with base64 file data
         >>> result = response.run_sync(
         ...     "Analyze this document",

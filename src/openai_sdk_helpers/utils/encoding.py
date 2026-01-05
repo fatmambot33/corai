@@ -103,8 +103,7 @@ def get_mime_type(file_path: str | Path) -> str:
 
 
 def create_image_data_url(
-    image_path: str | Path,
-    detail: Literal["low", "high", "auto"] = "auto"
+    image_path: str | Path, detail: Literal["low", "high", "auto"] = "auto"
 ) -> tuple[str, Literal["low", "high", "auto"]]:
     """Create a data URL for an image with MIME type detection.
 
