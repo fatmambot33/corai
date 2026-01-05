@@ -291,7 +291,7 @@ class VectorStorage:
                     file_data = handle.read()
 
             file = self._client.files.create(
-                file=(file_path, file_data), purpose=purpose  # type: ignore
+                file=(file_name, file_data), purpose=purpose  # type: ignore
             )
 
             self._client.vector_stores.files.create(

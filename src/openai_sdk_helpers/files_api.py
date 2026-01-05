@@ -149,8 +149,14 @@ class FilesAPIManager:
             file_path = Path(file).resolve()
             if not file_path.exists():
                 raise FileNotFoundError(f"File not found: {file}")
+            
+            # Use only the basename as filename (remove path)
+            filename = file_path.name
             with open(file_path, "rb") as f:
-                file_obj = self._client.files.create(file=f, purpose=purpose)
+                # Pass tuple (filename, file_data) to set custom filename
+                file_obj = self._client.files.create(
+                    file=(filename, f), purpose=purpose
+                )
         else:
             # Assume it's a BinaryIO
             file_obj = self._client.files.create(file=file, purpose=purpose)
