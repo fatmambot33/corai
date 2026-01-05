@@ -12,6 +12,7 @@ from openai_sdk_helpers.utils.encoding import (
     encode_file,
     encode_image,
     get_mime_type,
+    is_image_file,
 )
 
 
@@ -142,3 +143,19 @@ def test_encode_with_path_object(tmp_path):
     result = encode_file(file_path)
     expected = base64.b64encode(file_content).decode("utf-8")
     assert result == expected
+
+
+def test_is_image_file():
+    """Test image file detection."""
+    # Test image files
+    assert is_image_file("photo.jpg") is True
+    assert is_image_file("photo.jpeg") is True
+    assert is_image_file("image.png") is True
+    assert is_image_file("graphic.gif") is True
+    assert is_image_file("picture.bmp") is True
+
+    # Test non-image files
+    assert is_image_file("document.pdf") is False
+    assert is_image_file("text.txt") is False
+    assert is_image_file("data.csv") is False
+    assert is_image_file("page.html") is False

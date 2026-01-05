@@ -11,13 +11,38 @@ from pathlib import Path
 from typing import Literal
 
 
+def is_image_file(file_path: str | Path) -> bool:
+    """Check if a file is an image based on its MIME type.
+
+    Parameters
+    ----------
+    file_path : str or Path
+        Path to the file to check.
+
+    Returns
+    -------
+    bool
+        True if the file is an image, False otherwise.
+
+    Examples
+    --------
+    >>> is_image_file("photo.jpg")
+    True
+    >>> is_image_file("document.pdf")
+    False
+    """
+    mime_type = get_mime_type(file_path)
+    return mime_type.startswith("image/")
+
+
 def encode_image(image_path: str | Path) -> str:
     """Encode an image file to base64.
 
     Parameters
     ----------
     image_path : str or Path
-        Path to the image file to encode.
+        Path to the image file to encode. Relative paths are converted
+        to absolute paths.
 
     Returns
     -------
@@ -36,7 +61,7 @@ def encode_image(image_path: str | Path) -> str:
     >>> base64_image = encode_image("photo.jpg")
     >>> image_url = f"data:image/jpeg;base64,{base64_image}"
     """
-    path = Path(image_path)
+    path = Path(image_path).resolve()
     if not path.exists():
         raise FileNotFoundError(f"Image file not found: {image_path}")
 
@@ -50,7 +75,8 @@ def encode_file(file_path: str | Path) -> str:
     Parameters
     ----------
     file_path : str or Path
-        Path to the file to encode.
+        Path to the file to encode. Relative paths are converted
+        to absolute paths.
 
     Returns
     -------
@@ -69,7 +95,7 @@ def encode_file(file_path: str | Path) -> str:
     >>> base64_file = encode_file("document.pdf")
     >>> file_data = f"data:application/pdf;base64,{base64_file}"
     """
-    path = Path(file_path)
+    path = Path(file_path).resolve()
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 

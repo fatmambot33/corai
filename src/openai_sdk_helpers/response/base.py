@@ -53,6 +53,7 @@ from ..utils import (
     create_image_data_url,
     customJSONEncoder,
     ensure_list,
+    is_image_file,
     log,
 )
 
@@ -263,70 +264,68 @@ class BaseResponse(Generic[T]):
     def _build_input(
         self,
         content: str | list[str],
-        attachments: list[str] | None = None,
-        images: list[str] | None = None,
-        file_data: list[str] | None = None,
-        use_base64: bool = False,
+        files: list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> None:
         """Construct input messages for the OpenAI API request.
 
-        Supports multiple attachment methods:
-        1. Vector store uploads (default for file attachments)
-        2. Base64-encoded images via image URLs
-        3. Base64-encoded file data
+        Automatically detects file types and handles them appropriately:
+        - Images (jpg, png, gif, etc.) are sent as base64-encoded images
+        - Documents are sent as base64-encoded file data by default
+        - Documents can optionally be uploaded to vector stores for RAG
 
         Parameters
         ----------
         content : str or list[str]
             String or list of strings to include as user messages.
-        attachments : list[str] or None, default None
-            Optional list of file paths to upload and attach via vector stores.
-        images : list[str] or None, default None
-            Optional list of image file paths to attach as base64-encoded images.
-        file_data : list[str] or None, default None
-            Optional list of file paths to attach as base64-encoded file data.
-        use_base64 : bool, default False
-            If True, treat attachments as base64-encoded files instead of
-            uploading to vector stores.
+        files : list[str] or None, default None
+            Optional list of file paths. Each file is automatically processed
+            based on its type:
+            - Images are base64-encoded as input_image
+            - Documents are base64-encoded as input_file (default)
+            - Documents can be uploaded to vector stores if use_vector_store=True
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store for
+            RAG-enabled file search instead of inline base64 encoding.
 
         Notes
         -----
-        If attachments are provided and use_base64 is False, this method
-        automatically creates a vector store and adds a file_search tool.
-        Images and file_data always use base64 encoding.
+        When use_vector_store is True, this method automatically creates
+        a vector store and adds a file_search tool for document retrieval.
+        Images are always base64-encoded regardless of this setting.
 
         Examples
         --------
-        >>> # Use base64-encoded image
-        >>> response._build_input("What's in this image?", images=["photo.jpg"])
+        >>> # Automatic handling - images as base64, docs inline
+        >>> response._build_input("Analyze these", files=["photo.jpg", "doc.pdf"])
 
-        >>> # Use base64-encoded file data
-        >>> response._build_input("Analyze this PDF", file_data=["doc.pdf"])
+        >>> # Use vector store for documents (RAG)
+        >>> response._build_input(
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
+        ... )
         """
         contents = ensure_list(content)
-        all_attachments = attachments or []
-        all_images = images or []
-        all_file_data = file_data or []
+        all_files = files or []
 
-        # Handle file attachments (vector store or base64)
+        # Categorize files by type
+        image_files: list[str] = []
+        document_files: list[str] = []
+
+        for file_path in all_files:
+            if is_image_file(file_path):
+                image_files.append(file_path)
+            else:
+                document_files.append(file_path)
+
+        # Handle document files (vector store or base64)
         file_ids: list[str] = []
         base64_files: list[ResponseInputFileContentParam] = []
 
-        if all_attachments:
-            if use_base64:
-                # Use base64 encoding for file attachments
-                for file_path in all_attachments:
-                    file_data_url = create_file_data_url(file_path)
-                    filename = Path(file_path).name
-                    base64_files.append(
-                        ResponseInputFileContentParam(
-                            type="input_file",
-                            file_data=file_data_url,
-                            filename=filename,
-                        )
-                    )
-            else:
-                # Upload to vector store
+        if document_files:
+            if use_vector_store:
+                # Upload to vector store for RAG
                 if self._user_vector_storage is None:
                     from openai_sdk_helpers.vector_storage import VectorStorage
 
@@ -348,25 +347,25 @@ class BaseResponse(Generic[T]):
                         )
 
                 user_vector_storage = cast(Any, self._user_vector_storage)
-                for file_path in all_attachments:
+                for file_path in document_files:
                     uploaded_file = user_vector_storage.upload_file(file_path)
                     file_ids.append(uploaded_file.id)
-
-        # Handle file_data parameter (always base64)
-        for file_path in all_file_data:
-            file_data_url = create_file_data_url(file_path)
-            filename = Path(file_path).name
-            base64_files.append(
-                ResponseInputFileContentParam(
-                    type="input_file",
-                    file_data=file_data_url,
-                    filename=filename,
-                )
-            )
+            else:
+                # Use base64 encoding for inline documents
+                for file_path in document_files:
+                    file_data_url = create_file_data_url(file_path)
+                    filename = Path(file_path).name
+                    base64_files.append(
+                        ResponseInputFileContentParam(
+                            type="input_file",
+                            file_data=file_data_url,
+                            filename=filename,
+                        )
+                    )
 
         # Handle images (always base64)
         image_contents: list[ResponseInputImageContentParam] = []
-        for image_path in all_images:
+        for image_path in image_files:
             image_url, detail = create_image_data_url(image_path, detail="auto")
             image_contents.append(
                 ResponseInputImageContentParam(
@@ -407,10 +406,8 @@ class BaseResponse(Generic[T]):
     async def run_async(
         self,
         content: str | list[str],
-        attachments: str | list[str] | None = None,
-        images: str | list[str] | None = None,
-        file_data: str | list[str] | None = None,
-        use_base64: bool = False,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Generate a response asynchronously from the OpenAI API.
 
@@ -418,21 +415,21 @@ class BaseResponse(Generic[T]):
         tool calls with registered handlers, and optionally parses the
         result into the configured output_structure.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
-        images : str, list[str], or None, default None
-            Optional image file path or list of image file paths to attach
-            as base64-encoded images.
-        file_data : str, list[str], or None, default None
-            Optional file path or list of file paths to attach as
-            base64-encoded file data.
-        use_base64 : bool, default False
-            If True, treat attachments as base64-encoded files instead of
-            uploading to vector stores.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -450,16 +447,17 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> # Use with image
+        >>> # Automatic type detection
         >>> result = await response.run_async(
-        ...     "What's in this image?",
-        ...     images="photo.jpg"
+        ...     "Analyze these files",
+        ...     files=["photo.jpg", "document.pdf"]
         ... )
 
-        >>> # Use with base64 file data
+        >>> # Use vector store for documents
         >>> result = await response.run_async(
-        ...     "Analyze this document",
-        ...     file_data="document.pdf"
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
         ... )
         """
         log(f"{self.__class__.__name__}::run_response")
@@ -467,10 +465,8 @@ class BaseResponse(Generic[T]):
 
         self._build_input(
             content=content,
-            attachments=(ensure_list(attachments) if attachments else None),
-            images=(ensure_list(images) if images else None),
-            file_data=(ensure_list(file_data) if file_data else None),
-            use_base64=use_base64,
+            files=(ensure_list(files) if files else None),
+            use_vector_store=use_vector_store,
         )
 
         kwargs = {
@@ -557,10 +553,8 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         *,
-        attachments: str | list[str] | None = None,
-        images: str | list[str] | None = None,
-        file_data: str | list[str] | None = None,
-        use_base64: bool = False,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Execute run_async synchronously with proper event loop handling.
 
@@ -568,21 +562,21 @@ class BaseResponse(Generic[T]):
         a separate thread if necessary. This enables safe usage in both
         synchronous and asynchronous contexts.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
-        images : str, list[str], or None, default None
-            Optional image file path or list of image file paths to attach
-            as base64-encoded images.
-        file_data : str, list[str], or None, default None
-            Optional file path or list of file paths to attach as
-            base64-encoded file data.
-        use_base64 : bool, default False
-            If True, treat attachments as base64-encoded files instead of
-            uploading to vector stores.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -591,26 +585,25 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> # Use with image
+        >>> # Automatic type detection
         >>> result = response.run_sync(
-        ...     "What's in this image?",
-        ...     images="photo.jpg"
+        ...     "Analyze these files",
+        ...     files=["photo.jpg", "document.pdf"]
         ... )
 
-        >>> # Use with base64 file data
+        >>> # Use vector store for documents
         >>> result = response.run_sync(
-        ...     "Analyze this document",
-        ...     file_data="document.pdf"
+        ...     "Search these documents",
+        ...     files=["doc1.pdf", "doc2.pdf"],
+        ...     use_vector_store=True
         ... )
         """
 
         async def runner() -> T | None:
             return await self.run_async(
                 content=content,
-                attachments=attachments,
-                images=images,
-                file_data=file_data,
-                use_base64=use_base64,
+                files=files,
+                use_vector_store=use_vector_store,
             )
 
         try:
@@ -632,10 +625,8 @@ class BaseResponse(Generic[T]):
         self,
         content: str | list[str],
         *,
-        attachments: str | list[str] | None = None,
-        images: str | list[str] | None = None,
-        file_data: str | list[str] | None = None,
-        use_base64: bool = False,
+        files: str | list[str] | None = None,
+        use_vector_store: bool = False,
     ) -> T | None:
         """Execute run_async and await the result.
 
@@ -643,21 +634,21 @@ class BaseResponse(Generic[T]):
         simply awaits run_async to provide API compatibility with agent
         interfaces.
 
+        Automatically detects file types:
+        - Images are sent as base64-encoded images
+        - Documents are sent as base64-encoded files (default)
+        - Documents can optionally use vector stores for RAG
+
         Parameters
         ----------
         content : str or list[str]
             Prompt text or list of prompt texts to send.
-        attachments : str, list[str], or None, default None
-            Optional file path or list of file paths to upload and attach.
-        images : str, list[str], or None, default None
-            Optional image file path or list of image file paths to attach
-            as base64-encoded images.
-        file_data : str, list[str], or None, default None
-            Optional file path or list of file paths to attach as
-            base64-encoded file data.
-        use_base64 : bool, default False
-            If True, treat attachments as base64-encoded files instead of
-            uploading to vector stores.
+        files : str, list[str], or None, default None
+            Optional file path or list of file paths. Each file is
+            automatically processed based on its type.
+        use_vector_store : bool, default False
+            If True, non-image files are uploaded to a vector store
+            for RAG-enabled search instead of inline base64 encoding.
 
         Returns
         -------
@@ -672,10 +663,8 @@ class BaseResponse(Generic[T]):
         return asyncio.run(
             self.run_async(
                 content=content,
-                attachments=attachments,
-                images=images,
-                file_data=file_data,
-                use_base64=use_base64,
+                files=files,
+                use_vector_store=use_vector_store,
             )
         )
 

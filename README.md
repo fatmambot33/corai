@@ -273,7 +273,7 @@ response.close()
 
 ### Image and File Analysis
 
-The `response` module supports base64-encoded images and files for direct analysis without vector stores:
+The `response` module automatically detects file types and handles them appropriately:
 
 ```python
 from openai_sdk_helpers.response import BaseResponse
@@ -282,35 +282,43 @@ from openai_sdk_helpers import OpenAISettings
 settings = OpenAISettings.from_env()
 
 with BaseResponse(
-    name="vision_demo",
-    instructions="You are a helpful assistant that can analyze images and documents.",
+    name="analyzer",
+    instructions="You are a helpful assistant that can analyze files.",
     tools=None,
     output_structure=None,
     tool_handlers={},
     openai_settings=settings,
 ) as response:
-    # Analyze an image
+    # Automatic type detection - single files parameter
+    # Images are sent as base64-encoded images
+    # Documents are sent as base64-encoded file data
+    result = response.run_sync(
+        "Analyze these files",
+        files=["photo.jpg", "document.pdf"]
+    )
+    print(result)
+    
+    # Single file - automatically detected
     result = response.run_sync(
         "What's in this image?",
-        images="path_to_image.jpg"  # Automatically base64-encoded
+        files="photo.jpg"  # Automatically detected as image
     )
     print(result)
     
-    # Analyze a document with inline base64 encoding
+    # Use vector store for RAG (Retrieval-Augmented Generation)
     result = response.run_sync(
-        "What is the main topic of this document?",
-        file_data="document.pdf"  # Automatically base64-encoded
-    )
-    print(result)
-    
-    # Analyze both together
-    result = response.run_sync(
-        "Compare the image and document",
-        images="photo.jpg",
-        file_data="report.pdf"
+        "Search these documents",
+        files=["doc1.pdf", "doc2.pdf"],
+        use_vector_store=True  # Enable RAG with vector stores
     )
     print(result)
 ```
+
+**How It Works:**
+
+- **Images** (jpg, png, gif, etc.) are automatically sent as base64-encoded images
+- **Documents** (pdf, txt, xlsx, etc.) are sent as base64-encoded file data by default
+- **Vector Stores** can optionally be used for documents when `use_vector_store=True`
 
 **Base64 Encoding Utilities:**
 
@@ -318,9 +326,14 @@ with BaseResponse(
 from openai_sdk_helpers.utils import (
     encode_image,
     encode_file,
+    is_image_file,
     create_image_data_url,
     create_file_data_url,
 )
+
+# Check if a file is an image
+is_image_file("photo.jpg")  # True
+is_image_file("document.pdf")  # False
 
 # Encode an image to base64
 base64_image = encode_image("photo.jpg")
@@ -333,19 +346,6 @@ base64_file = encode_file("document.pdf")
 
 # Create a data URL for a file
 file_data = create_file_data_url("document.pdf")
-```
-
-**Note on File Attachments:**
-
-By default, file attachments use vector stores for RAG (Retrieval-Augmented Generation). To use inline base64 encoding instead:
-
-```python
-# Use base64 encoding for attachments (alternative to vector stores)
-result = response.run_sync(
-    "Analyze this document",
-    attachments="document.pdf",
-    use_base64=True  # Force base64 encoding instead of vector store
-)
 ```
 
 ### Custom Prompt Templates

@@ -32,17 +32,14 @@ def test_build_input_with_images(response_base, tmp_path):
     image_content = b"fake image content"
     image_path.write_bytes(image_content)
 
-    # Build input with image
-    response_base._build_input(
-        content="What's in this image?",
-        images=[str(image_path)]
-    )
+    # Build input with image (automatically detected)
+    response_base._build_input(content="What's in this image?", files=[str(image_path)])
 
     # Verify message was added
     assert len(response_base.messages.messages) == 2  # system + user
     user_message = response_base.messages.messages[-1]
     assert user_message.role == "user"
-    
+
     # Check that the message content has an image
     content = user_message.content["content"]
     assert len(content) == 2  # text + image
@@ -58,17 +55,14 @@ def test_build_input_with_file_data(response_base, tmp_path):
     file_content = b"fake pdf content"
     file_path.write_bytes(file_content)
 
-    # Build input with file data
-    response_base._build_input(
-        content="Analyze this document",
-        file_data=[str(file_path)]
-    )
+    # Build input with file data (automatically detected as non-image)
+    response_base._build_input(content="Analyze this document", files=[str(file_path)])
 
     # Verify message was added
     assert len(response_base.messages.messages) == 2  # system + user
     user_message = response_base.messages.messages[-1]
     assert user_message.role == "user"
-    
+
     # Check that the message content has a file
     content = user_message.content["content"]
     assert len(content) == 2  # text + file
@@ -80,24 +74,20 @@ def test_build_input_with_file_data(response_base, tmp_path):
 
 
 def test_build_input_with_base64_attachments(response_base, tmp_path):
-    """Test _build_input with use_base64 flag."""
+    """Test _build_input without vector store flag (default is inline base64)."""
     # Create a temporary file
     file_path = tmp_path / "test_file.txt"
     file_content = b"test content"
     file_path.write_bytes(file_content)
 
-    # Build input with base64 flag
-    response_base._build_input(
-        content="Process this file",
-        attachments=[str(file_path)],
-        use_base64=True
-    )
+    # Build input - non-image files default to base64
+    response_base._build_input(content="Process this file", files=[str(file_path)])
 
     # Verify message was added
     assert len(response_base.messages.messages) == 2  # system + user
     user_message = response_base.messages.messages[-1]
     assert user_message.role == "user"
-    
+
     # Check that the message content has a file with base64 data
     content = user_message.content["content"]
     assert len(content) == 2  # text + file
@@ -112,22 +102,20 @@ def test_build_input_with_multiple_types(response_base, tmp_path):
     # Create temporary files
     image_path = tmp_path / "test_image.png"
     image_path.write_bytes(b"fake image")
-    
+
     file_path = tmp_path / "test_doc.pdf"
     file_path.write_bytes(b"fake pdf")
 
-    # Build input with multiple types
+    # Build input with multiple types - automatic detection
     response_base._build_input(
-        content="Analyze these",
-        images=[str(image_path)],
-        file_data=[str(file_path)]
+        content="Analyze these", files=[str(image_path), str(file_path)]
     )
 
     # Verify message was added
     user_message = response_base.messages.messages[-1]
     content = user_message.content["content"]
-    
-    # Should have text + image + file
+
+    # Should have text + file + image (order: files first, then images)
     assert len(content) == 3
     assert content[0]["type"] == "input_text"
     assert content[1]["type"] == "input_file"
@@ -135,7 +123,7 @@ def test_build_input_with_multiple_types(response_base, tmp_path):
 
 
 def test_build_input_vector_store_still_works(response_base, tmp_path):
-    """Test that vector store attachment still works without use_base64."""
+    """Test that vector store attachment still works with use_vector_store flag."""
     # Create a temporary file
     file_path = tmp_path / "test_file.txt"
     file_path.write_bytes(b"test content")
@@ -146,17 +134,19 @@ def test_build_input_vector_store_still_works(response_base, tmp_path):
     mock_file.id = "file_123"
     mock_storage.upload_file.return_value = mock_file
     mock_storage.id = "vs_123"
-    
-    with patch("openai_sdk_helpers.vector_storage.VectorStorage", return_value=mock_storage):
+
+    with patch(
+        "openai_sdk_helpers.vector_storage.VectorStorage", return_value=mock_storage
+    ):
         response_base._build_input(
             content="Process this file",
-            attachments=[str(file_path)],
-            use_base64=False
+            files=[str(file_path)],
+            use_vector_store=True,
         )
 
     # Verify vector storage was used
     mock_storage.upload_file.assert_called_once()
-    
+
     # Verify message uses file_id
     user_message = response_base.messages.messages[-1]
     content = user_message.content["content"]
@@ -164,30 +154,21 @@ def test_build_input_vector_store_still_works(response_base, tmp_path):
     assert content[1]["file_id"] == "file_123"
 
 
-def test_run_sync_with_images(response_base, tmp_path):
-    """Test run_sync method signature accepts images parameter."""
-    # Create a temporary image file
-    image_path = tmp_path / "test_image.jpg"
-    image_path.write_bytes(b"fake image")
-
+def test_run_sync_with_files(response_base, tmp_path):
+    """Test run_sync method signature accepts files parameter."""
     # We just need to verify the method signature accepts the parameter
-    # Don't actually call run_sync as it involves complex async behavior
     from inspect import signature
+
     sig = signature(response_base.run_sync)
-    assert 'images' in sig.parameters
-    assert 'file_data' in sig.parameters
-    assert 'use_base64' in sig.parameters
+    assert "files" in sig.parameters
+    assert "use_vector_store" in sig.parameters
 
 
-def test_run_async_with_images(response_base, tmp_path):
-    """Test run_async method signature accepts images parameter."""
-    # Create a temporary image file
-    image_path = tmp_path / "test_image.jpg"
-    image_path.write_bytes(b"fake image")
-
+def test_run_async_with_files(response_base, tmp_path):
+    """Test run_async method signature accepts files parameter."""
     # We just need to verify the method signature accepts the parameter
     from inspect import signature
+
     sig = signature(response_base.run_async)
-    assert 'images' in sig.parameters
-    assert 'file_data' in sig.parameters
-    assert 'use_base64' in sig.parameters
+    assert "files" in sig.parameters
+    assert "use_vector_store" in sig.parameters

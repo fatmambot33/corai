@@ -78,6 +78,7 @@ from .encoding import (
     encode_file,
     encode_image,
     get_mime_type,
+    is_image_file,
 )
 
 __all__ = [
@@ -120,4 +121,5 @@ __all__ = [
     "get_mime_type",
     "create_image_data_url",
     "create_file_data_url",
+    "is_image_file",
 ]
