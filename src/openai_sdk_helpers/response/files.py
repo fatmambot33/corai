@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from openai.types.responses.response_input_file_content_param import (
     ResponseInputFileContentParam,
@@ -40,7 +40,7 @@ def process_files(
     """Process file attachments and prepare them for OpenAI API.
 
     Automatically categorizes files by type (images vs documents) and
-    processes them appropriately. Supports batch processing for efficient
+    processes them appropriately. Supports concurrent processing for efficient
     handling of multiple files.
 
     Parameters
@@ -53,9 +53,10 @@ def process_files(
         If True, non-image files are uploaded to a vector store for
         RAG-enabled file search instead of inline base64 encoding.
     batch_size : int, default 10
-        Number of files to process in each batch for encoding operations.
+        Maximum number of files to submit to thread pool at once.
+        Processes files in chunks to avoid overwhelming the executor.
     max_workers : int, default 5
-        Maximum number of concurrent workers for batch processing.
+        Maximum number of concurrent workers for processing.
 
     Returns
     -------
@@ -242,25 +243,33 @@ def _encode_documents_base64_batch(
             filename=filename,
         )
 
-    # Process files in batches using thread pool
-    log(f"Batch processing {len(document_files)} documents with {max_workers} workers")
+    # Process files concurrently in batches using thread pool
+    log(
+        f"Processing {len(document_files)} documents in batches of {batch_size} "
+        f"with {max_workers} workers"
+    )
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks
-        future_to_file = {
-            executor.submit(encode_single_document, file_path): file_path
-            for file_path in document_files
-        }
+        # Process files in batches to avoid overwhelming the executor
+        for batch_start in range(0, len(document_files), batch_size):
+            batch_end = min(batch_start + batch_size, len(document_files))
+            batch = document_files[batch_start:batch_end]
 
-        # Collect results as they complete
-        for future in as_completed(future_to_file):
-            try:
-                result = future.result()
-                base64_files.append(result)
-            except Exception as exc:
-                file_path = future_to_file[future]
-                log(f"Error encoding document {file_path}: {exc}")
-                raise
+            # Submit this batch of tasks
+            future_to_file = {
+                executor.submit(encode_single_document, file_path): file_path
+                for file_path in batch
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_file):
+                try:
+                    result = future.result()
+                    base64_files.append(result)
+                except Exception as exc:
+                    file_path = future_to_file[future]
+                    log(f"Error encoding document {file_path}: {exc}")
+                    raise
 
     return base64_files
 
@@ -336,25 +345,33 @@ def _encode_images_base64_batch(
             detail=detail,
         )
 
-    # Process images in batches using thread pool
-    log(f"Batch processing {len(image_files)} images with {max_workers} workers")
+    # Process images concurrently in batches using thread pool
+    log(
+        f"Processing {len(image_files)} images in batches of {batch_size} "
+        f"with {max_workers} workers"
+    )
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks
-        future_to_file = {
-            executor.submit(encode_single_image, image_path): image_path
-            for image_path in image_files
-        }
+        # Process images in batches to avoid overwhelming the executor
+        for batch_start in range(0, len(image_files), batch_size):
+            batch_end = min(batch_start + batch_size, len(image_files))
+            batch = image_files[batch_start:batch_end]
 
-        # Collect results as they complete
-        for future in as_completed(future_to_file):
-            try:
-                result = future.result()
-                image_contents.append(result)
-            except Exception as exc:
-                image_path = future_to_file[future]
-                log(f"Error encoding image {image_path}: {exc}")
-                raise
+            # Submit this batch of tasks
+            future_to_file = {
+                executor.submit(encode_single_image, image_path): image_path
+                for image_path in batch
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_file):
+                try:
+                    result = future.result()
+                    image_contents.append(result)
+                except Exception as exc:
+                    image_path = future_to_file[future]
+                    log(f"Error encoding image {image_path}: {exc}")
+                    raise
 
     return image_contents
 
