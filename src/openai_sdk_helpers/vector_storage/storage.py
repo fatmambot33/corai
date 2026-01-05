@@ -301,7 +301,7 @@ class VectorStorage:
             file = self._client.files.create(
                 file=(file_name, file_data),
                 purpose=cast(Any, purpose),  # Cast to avoid type error
-                expires_after=expires_after if expires_after is not None else None,  # type: ignore
+                expires_after=expires_after,  # type: ignore
             )
 
             self._client.vector_stores.files.create(
