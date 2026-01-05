@@ -256,3 +256,72 @@ def test_repr(files_manager):
     repr_str = repr(files_manager)
     assert "FilesAPIManager" in repr_str
     assert "2" in repr_str
+
+
+def test_create_with_expires_after(files_manager, mock_client, tmp_path):
+    """Test creating file with expires_after parameter."""
+    # Create a temporary file
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("test content")
+
+    # Mock the API response
+    mock_file = Mock()
+    mock_file.id = "file-123"
+    mock_file.filename = "test.txt"
+    mock_client.files.create.return_value = mock_file
+
+    # Create file with 24h expiration (86400 seconds)
+    result = files_manager.create(test_file, purpose="user_data", expires_after=86400)
+
+    # Verify the expires_after was converted to days and hours
+    call_kwargs = mock_client.files.create.call_args[1]
+    assert "expires_after" in call_kwargs
+    expires_dict = call_kwargs["expires_after"]
+    assert expires_dict["days"] == 1  # 86400 seconds = 1 day
+    assert expires_dict["hours"] == 0
+
+    # Verify result
+    assert result.id == "file-123"
+    assert "file-123" in files_manager.tracked_files
+
+
+def test_create_with_expires_after_hours_conversion(
+    files_manager, mock_client, tmp_path
+):
+    """Test expires_after conversion for non-full-day values."""
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("test content")
+
+    mock_file = Mock()
+    mock_file.id = "file-456"
+    mock_client.files.create.return_value = mock_file
+
+    # Create file with 1 hour expiration (3600 seconds)
+    result = files_manager.create(test_file, purpose="user_data", expires_after=3600)
+
+    # Verify conversion
+    call_kwargs = mock_client.files.create.call_args[1]
+    expires_dict = call_kwargs["expires_after"]
+    assert expires_dict["days"] == 0
+    assert expires_dict["hours"] == 1  # 3600 seconds = 1 hour
+
+    assert result.id == "file-456"
+
+
+def test_create_without_expires_after(files_manager, mock_client, tmp_path):
+    """Test creating file without expires_after uses no expiration."""
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("test content")
+
+    mock_file = Mock()
+    mock_file.id = "file-789"
+    mock_client.files.create.return_value = mock_file
+
+    # Create file without expiration
+    result = files_manager.create(test_file, purpose="fine-tune")
+
+    # Verify no expires_after was passed
+    call_kwargs = mock_client.files.create.call_args[1]
+    assert "expires_after" not in call_kwargs
+
+    assert result.id == "file-789"
