@@ -121,6 +121,11 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
     if message is None:
         return ""
 
+    # Check if the message content has output_text attribute
+    output_text = getattr(message.content, "output_text", None)
+    if output_text:
+        return str(output_text)
+
     content = getattr(message.content, "content", None)
     if content is None:
         return ""
@@ -472,15 +477,17 @@ def main(config_path: Path) -> None:
     # Get attachment paths from session state if they were previously attached
     attachment_paths = st.session_state.get("current_attachments", [])
     if attachment_paths:
-        st.caption(f"Ready to send: {', '.join([Path(p).name for p in attachment_paths])}")
+        st.caption(
+            f"Ready to send: {', '.join([Path(p).name for p in attachment_paths])}"
+        )
 
     prompt = st.chat_input("Message the assistant")
     if prompt:
+        # Clear attachments before rerun to prevent them from being sent again
+        st.session_state["current_attachments"] = []
         _handle_user_message(
             prompt, config, attachment_paths if attachment_paths else None
         )
-        # Clear attachments after message is sent
-        st.session_state["current_attachments"] = []
 
 
 if __name__ == "__main__":
