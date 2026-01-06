@@ -8,6 +8,7 @@ rendering, response execution, and resource cleanup.
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -30,22 +31,30 @@ from openai_sdk_helpers.utils import (
     log,
 )
 
-# Supported file extensions for OpenAI Assistants file search
+# Supported file extensions for OpenAI Assistants file search and vision
 SUPPORTED_FILE_EXTENSIONS = (
     ".csv",
     ".docx",
+    ".gif",
     ".html",
     ".json",
+    ".jpeg",
+    ".jpg",
     ".md",
     ".pdf",
+    ".png",
     ".pptx",
     ".txt",
+    ".webp",
     ".xlsx",
 )
 
 
 def _validate_file_type(filename: str) -> bool:
-    """Check if a file has a supported extension for vector storage.
+    """Check if a file has a supported extension for upload.
+
+    Supports both document formats (for file search) and image formats
+    (for vision analysis).
 
     Parameters
     ----------
@@ -59,6 +68,32 @@ def _validate_file_type(filename: str) -> bool:
     """
     file_ext = Path(filename).suffix.lower()
     return file_ext in SUPPORTED_FILE_EXTENSIONS
+
+
+def _cleanup_temp_files(file_paths: list[str] | None = None) -> None:
+    """Delete temporary files that were created for uploads.
+
+    Parameters
+    ----------
+    file_paths : list[str] or None, default None
+        Specific file paths to delete. If None, deletes all tracked
+        temporary files from session state.
+
+    Notes
+    -----
+    Silently ignores errors when deleting files that may have already
+    been removed or are inaccessible.
+    """
+    paths_to_delete = file_paths or st.session_state.get("temp_file_paths", [])
+    for path in paths_to_delete:
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except (OSError, IOError):
+            pass  # Silently ignore if file already deleted or inaccessible
+
+    if file_paths is None:
+        st.session_state["temp_file_paths"] = []
 
 
 def _extract_assistant_text(response: BaseResponse[Any]) -> str:
@@ -223,7 +258,8 @@ def _reset_chat(close_response: bool = True) -> None:
     """Clear conversation and optionally close the response session.
 
     Saves the current conversation to disk, closes the response to clean
-    up resources, and clears the chat history from session state.
+    up resources, and clears the chat history from session state. Also
+    cleans up any temporary files that were created for uploads.
 
     Parameters
     ----------
@@ -234,13 +270,17 @@ def _reset_chat(close_response: bool = True) -> None:
     Notes
     -----
     This function mutates st.session_state in-place, clearing the
-    chat_history and response_instance keys.
+    chat_history, response_instance, and temp_file_paths keys.
     """
     response = st.session_state.get("response_instance")
     if close_response and isinstance(response, BaseResponse):
         filepath = f"./data/{response.name}.{response.uuid}.json"
         response.save(filepath)
         response.close()
+
+    # Clean up temporary files
+    _cleanup_temp_files()
+
     st.session_state["chat_history"] = []
     st.session_state.pop("response_instance", None)
 
@@ -249,7 +289,8 @@ def _init_session_state() -> None:
     """Initialize Streamlit session state for chat functionality.
 
     Creates the chat_history list in session state if it doesn't exist,
-    enabling conversation persistence across Streamlit reruns.
+    enabling conversation persistence across Streamlit reruns. Also
+    initializes a list for tracking temporary file paths that need cleanup.
 
     Notes
     -----
@@ -258,8 +299,10 @@ def _init_session_state() -> None:
     """
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
-    if "uploaded_files" not in st.session_state:
-        st.session_state["uploaded_files"] = []
+    if "temp_file_paths" not in st.session_state:
+        st.session_state["temp_file_paths"] = []
+    if "current_attachments" not in st.session_state:
+        st.session_state["current_attachments"] = []
 
 
 def _render_chat_history() -> None:
@@ -388,41 +431,56 @@ def main(config_path: Path) -> None:
 
     _render_chat_history()
 
-    # File uploader for attachments
-    uploaded_files = st.file_uploader(
-        "Attach files (optional)",
-        accept_multiple_files=True,
-        key="file_uploader",
-        help=f"Supported formats: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}",
-    )
+    # File uploader form - auto-clears on submit
+    with st.form("file_upload_form", clear_on_submit=True):
+        uploaded_files = st.file_uploader(
+            "Attach files (optional)",
+            accept_multiple_files=True,
+            help=f"Supported formats: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}",
+        )
+        submit_files = st.form_submit_button("Attach files")
 
-    # Save uploaded files to temporary directory and track paths
+    # Process uploaded files if form was submitted
     attachment_paths: list[str] = []
-    if uploaded_files:
+    if submit_files and uploaded_files:
         invalid_files = []
         for uploaded_file in uploaded_files:
             if not _validate_file_type(uploaded_file.name):
                 invalid_files.append(uploaded_file.name)
                 continue
+
+            # Create temporary file with the uploaded content
             with tempfile.NamedTemporaryFile(
                 delete=False, suffix=Path(uploaded_file.name).suffix
             ) as tmp_file:
                 tmp_file.write(uploaded_file.getbuffer())
+                tmp_file.flush()
                 attachment_paths.append(tmp_file.name)
+                # Track for cleanup
+                if tmp_file.name not in st.session_state.get("temp_file_paths", []):
+                    st.session_state["temp_file_paths"].append(tmp_file.name)
 
         if invalid_files:
             st.warning(
-                f"⚠️ Unsupported file types skipped: {', '.join(invalid_files)}. "
-                f"Supported formats: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}"
+                f"⚠️ Unsupported file types: {', '.join(invalid_files)}. "
+                f"Supported: {', '.join(sorted(SUPPORTED_FILE_EXTENSIONS))}"
             )
         if attachment_paths:
-            st.caption(f"📎 {len(attachment_paths)} file(s) ready to attach")
+            st.session_state["current_attachments"] = attachment_paths
+            st.info(f"📎 {len(attachment_paths)} file(s) attached")
+
+    # Get attachment paths from session state if they were previously attached
+    attachment_paths = st.session_state.get("current_attachments", [])
+    if attachment_paths:
+        st.caption(f"Ready to send: {', '.join([Path(p).name for p in attachment_paths])}")
 
     prompt = st.chat_input("Message the assistant")
     if prompt:
         _handle_user_message(
             prompt, config, attachment_paths if attachment_paths else None
         )
+        # Clear attachments after message is sent
+        st.session_state["current_attachments"] = []
 
 
 if __name__ == "__main__":
