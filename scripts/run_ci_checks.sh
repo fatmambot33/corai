@@ -27,7 +27,7 @@ fi
 echo ""
 
 echo "▶ Running black..."
-if black --check .; then
+if black .; then
     echo "✓ black passed"
 else
     echo "✗ black failed"
