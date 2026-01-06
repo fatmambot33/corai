@@ -121,15 +121,33 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
     if message is None:
         return ""
 
+    # Check if the message content has output_text attribute
+    output_text = getattr(message.content, "output_text", None)
+    if output_text:
+        return str(output_text)
+
     content = getattr(message.content, "content", None)
     if content is None:
         return ""
 
     text_parts: list[str] = []
     for part in ensure_list(content):
-        text_value = getattr(getattr(part, "text", None), "value", None)
-        if text_value:
-            text_parts.append(text_value)
+        # Handle both dict-like parts and object-like parts
+        text_content = None
+        if hasattr(part, "text"):
+            text_content = getattr(part, "text", None)
+        elif isinstance(part, dict):
+            text_content = part.get("text")
+
+        if text_content:
+            # If text_content is a string, use it directly (dict-style)
+            if isinstance(text_content, str):
+                text_parts.append(text_content)
+            # If text_content is an object with a value attribute, extract that value (object-style)
+            else:
+                text_value = getattr(text_content, "value", None)
+                if text_value:
+                    text_parts.append(text_value)
     if text_parts:
         return "\n\n".join(text_parts)
     return ""
@@ -303,6 +321,8 @@ def _init_session_state() -> None:
         st.session_state["temp_file_paths"] = []
     if "current_attachments" not in st.session_state:
         st.session_state["current_attachments"] = []
+    if "attachment_names" not in st.session_state:
+        st.session_state["attachment_names"] = []
 
 
 def _render_chat_history() -> None:
@@ -336,7 +356,10 @@ def _render_chat_history() -> None:
 
 
 def _handle_user_message(
-    prompt: str, config: StreamlitAppConfig, attachment_paths: list[str] | None = None
+    prompt: str,
+    config: StreamlitAppConfig,
+    attachment_paths: list[str] | None = None,
+    attachment_names: list[str] | None = None,
 ) -> None:
     """Process user input and generate assistant response.
 
@@ -352,6 +375,8 @@ def _handle_user_message(
         Loaded configuration with response handler definition.
     attachment_paths : list[str] or None, default None
         Optional list of file paths to attach to the message.
+    attachment_names : list[str] or None, default None
+        Optional list of original filenames for display purposes.
 
     Notes
     -----
@@ -359,11 +384,15 @@ def _handle_user_message(
     chat transcript rather than crashing the application. The function
     triggers a Streamlit rerun after successful response generation.
     """
-    attachment_names = (
-        [Path(p).name for p in attachment_paths] if attachment_paths else []
+    # Use provided display names or fall back to extracting from paths
+    display_names = (
+        attachment_names
+        if attachment_names
+        else [Path(p).name for p in attachment_paths] if attachment_paths else []
     )
+
     st.session_state["chat_history"].append(
-        {"role": "user", "content": prompt, "attachments": attachment_names}
+        {"role": "user", "content": prompt, "attachments": display_names}
     )
     try:
         response = _get_response_instance(config)
@@ -442,6 +471,7 @@ def main(config_path: Path) -> None:
 
     # Process uploaded files if form was submitted
     attachment_paths: list[str] = []
+    original_filenames: list[str] = []
     if submit_files and uploaded_files:
         invalid_files = []
         for uploaded_file in uploaded_files:
@@ -456,6 +486,7 @@ def main(config_path: Path) -> None:
                 tmp_file.write(uploaded_file.getbuffer())
                 tmp_file.flush()
                 attachment_paths.append(tmp_file.name)
+                original_filenames.append(uploaded_file.name)
                 # Track for cleanup
                 if tmp_file.name not in st.session_state.get("temp_file_paths", []):
                     st.session_state["temp_file_paths"].append(tmp_file.name)
@@ -467,20 +498,26 @@ def main(config_path: Path) -> None:
             )
         if attachment_paths:
             st.session_state["current_attachments"] = attachment_paths
+            st.session_state["attachment_names"] = original_filenames
             st.info(f"📎 {len(attachment_paths)} file(s) attached")
 
     # Get attachment paths from session state if they were previously attached
     attachment_paths = st.session_state.get("current_attachments", [])
+    attachment_display_names = st.session_state.get("attachment_names", [])
     if attachment_paths:
-        st.caption(f"Ready to send: {', '.join([Path(p).name for p in attachment_paths])}")
+        st.caption(f"Ready to send: {', '.join(attachment_display_names)}")
 
     prompt = st.chat_input("Message the assistant")
     if prompt:
-        _handle_user_message(
-            prompt, config, attachment_paths if attachment_paths else None
-        )
-        # Clear attachments after message is sent
+        # Clear attachments before rerun to prevent them from being sent again
         st.session_state["current_attachments"] = []
+        st.session_state["attachment_names"] = []
+        _handle_user_message(
+            prompt,
+            config,
+            attachment_paths or None,
+            attachment_display_names or None,
+        )
 
 
 if __name__ == "__main__":
