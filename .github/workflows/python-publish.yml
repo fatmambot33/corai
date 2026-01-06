@@ -27,8 +27,34 @@ jobs:
         python-version: '3.10'
     - name: Verify version matches release tag
       run: |
-        # Extract version from pyproject.toml
-        PACKAGE_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+        # Install toml parser (works with Python 3.10)
+        pip install toml
+        
+        # Extract version from pyproject.toml with error handling
+        PACKAGE_VERSION=$(python -c "
+import sys
+import toml
+try:
+    with open('pyproject.toml', 'r') as f:
+        config = toml.load(f)
+    version = config.get('project', {}).get('version')
+    if not version:
+        print('ERROR: Could not find project.version in pyproject.toml', file=sys.stderr)
+        sys.exit(1)
+    print(version)
+except FileNotFoundError:
+    print('ERROR: pyproject.toml not found', file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f'ERROR: Failed to read version from pyproject.toml: {e}', file=sys.stderr)
+    sys.exit(1)
+        ")
+        
+        if [ $? -ne 0 ]; then
+          echo "Failed to extract version from pyproject.toml"
+          exit 1
+        fi
+        
         # Extract version from GitHub release tag (remove 'v' prefix if present)
         TAG_VERSION=${GITHUB_REF#refs/tags/}
         TAG_VERSION=${TAG_VERSION#v}
