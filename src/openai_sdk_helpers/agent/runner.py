@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from agents import Agent, RunResult, RunResultStreaming, Runner
+from agents import Agent, RunResult, RunResultStreaming, Runner, Session
 
 from openai_sdk_helpers.utils.async_utils import run_coroutine_with_fallback
 
@@ -20,6 +20,7 @@ async def run_async(
     *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
+    session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent asynchronously.
 
@@ -33,6 +34,8 @@ async def run_async(
         Optional context dictionary passed to the agent.
     output_type : type or None, default=None
         Optional type used to cast the final output.
+    session : Session or None, default=None
+        Optional session for maintaining conversation history.
 
     Returns
     -------
@@ -49,7 +52,7 @@ async def run_async(
     ...     return result
     >>> asyncio.run(example())  # doctest: +SKIP
     """
-    result = await Runner.run(agent, input, context=context)
+    result = await Runner.run(agent, input, context=context, session=session)
     if output_type is not None:
         return result.final_output_as(output_type)
     return result
@@ -61,6 +64,7 @@ def run_sync(
     *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
+    session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent synchronously.
 
@@ -78,6 +82,8 @@ def run_sync(
         Optional context dictionary passed to the agent.
     output_type : type or None, default=None
         Optional type used to cast the final output.
+    session : Session or None, default=None
+        Optional session for maintaining conversation history.
 
     Returns
     -------
@@ -95,7 +101,7 @@ def run_sync(
     >>> agent = Agent(name="test", instructions="test", model="gpt-4o-mini")
     >>> result = run_sync(agent, "What is 2+2?")  # doctest: +SKIP
     """
-    coro = Runner.run(agent, input, context=context)
+    coro = Runner.run(agent, input, context=context, session=session)
     result: RunResult = run_coroutine_with_fallback(coro)
     if output_type is not None:
         return result.final_output_as(output_type)
@@ -108,6 +114,7 @@ def run_streamed(
     *,
     context: Optional[Dict[str, Any]] = None,
     output_type: Optional[Any] = None,
+    session: Optional[Session] = None,
 ) -> RunResultStreaming:
     """Stream agent execution results.
 
@@ -121,6 +128,8 @@ def run_streamed(
         Optional context dictionary passed to the agent.
     output_type : type or None, default=None
         Optional type used to cast the final output.
+    session : Session or None, default=None
+        Optional session for maintaining conversation history.
 
     Returns
     -------
@@ -135,7 +144,7 @@ def run_streamed(
     >>> for chunk in result.stream_text():  # doctest: +SKIP
     ...     print(chunk, end="")
     """
-    result = Runner.run_streamed(agent, input, context=context)
+    result = Runner.run_streamed(agent, input, context=context, session=session)
     if output_type is not None:
         return result.final_output_as(output_type)
     return result

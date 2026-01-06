@@ -19,20 +19,26 @@ class AgentConfigLike(Protocol):
     name: str
     description: Optional[str]
     model: Optional[str]
-    template_path: Optional[str]
+    template_path: Optional[Any]
+    instructions: Optional[Any]
     input_type: Optional[Any]
     output_type: Optional[Any]
     tools: Optional[Any]
     model_settings: Optional[Any]
+    handoffs: Optional[Any]
+    input_guardrails: Optional[Any]
+    output_guardrails: Optional[Any]
+    session: Optional[Any]
 
 
 class AgentBase:
     """Factory for creating and configuring specialized agents.
 
     ``AgentBase`` provides the foundation for building OpenAI agents with support
-    for Jinja2 prompt templates, custom tools, and both synchronous and
-    asynchronous execution modes. All specialized agents in this package extend
-    this base class.
+    for Jinja2 prompt templates, custom tools, handoffs for agent delegation,
+    input and output guardrails for validation, session management for
+    conversation history, and both synchronous and asynchronous execution modes.
+    All specialized agents in this package extend this base class.
 
     Examples
     --------
@@ -66,7 +72,7 @@ class AgentBase:
 
     Methods
     -------
-    from_config(config, run_context_wrapper)
+    from_config(config, run_context_wrapper, prompt_dir, default_model)
         Instantiate a ``AgentBase`` from configuration.
     build_prompt_from_jinja(run_context_wrapper)
         Render the agent prompt using Jinja and optional context.
@@ -74,16 +80,16 @@ class AgentBase:
         Render the agent prompt using the provided run context.
     get_agent()
         Construct the configured :class:`agents.Agent` instance.
-    run(input, context, output_type)
-        Execute the agent asynchronously (alias of ``run_async``).
-    run_async(input, context, output_type)
+    run_async(input, context, output_type, session)
         Execute the agent asynchronously and optionally cast the result.
-    run_sync(input, context, output_type)
+    run_sync(input, context, output_type, session)
         Execute the agent synchronously.
-    run_streamed(input, context, output_type)
+    run_streamed(input, context, output_type, session)
         Return a streaming result for the agent execution.
     as_tool()
         Return the agent as a callable tool.
+    close()
+        Clean up agent resources (can be overridden by subclasses).
     """
 
     def __init__(
@@ -140,7 +146,14 @@ class AgentBase:
         self._output_type = config.output_type or config.input_type
         self._tools = config.tools
         self._model_settings = config.model_settings
+        self._handoffs = config.handoffs
+        self._input_guardrails = config.input_guardrails
+        self._output_guardrails = config.output_guardrails
+        self._session = config.session
         self._run_context_wrapper = run_context_wrapper
+
+        # Store instructions if provided directly in config
+        self._instructions = getattr(config, "instructions", None)
 
     @classmethod
     def from_config(
@@ -252,6 +265,12 @@ class AgentBase:
             agent_config["tools"] = self._tools
         if self._model_settings:
             agent_config["model_settings"] = self._model_settings
+        if self._handoffs:
+            agent_config["handoffs"] = self._handoffs
+        if self._input_guardrails:
+            agent_config["input_guardrails"] = self._input_guardrails
+        if self._output_guardrails:
+            agent_config["output_guardrails"] = self._output_guardrails
 
         return Agent(**agent_config)
 
@@ -261,6 +280,7 @@ class AgentBase:
         *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
+        session: Optional[Any] = None,
     ) -> Any:
         """Execute the agent asynchronously.
 
@@ -272,6 +292,9 @@ class AgentBase:
             Optional dictionary passed to the agent.
         output_type : type or None, default=None
             Optional type used to cast the final output.
+        session : Session or None, default=None
+            Optional session for maintaining conversation history across runs.
+            If not provided, uses the session from config if available.
 
         Returns
         -------
@@ -280,11 +303,14 @@ class AgentBase:
         """
         if self._output_type is not None and output_type is None:
             output_type = self._output_type
+        # Use session from parameter, fall back to config session
+        session_to_use = session if session is not None else self._session
         return await run_async(
             agent=self.get_agent(),
             input=input,
             context=context,
             output_type=output_type,
+            session=session_to_use,
         )
 
     def run_sync(
@@ -293,6 +319,7 @@ class AgentBase:
         *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
+        session: Optional[Any] = None,
     ) -> Any:
         """Run the agent synchronously.
 
@@ -304,17 +331,23 @@ class AgentBase:
             Optional dictionary passed to the agent.
         output_type : type or None, default=None
             Optional type used to cast the final output.
+        session : Session or None, default=None
+            Optional session for maintaining conversation history across runs.
+            If not provided, uses the session from config if available.
 
         Returns
         -------
         Any
             Agent result, optionally converted to ``output_type``.
         """
+        # Use session from parameter, fall back to config session
+        session_to_use = session if session is not None else self._session
         return run_sync(
             agent=self.get_agent(),
             input=input,
             context=context,
             output_type=output_type,
+            session=session_to_use,
         )
 
     def run_streamed(
@@ -323,6 +356,7 @@ class AgentBase:
         *,
         context: Optional[Dict[str, Any]] = None,
         output_type: Optional[Any] = None,
+        session: Optional[Any] = None,
     ) -> RunResultStreaming:
         """Stream the agent execution results.
 
@@ -334,16 +368,22 @@ class AgentBase:
             Optional dictionary passed to the agent.
         output_type : type or None, default=None
             Optional type used to cast the final output.
+        session : Session or None, default=None
+            Optional session for maintaining conversation history across runs.
+            If not provided, uses the session from config if available.
 
         Returns
         -------
         RunResultStreaming
             Streaming output wrapper from the agent execution.
         """
+        # Use session from parameter, fall back to config session
+        session_to_use = session if session is not None else self._session
         result = run_streamed(
             agent=self.get_agent(),
             input=input,
             context=context,
+            session=session_to_use,
         )
         if self._output_type and not output_type:
             output_type = self._output_type
@@ -364,6 +404,48 @@ class AgentBase:
             tool_name=self.agent_name, tool_description=self.description
         )  # type: ignore
         return tool_obj
+
+    def __enter__(self) -> AgentBase:
+        """Enter the context manager for resource management.
+
+        Returns
+        -------
+        AgentBase
+            Self reference for use in with statements.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context manager and clean up resources.
+
+        Parameters
+        ----------
+        exc_type : type or None
+            Exception type if an exception occurred, otherwise None.
+        exc_val : Exception or None
+            Exception instance if an exception occurred, otherwise None.
+        exc_tb : traceback or None
+            Traceback object if an exception occurred, otherwise None.
+        """
+        self.close()
+
+    def close(self) -> None:
+        """Clean up agent resources.
+
+        This method is called automatically when using the agent as a
+        context manager. Override in subclasses to implement custom
+        cleanup logic.
+
+        Examples
+        --------
+        >>> agent = AgentBase(config, default_model="gpt-4o-mini")
+        >>> try:
+        ...     result = agent.run_sync("query")
+        ... finally:
+        ...     agent.close()
+        """
+        # Base implementation does nothing, but subclasses can override
+        pass
 
 
 __all__ = ["AgentConfigLike", "AgentBase"]

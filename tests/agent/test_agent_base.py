@@ -24,10 +24,15 @@ class MockConfig(BaseModel):
     description: str | None = None
     model: str | None = None
     template_path: str | None = None
+    instructions: str | None = None
     input_type: Any | None = None
     output_type: Any | None = None
     tools: Any | None = None
     model_settings: Any | None = None
+    handoffs: Any | None = None
+    input_guardrails: Any | None = None
+    output_guardrails: Any | None = None
+    session: Any | None = None
 
 
 @pytest.fixture
