@@ -28,17 +28,18 @@ To create a new release of this package:
    - Add release notes describing the changes
    - Publish the release
 
-3. **Automated workflow**
+4. **Automated workflow**
    - The `Upload Python Package` workflow will automatically trigger
-   - It will verify the version matches the release tag
    - It will build and publish to PyPI
+   - **Important**: Ensure version is updated and release is from main before publishing
 
-## Version Validation
+## Manual Validation Checklist
 
-The release workflow includes automatic validation steps that:
-- **Branch validation**: Ensures the release is created from the `main` branch
-- **Version validation**: Extracts the version from `pyproject.toml` and compares it with the GitHub release tag
-- Fails the build early if there's a mismatch
+Before creating a release, verify:
+- [ ] All changes are merged from `develop` to `main`
+- [ ] Version in `pyproject.toml` matches the intended release tag
+- [ ] Release will be created targeting the `main` branch
+- [ ] Version doesn't already exist on PyPI
 
 This prevents the following error:
 ```
@@ -66,22 +67,24 @@ This occurs when:
 - The workflow tried to upload a version that already exists on PyPI
 
 **Solution**: 
-1. Delete the failed release and tag
-2. Merge changes to `main` branch
-3. Update version in `pyproject.toml` on `main`
-4. Create a new release from `main` with an incremented version number
+1. Delete the failed release and tag from GitHub
+2. Verify changes are merged to `main` branch
+3. Update version in `pyproject.toml` on `main` to a new version number
+4. Commit and push changes to `main`
+5. Create a new release from `main` with the matching new version number
 
-### Branch validation error
+### Wrong branch used for release
 
-If the workflow fails with "Release must be created from main branch" error:
+If you accidentally created a release from `develop`:
 1. Delete the release and tag from GitHub
 2. Merge your changes from `develop` to `main`
-3. Create a new release targeting the `main` branch
+3. Verify version in `pyproject.toml` on `main` is correct
+4. Create a new release targeting the `main` branch
 
-### Version mismatch error
+### Version already exists on PyPI
 
-If the workflow fails with "Version mismatch!" error:
+If the version number already exists on PyPI:
 1. Delete the release and tag from GitHub
-2. Update the version in `pyproject.toml` on `main` branch to match your intended release version
+2. Increment the version in `pyproject.toml` on `main` branch
 3. Commit and push the change to `main`
-4. Create a new release from `main` with the matching tag
+4. Create a new release from `main` with the new version tag
