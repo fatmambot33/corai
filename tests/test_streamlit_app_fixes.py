@@ -93,3 +93,38 @@ def test_extract_assistant_text_with_multiple_text_parts() -> None:
     # Test that parts are joined with double newlines
     result = _extract_assistant_text(mock_response)
     assert result == "First part\n\nSecond part"
+
+
+def test_extract_assistant_text_with_dict_text_structure() -> None:
+    """Test extraction when content part has text as a string in a dict.
+
+    This tests the specific case where message.content.content is a list
+    of dictionaries with 'text' as a string value (not an object with .value).
+    This structure appears in some OpenAI API responses.
+    """
+    # Create a mock response
+    mock_response = Mock(spec=BaseResponse)
+
+    # Create a mock message that matches the dict structure
+    mock_message = Mock()
+    mock_message.content = Mock()
+    mock_message.content.output_text = None
+
+    # The content structure where text is a string directly in the dict
+    mock_content_part = {
+        "annotations": [],
+        "text": "Could you please provide more details or specify what you're referring to regarding the tree?",
+        "type": "output_text",
+        "logprobs": [],
+    }
+
+    mock_message.content.content = [mock_content_part]
+
+    mock_response.get_last_assistant_message.return_value = mock_message
+    mock_response.get_last_tool_message.return_value = None
+
+    # Test that output_text is extracted
+    result = _extract_assistant_text(mock_response)
+
+    expected = "Could you please provide more details or specify what you're referring to regarding the tree?"
+    assert result == expected

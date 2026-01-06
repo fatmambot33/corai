@@ -132,9 +132,22 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
 
     text_parts: list[str] = []
     for part in ensure_list(content):
-        text_value = getattr(getattr(part, "text", None), "value", None)
-        if text_value:
-            text_parts.append(text_value)
+        # Handle both dict-like parts and object-like parts
+        text_attr = (
+            getattr(part, "text", None)
+            if hasattr(part, "text")
+            else part.get("text") if isinstance(part, dict) else None
+        )
+
+        if text_attr:
+            # If text_attr is a string, use it directly
+            if isinstance(text_attr, str):
+                text_parts.append(text_attr)
+            # If text_attr has a value attribute, use that
+            else:
+                text_value = getattr(text_attr, "value", None)
+                if text_value:
+                    text_parts.append(text_value)
     if text_parts:
         return "\n\n".join(text_parts)
     return ""
