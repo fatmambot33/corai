@@ -10,6 +10,7 @@ from openai.types.responses.response_text_config_param import ResponseTextConfig
 from ..config import OpenAISettings
 from ..structure.base import BaseStructure
 from ..response.base import BaseResponse, ToolHandler
+from ..utils import JSONSerializable
 
 TIn = TypeVar("TIn", bound="BaseStructure")
 TOut = TypeVar("TOut", bound="BaseStructure")
@@ -158,12 +159,13 @@ def get_default_registry() -> ResponseRegistry:
 
 
 @dataclass(frozen=True, slots=True)
-class ResponseConfiguration(Generic[TIn, TOut]):
+class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
     """
     Represent an immutable configuration describing input and output structures.
 
     Encapsulate all metadata required to define how a request is interpreted and
     how a response is structured, while enforcing strict type and runtime safety.
+    Inherits from JSONSerializable to support serialization to JSON format.
 
     Parameters
     ----------
@@ -207,6 +209,10 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         Validate configuration invariants and enforce BaseStructure subclassing.
     instructions_text
         Return the resolved instruction content as a string.
+    to_json()
+        Return a JSON-compatible dict representation (inherited from JSONSerializable).
+    to_json_file(filepath)
+        Write serialized JSON data to a file path (inherited from JSONSerializable).
 
     Examples
     --------
