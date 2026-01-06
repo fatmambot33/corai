@@ -11,7 +11,7 @@ echo "=========================================="
 echo ""
 
 # Change to project root directory
-cd "$(dirname "$0")/.."
+cd "$(git rev-parse --show-toplevel)"
 
 # Track overall status
 FAILED=0
