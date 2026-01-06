@@ -32,6 +32,8 @@ class AgentRegistry:
         Remove all registered configurations.
     save_to_directory(path)
         Export all registered configurations to JSON files.
+    load_from_directory(path)
+        Load configurations from JSON files in a directory.
 
     Examples
     --------
@@ -171,6 +173,60 @@ class AgentRegistry:
             filepath = dir_path / filename
             config.to_json_file(filepath)
 
+    def load_from_directory(self, path: Path | str) -> int:
+        """Load all agent configurations from JSON files in a directory.
+
+        Scans the directory for JSON files and attempts to load each as an
+        AgentConfig. Successfully loaded configurations are registered.
+        Existing configurations with the same name will cause a ValueError.
+
+        Parameters
+        ----------
+        path : Path or str
+            Directory path containing JSON configuration files.
+
+        Returns
+        -------
+        int
+            Number of configurations successfully loaded and registered.
+
+        Raises
+        ------
+        FileNotFoundError
+            If the directory does not exist.
+        ValueError
+            If a configuration with the same name is already registered.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> count = registry.load_from_directory("./agents")
+        >>> print(f"Loaded {count} configurations")
+        """
+        dir_path = Path(path)
+        if not dir_path.exists():
+            raise FileNotFoundError(f"Directory not found: {dir_path}")
+
+        if not dir_path.is_dir():
+            raise NotADirectoryError(f"Path is not a directory: {dir_path}")
+
+        count = 0
+        for json_file in sorted(dir_path.glob("*.json")):
+            try:
+                config = AgentConfig.from_json_file(json_file)
+                self.register(config)
+                count += 1
+            except Exception as exc:
+                # Log warning but continue processing other files
+                import warnings
+
+                warnings.warn(
+                    f"Failed to load configuration from {json_file}: {exc}",
+                    stacklevel=2,
+                )
+
+        return count
+
 
 # Global default registry instance
 _default_registry = AgentRegistry()
@@ -245,6 +301,10 @@ class AgentConfig(JSONSerializable):
         Validate configuration invariants after initialization.
     instructions_text
         Return the resolved instruction content as a string.
+    to_agent_base(run_context_wrapper, prompt_dir, default_model)
+        Create an AgentBase instance from this configuration.
+    replace(**changes)
+        Create a new AgentConfig with specified fields replaced.
     to_json()
         Return a JSON-compatible dict (inherited from JSONSerializable).
     to_json_file(filepath)
@@ -341,6 +401,76 @@ class AgentConfig(JSONSerializable):
                     f"Unable to read instructions at '{instruction_path}': {exc}"
                 ) from exc
         return self.instructions
+
+    def to_agent_base(
+        self,
+        run_context_wrapper: Any = None,
+        prompt_dir: Path | None = None,
+        default_model: str | None = None,
+    ) -> Any:
+        """Create an AgentBase instance from this configuration.
+
+        This is a convenience method that delegates to AgentBase.from_config().
+
+        Parameters
+        ----------
+        run_context_wrapper : RunContextWrapper or None, default=None
+            Optional wrapper providing runtime context for prompt rendering.
+        prompt_dir : Path or None, default=None
+            Optional directory holding prompt templates.
+        default_model : str or None, default=None
+            Optional fallback model identifier if config doesn't specify one.
+
+        Returns
+        -------
+        AgentBase
+            Configured agent instance ready for execution.
+
+        Examples
+        --------
+        >>> config = AgentConfig(name="helper", model="gpt-4o-mini")
+        >>> agent = config.to_agent_base()
+        >>> result = agent.run_sync("Hello!")
+        """
+        # Import here to avoid circular dependency
+        from .base import AgentBase
+
+        return AgentBase.from_config(
+            config=self,
+            run_context_wrapper=run_context_wrapper,
+            prompt_dir=prompt_dir,
+            default_model=default_model,
+        )
+
+    def replace(self, **changes: Any) -> AgentConfig:
+        """Create a new AgentConfig with specified fields replaced.
+
+        Since AgentConfig is frozen (immutable), this method creates a new
+        instance with the specified changes applied. This is useful for
+        creating variations of a configuration.
+
+        Parameters
+        ----------
+        **changes : Any
+            Keyword arguments specifying fields to change and their new values.
+
+        Returns
+        -------
+        AgentConfig
+            New configuration instance with changes applied.
+
+        Examples
+        --------
+        >>> config = AgentConfig(name="agent1", model="gpt-4o-mini")
+        >>> config2 = config.replace(name="agent2", description="Modified")
+        >>> config2.name
+        'agent2'
+        >>> config2.model
+        'gpt-4o-mini'
+        """
+        from dataclasses import replace
+
+        return replace(self, **changes)
 
 
 __all__ = ["AgentConfig", "AgentRegistry", "get_default_registry"]

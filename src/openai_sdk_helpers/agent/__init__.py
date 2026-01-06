@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .base import AgentBase
-from .config import AgentConfig
+from .config import AgentConfig, AgentRegistry, get_default_registry
 from ..structure.plan.enum import AgentEnum
 from .coordination import CoordinatorAgent
 from .runner import run_sync, run_async, run_streamed
@@ -18,6 +18,8 @@ from .search.web import WebAgentSearch
 __all__ = [
     "AgentBase",
     "AgentConfig",
+    "AgentRegistry",
+    "get_default_registry",
     "AgentEnum",
     "CoordinatorAgent",
     "run_sync",
