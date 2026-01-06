@@ -11,6 +11,7 @@ from ..config import OpenAISettings
 from ..structure.base import BaseStructure
 from ..response.base import BaseResponse, ToolHandler
 from ..utils import JSONSerializable
+from ..utils.path_utils import ensure_directory
 
 TIn = TypeVar("TIn", bound="BaseStructure")
 TOut = TypeVar("TOut", bound="BaseStructure")
@@ -135,6 +136,45 @@ class ResponseRegistry:
         >>> registry.clear()
         """
         self._configs.clear()
+
+    def save_to_directory(self, path: Path | str) -> None:
+        """Export all registered configurations to JSON files in a directory.
+
+        Serializes each registered ResponseConfiguration to an individual JSON file
+        named after the configuration. Creates the directory if it does not exist.
+
+        Parameters
+        ----------
+        path : Path or str
+            Directory path where JSON files will be saved. Will be created if
+            it does not already exist.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        OSError
+            If the directory cannot be created or files cannot be written.
+
+        Examples
+        --------
+        >>> registry = ResponseRegistry()
+        >>> registry.save_to_directory("./data")
+        >>> registry.save_to_directory(Path("exports"))
+        """
+        dir_path = ensure_directory(Path(path))
+        config_names = self.list_names()
+
+        if not config_names:
+            return
+
+        for config_name in config_names:
+            config = self.get(config_name)
+            filename = f"{config_name}.json"
+            filepath = dir_path / filename
+            config.to_json_file(filepath)
 
 
 # Global default registry instance
