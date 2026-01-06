@@ -385,12 +385,11 @@ def _handle_user_message(
     triggers a Streamlit rerun after successful response generation.
     """
     # Use provided display names or fall back to extracting from paths
-    if attachment_names:
-        display_names = attachment_names
-    elif attachment_paths:
-        display_names = [Path(p).name for p in attachment_paths]
-    else:
-        display_names = []
+    display_names = (
+        attachment_names
+        if attachment_names
+        else [Path(p).name for p in attachment_paths] if attachment_paths else []
+    )
 
     st.session_state["chat_history"].append(
         {"role": "user", "content": prompt, "attachments": display_names}
@@ -516,8 +515,8 @@ def main(config_path: Path) -> None:
         _handle_user_message(
             prompt,
             config,
-            attachment_paths if attachment_paths else None,
-            attachment_display_names if attachment_display_names else None,
+            attachment_paths or None,
+            attachment_display_names or None,
         )
 
 
