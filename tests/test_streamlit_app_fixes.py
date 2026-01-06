@@ -123,7 +123,7 @@ def test_extract_assistant_text_with_dict_text_structure() -> None:
     mock_response.get_last_assistant_message.return_value = mock_message
     mock_response.get_last_tool_message.return_value = None
 
-    # Test that output_text is extracted
+    # Test that text content from dict structure is extracted
     result = _extract_assistant_text(mock_response)
 
     expected = "Could you please provide more details or specify what you're referring to regarding the tree?"
