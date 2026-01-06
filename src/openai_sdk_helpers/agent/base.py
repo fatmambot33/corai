@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Protocol
 
 from agents import Agent, RunResult, RunResultStreaming, Runner
 from agents.run_context import RunContextWrapper
-from agents.tool import FunctionTool
+from agents.tool import FunctionTool, Tool
 from jinja2 import Template
 
 from .runner import run_async, run_streamed, run_sync
@@ -442,18 +442,18 @@ class AgentBase:
             return result.final_output_as(output_type)
         return result
 
-    def as_tool(self) -> FunctionTool:
+    def as_tool(self) -> Tool:
         """Return the agent as a callable tool.
 
         Returns
         -------
-        FunctionTool
+        Tool
             Tool instance wrapping this agent.
         """
         agent = self.get_agent()
-        tool_obj: FunctionTool = agent.as_tool(
+        tool_obj: Tool = agent.as_tool(
             tool_name=self.agent_name, tool_description=self.description
-        )  # type: ignore
+        )
         return tool_obj
 
     def __enter__(self) -> AgentBase:
