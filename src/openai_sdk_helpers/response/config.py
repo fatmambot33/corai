@@ -181,6 +181,12 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         Structure class used to format or validate output. Schema is
         automatically generated from this structure. Must subclass
         BaseStructure. Default is None.
+    system_vector_store : list[str], optional
+        Optional list of vector store names to attach as system context.
+        Default is None.
+    data_path : Path, str, or None, optional
+        Optional absolute directory path for storing artifacts. If not provided,
+        defaults to get_data_path(class_name). Default is None.
 
     Raises
     ------
@@ -219,6 +225,8 @@ class ResponseConfiguration(Generic[TIn, TOut]):
     tools: Optional[list]
     input_structure: Optional[Type[TIn]]
     output_structure: Optional[Type[TOut]]
+    system_vector_store: Optional[list[str]] = None
+    data_path: Optional[Path | str] = None
 
     def __post_init__(self) -> None:
         """
@@ -328,6 +336,8 @@ class ResponseConfiguration(Generic[TIn, TOut]):
             instructions=instructions,
             tools=self.tools,
             output_structure=self.output_structure,
+            system_vector_store=self.system_vector_store,
+            data_path=self.data_path,
             tool_handlers=tool_handlers,
             openai_settings=openai_settings,
         )

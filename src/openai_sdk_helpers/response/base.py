@@ -126,10 +126,10 @@ class BaseResponse(Generic[T]):
         instructions: str,
         tools: list | None,
         output_structure: type[T] | None,
-        tool_handlers: dict[str, ToolHandler],
-        openai_settings: OpenAISettings,
         system_vector_store: list[str] | None = None,
         data_path: Path | str | None = None,
+        tool_handlers: dict[str, ToolHandler] | None = None,
+        openai_settings: OpenAISettings | None = None,
     ) -> None:
         """Initialize a response session with OpenAI configuration.
 
@@ -150,18 +150,19 @@ class BaseResponse(Generic[T]):
             Structure class used to parse tool call outputs. When provided,
             the schema is automatically generated using the structure's
             response_format() method. Pass None for unstructured responses.
-        tool_handlers : dict[str, ToolHandler]
-            Mapping from tool names to callable handlers. Each handler receives
-            a ResponseFunctionToolCall and returns a string or any serializable
-            result.
-        openai_settings : OpenAISettings
-            Fully configured OpenAI settings with API key and default model.
         system_vector_store : list[str] or None, default None
             Optional list of vector store names to attach as system context.
         data_path : Path, str, or None, default None
             Optional absolute directory path for storing artifacts. If not provided,
             defaults to get_data_path(class_name). Session files are saved as
             data_path / uuid.json.
+        tool_handlers : dict[str, ToolHandler] or None, default None
+            Mapping from tool names to callable handlers. Each handler receives
+            a ResponseFunctionToolCall and returns a string or any serializable
+            result. Defaults to an empty dict when not provided.
+        openai_settings : OpenAISettings or None, default None
+            Fully configured OpenAI settings with API key and default model.
+            Required for normal operation.
 
         Raises
         ------
@@ -184,6 +185,11 @@ class BaseResponse(Generic[T]):
         ...     openai_settings=settings,
         ... )
         """
+        if tool_handlers is None:
+            tool_handlers = {}
+        if openai_settings is None:
+            raise ValueError("openai_settings is required")
+
         self._tool_handlers = tool_handlers
         self._name = name
 
