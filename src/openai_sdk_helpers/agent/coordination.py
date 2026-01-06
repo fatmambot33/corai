@@ -44,6 +44,14 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
         Return a JSON-serializable snapshot of stored project data.
     save()
         Persist the stored project data to a JSON file.
+    to_json()
+        Return a JSON-compatible dict representation (inherited from JSONSerializable).
+    to_json_file(filepath)
+        Write serialized JSON data to a file path (inherited from JSONSerializable).
+    from_json(data)
+        Create an instance from a JSON-compatible dict (class method, inherited from JSONSerializable).
+    from_json_file(filepath)
+        Load an instance from a JSON file (class method, inherited from JSONSerializable).
     """
 
     def __init__(

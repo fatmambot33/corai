@@ -213,6 +213,10 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
         Return a JSON-compatible dict representation (inherited from JSONSerializable).
     to_json_file(filepath)
         Write serialized JSON data to a file path (inherited from JSONSerializable).
+    from_json(data)
+        Create an instance from a JSON-compatible dict (class method, inherited from JSONSerializable).
+    from_json_file(filepath)
+        Load an instance from a JSON file (class method, inherited from JSONSerializable).
 
     Examples
     --------
