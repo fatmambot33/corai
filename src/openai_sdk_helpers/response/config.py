@@ -10,6 +10,7 @@ from openai.types.responses.response_text_config_param import ResponseTextConfig
 from ..config import OpenAISettings
 from ..structure.base import BaseStructure
 from ..response.base import BaseResponse, ToolHandler
+from ..utils import JSONSerializable
 
 TIn = TypeVar("TIn", bound="BaseStructure")
 TOut = TypeVar("TOut", bound="BaseStructure")
@@ -158,12 +159,13 @@ def get_default_registry() -> ResponseRegistry:
 
 
 @dataclass(frozen=True, slots=True)
-class ResponseConfiguration(Generic[TIn, TOut]):
+class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
     """
     Represent an immutable configuration describing input and output structures.
 
     Encapsulate all metadata required to define how a request is interpreted and
     how a response is structured, while enforcing strict type and runtime safety.
+    Inherits from JSONSerializable to support serialization to JSON format.
 
     Parameters
     ----------
@@ -181,6 +183,12 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         Structure class used to format or validate output. Schema is
         automatically generated from this structure. Must subclass
         BaseStructure. Default is None.
+    system_vector_store : list[str], optional
+        Optional list of vector store names to attach as system context.
+        Default is None.
+    data_path : Path, str, or None, optional
+        Optional absolute directory path for storing artifacts. If not provided,
+        defaults to get_data_path(class_name). Default is None.
 
     Raises
     ------
@@ -201,6 +209,14 @@ class ResponseConfiguration(Generic[TIn, TOut]):
         Validate configuration invariants and enforce BaseStructure subclassing.
     instructions_text
         Return the resolved instruction content as a string.
+    to_json()
+        Return a JSON-compatible dict representation (inherited from JSONSerializable).
+    to_json_file(filepath)
+        Write serialized JSON data to a file path (inherited from JSONSerializable).
+    from_json(data)
+        Create an instance from a JSON-compatible dict (class method, inherited from JSONSerializable).
+    from_json_file(filepath)
+        Load an instance from a JSON file (class method, inherited from JSONSerializable).
 
     Examples
     --------
@@ -219,6 +235,8 @@ class ResponseConfiguration(Generic[TIn, TOut]):
     tools: Optional[list]
     input_structure: Optional[Type[TIn]]
     output_structure: Optional[Type[TOut]]
+    system_vector_store: Optional[list[str]] = None
+    data_path: Optional[Path | str] = None
 
     def __post_init__(self) -> None:
         """
@@ -328,6 +346,8 @@ class ResponseConfiguration(Generic[TIn, TOut]):
             instructions=instructions,
             tools=self.tools,
             output_structure=self.output_structure,
+            system_vector_store=self.system_vector_store,
+            data_path=self.data_path,
             tool_handlers=tool_handlers,
             openai_settings=openai_settings,
         )

@@ -50,6 +50,14 @@ class ResponseMessage(JSONSerializable):
     -------
     to_openai_format()
         Return the message content in OpenAI API format.
+    to_json()
+        Return a JSON-compatible dict representation (inherited from JSONSerializable).
+    to_json_file(filepath)
+        Write serialized JSON data to a file path (inherited from JSONSerializable).
+    from_json(data)
+        Create an instance from a JSON-compatible dict (class method, inherited from JSONSerializable).
+    from_json_file(filepath)
+        Load an instance from a JSON file (class method, inherited from JSONSerializable).
     """
 
     role: str  # "user", "assistant", "tool", etc.
@@ -113,6 +121,14 @@ class ResponseMessages(JSONSerializable):
         Return the most recent tool message or None.
     get_last_user_message()
         Return the most recent user message or None.
+    to_json()
+        Return a JSON-compatible dict representation (inherited from JSONSerializable).
+    to_json_file(filepath)
+        Write serialized JSON data to a file path (inherited from JSONSerializable).
+    from_json(data)
+        Create an instance from a JSON-compatible dict (class method, inherited from JSONSerializable).
+    from_json_file(filepath)
+        Load an instance from a JSON file (class method, inherited from JSONSerializable).
     """
 
     messages: list[ResponseMessage] = field(default_factory=list)
