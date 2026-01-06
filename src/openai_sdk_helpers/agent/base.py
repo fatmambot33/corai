@@ -16,19 +16,70 @@ from .runner import run_async, run_streamed, run_sync
 class AgentConfigLike(Protocol):
     """Protocol describing the configuration attributes for AgentBase."""
 
-    name: str
-    description: Optional[str]
-    model: Optional[str]
-    template_path: Optional[Any]
-    instructions: Optional[Any]
-    input_type: Optional[Any]
-    output_type: Optional[Any]
-    tools: Optional[Any]
-    model_settings: Optional[Any]
-    handoffs: Optional[Any]
-    input_guardrails: Optional[Any]
-    output_guardrails: Optional[Any]
-    session: Optional[Any]
+    @property
+    def name(self) -> str:
+        """Agent name."""
+        ...
+
+    @property
+    def description(self) -> Optional[str]:
+        """Agent description."""
+        ...
+
+    @property
+    def model(self) -> Optional[str]:
+        """Model identifier."""
+        ...
+
+    @property
+    def template_path(self) -> Optional[Any]:
+        """Template path."""
+        ...
+
+    @property
+    def instructions(self) -> Optional[Any]:
+        """Instructions."""
+        ...
+
+    @property
+    def input_type(self) -> Optional[Any]:
+        """Input type."""
+        ...
+
+    @property
+    def output_type(self) -> Optional[Any]:
+        """Output type."""
+        ...
+
+    @property
+    def tools(self) -> Optional[Any]:
+        """Tools."""
+        ...
+
+    @property
+    def model_settings(self) -> Optional[Any]:
+        """Model settings."""
+        ...
+
+    @property
+    def handoffs(self) -> Optional[Any]:
+        """Handoffs."""
+        ...
+
+    @property
+    def input_guardrails(self) -> Optional[Any]:
+        """Input guardrails."""
+        ...
+
+    @property
+    def output_guardrails(self) -> Optional[Any]:
+        """Output guardrails."""
+        ...
+
+    @property
+    def session(self) -> Optional[Any]:
+        """Session."""
+        ...
 
 
 class AgentBase:

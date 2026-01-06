@@ -10,6 +10,187 @@ from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, Session
 from agents.model_settings import ModelSettings
 
 from ..utils import JSONSerializable
+from ..utils.path_utils import ensure_directory
+
+
+class AgentRegistry:
+    """Registry for managing AgentConfig instances.
+
+    Provides centralized storage and retrieval of agent configurations,
+    enabling reusable agent specs across the application. Configurations
+    are stored by name and can be retrieved or listed as needed.
+
+    Methods
+    -------
+    register(config)
+        Add an AgentConfig to the registry.
+    get(name)
+        Retrieve a configuration by name.
+    list_names()
+        Return all registered configuration names.
+    clear()
+        Remove all registered configurations.
+    save_to_directory(path)
+        Export all registered configurations to JSON files.
+
+    Examples
+    --------
+    >>> registry = AgentRegistry()
+    >>> config = AgentConfig(
+    ...     name="test_agent",
+    ...     model="gpt-4o-mini"
+    ... )
+    >>> registry.register(config)
+    >>> retrieved = registry.get("test_agent")
+    >>> retrieved.name
+    'test_agent'
+    """
+
+    def __init__(self) -> None:
+        """Initialize an empty registry."""
+        self._configs: dict[str, AgentConfig] = {}
+
+    def register(self, config: AgentConfig) -> None:
+        """Add an AgentConfig to the registry.
+
+        Parameters
+        ----------
+        config : AgentConfig
+            Configuration to register.
+
+        Raises
+        ------
+        ValueError
+            If a configuration with the same name is already registered.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> config = AgentConfig(name="test", model="gpt-4o-mini")
+        >>> registry.register(config)
+        """
+        if config.name in self._configs:
+            raise ValueError(
+                f"Configuration '{config.name}' is already registered. "
+                "Use a unique name or clear the registry first."
+            )
+        self._configs[config.name] = config
+
+    def get(self, name: str) -> AgentConfig:
+        """Retrieve a configuration by name.
+
+        Parameters
+        ----------
+        name : str
+            Configuration name to look up.
+
+        Returns
+        -------
+        AgentConfig
+            The registered configuration.
+
+        Raises
+        ------
+        KeyError
+            If no configuration with the given name exists.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> config = registry.get("test_agent")
+        """
+        if name not in self._configs:
+            raise KeyError(
+                f"No configuration named '{name}' found. "
+                f"Available: {list(self._configs.keys())}"
+            )
+        return self._configs[name]
+
+    def list_names(self) -> list[str]:
+        """Return all registered configuration names.
+
+        Returns
+        -------
+        list[str]
+            Sorted list of configuration names.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> registry.list_names()
+        []
+        """
+        return sorted(self._configs.keys())
+
+    def clear(self) -> None:
+        """Remove all registered configurations.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> registry.clear()
+        """
+        self._configs.clear()
+
+    def save_to_directory(self, path: Path | str) -> None:
+        """Export all registered configurations to JSON files in a directory.
+
+        Serializes each registered AgentConfig to an individual JSON file
+        named after the configuration. Creates the directory if it does not exist.
+
+        Parameters
+        ----------
+        path : Path or str
+            Directory path where JSON files will be saved. Will be created if
+            it does not already exist.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        OSError
+            If the directory cannot be created or files cannot be written.
+
+        Examples
+        --------
+        >>> registry = AgentRegistry()
+        >>> registry.save_to_directory("./agents")
+        >>> registry.save_to_directory(Path("exports"))
+        """
+        dir_path = ensure_directory(Path(path))
+        config_names = self.list_names()
+
+        if not config_names:
+            return
+
+        for config_name in config_names:
+            config = self.get(config_name)
+            filename = f"{config_name}.json"
+            filepath = dir_path / filename
+            config.to_json_file(filepath)
+
+
+# Global default registry instance
+_default_registry = AgentRegistry()
+
+
+def get_default_registry() -> AgentRegistry:
+    """Return the global default registry instance.
+
+    Returns
+    -------
+    AgentRegistry
+        Singleton registry for application-wide configuration storage.
+
+    Examples
+    --------
+    >>> registry = get_default_registry()
+    >>> config = AgentConfig(name="test", model="gpt-4o-mini")
+    >>> registry.register(config)
+    """
+    return _default_registry
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,4 +343,4 @@ class AgentConfig(JSONSerializable):
         return self.instructions
 
 
-__all__ = ["AgentConfig"]
+__all__ = ["AgentConfig", "AgentRegistry", "get_default_registry"]

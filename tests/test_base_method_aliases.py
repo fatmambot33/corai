@@ -22,6 +22,10 @@ class _StubAgentBase(AgentBase):
         self.model = "model"
         self._tools = None
         self._model_settings = None
+        self._handoffs = None
+        self._input_guardrails = None
+        self._output_guardrails = None
+        self._session = None
         self._template = MagicMock(render=MagicMock(return_value=""))
 
     def get_agent(self) -> Any:  # pragma: no cover - mocked in tests
