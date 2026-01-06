@@ -25,6 +25,30 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+    - name: Verify release is from main branch
+      run: |
+        # Get the target branch of the release
+        # GITHUB_REF will be refs/tags/X.Y.Z, so we need to check the actual branch
+        echo "Checking release target branch..."
+        
+        # Get the current commit
+        CURRENT_COMMIT=$(git rev-parse HEAD)
+        echo "Current commit: $CURRENT_COMMIT"
+        
+        # Check if this commit exists on main branch
+        git fetch origin main
+        if git merge-base --is-ancestor $CURRENT_COMMIT origin/main; then
+          echo "✓ Release is based on main branch"
+        else
+          echo "✗ Error: Release must be created from main branch!"
+          echo ""
+          echo "This release was created from develop or another branch."
+          echo "Please:"
+          echo "  1. Delete this release and tag"
+          echo "  2. Merge changes to main branch"
+          echo "  3. Create a new release targeting 'main' branch"
+          exit 1
+        fi
     - name: Verify version matches release tag
       run: |
         # Install toml parser (works with Python 3.10)
