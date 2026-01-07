@@ -1,4 +1,4 @@
-"""Tests for AgentConfig JSON serialization."""
+"""Tests for AgentConfiguration JSON serialization."""
 
 from __future__ import annotations
 
@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import AgentConfig
+from openai_sdk_helpers.agent.config import AgentConfiguration
 
 
 def test_agent_config_to_json() -> None:
-    """Test that AgentConfig can be serialized to JSON."""
-    config = AgentConfig(
+    """Test that AgentConfiguration can be serialized to JSON."""
+    config = AgentConfiguration(
         name="test_agent",
         description="A test agent",
         model="gpt-4o-mini",
@@ -31,8 +31,8 @@ def test_agent_config_to_json() -> None:
 
 
 def test_agent_config_to_json_file(tmp_path: Path) -> None:
-    """Test that AgentConfig can be written to a JSON file."""
-    config = AgentConfig(
+    """Test that AgentConfiguration can be written to a JSON file."""
+    config = AgentConfiguration(
         name="test_agent",
         description="A test agent",
         model="gpt-4o-mini",
@@ -55,7 +55,7 @@ def test_agent_config_to_json_file(tmp_path: Path) -> None:
 
 def test_agent_config_json_serialization_with_none_fields() -> None:
     """Test JSON serialization with None fields."""
-    config = AgentConfig(
+    config = AgentConfiguration(
         name="minimal_agent",
         model="gpt-4o-mini",
     )
@@ -75,7 +75,7 @@ def test_agent_config_json_serialization_with_none_fields() -> None:
 
 
 def test_agent_config_from_json() -> None:
-    """Test that AgentConfig can be deserialized from JSON."""
+    """Test that AgentConfiguration can be deserialized from JSON."""
     json_data = {
         "name": "test_agent",
         "description": "A test agent",
@@ -92,7 +92,7 @@ def test_agent_config_from_json() -> None:
         "session": None,
     }
 
-    config = AgentConfig.from_json(json_data)
+    config = AgentConfiguration.from_json(json_data)
 
     assert config.name == "test_agent"
     assert config.description == "A test agent"
@@ -103,7 +103,7 @@ def test_agent_config_from_json() -> None:
 
 
 def test_agent_config_from_json_file(tmp_path: Path) -> None:
-    """Test that AgentConfig can be loaded from a JSON file."""
+    """Test that AgentConfiguration can be loaded from a JSON file."""
     json_data = {
         "name": "test_agent",
         "description": "A test agent",
@@ -124,7 +124,7 @@ def test_agent_config_from_json_file(tmp_path: Path) -> None:
     with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
-    config = AgentConfig.from_json_file(json_file)
+    config = AgentConfiguration.from_json_file(json_file)
 
     assert config.name == "test_agent"
     assert config.description == "A test agent"
@@ -133,7 +133,7 @@ def test_agent_config_from_json_file(tmp_path: Path) -> None:
 
 def test_agent_config_round_trip_serialization() -> None:
     """Test that serialization and deserialization preserve data."""
-    original_config = AgentConfig(
+    original_config = AgentConfiguration(
         name="round_trip_test",
         description="Round trip test agent",
         model="gpt-4o-mini",
@@ -144,7 +144,7 @@ def test_agent_config_round_trip_serialization() -> None:
     json_data = original_config.to_json()
 
     # Deserialize from JSON
-    restored_config = AgentConfig.from_json(json_data)
+    restored_config = AgentConfiguration.from_json(json_data)
 
     # Verify all fields match
     assert restored_config.name == original_config.name
@@ -158,29 +158,29 @@ def test_agent_config_round_trip_serialization() -> None:
 def test_agent_config_from_json_file_not_found() -> None:
     """Test that from_json_file raises FileNotFoundError for missing files."""
     with pytest.raises(FileNotFoundError):
-        AgentConfig.from_json_file("/nonexistent/file.json")
+        AgentConfiguration.from_json_file("/nonexistent/file.json")
 
 
 def test_agent_config_validation_empty_name() -> None:
-    """Test that AgentConfig raises TypeError for empty name."""
-    with pytest.raises(TypeError, match="AgentConfig.name must be a non-empty str"):
-        AgentConfig(name="", model="gpt-4o-mini")
+    """Test that AgentConfiguration raises TypeError for empty name."""
+    with pytest.raises(TypeError, match="AgentConfiguration.name must be a non-empty str"):
+        AgentConfiguration(name="", model="gpt-4o-mini")
 
 
 def test_agent_config_validation_empty_instructions() -> None:
-    """Test that AgentConfig raises ValueError for empty instructions."""
+    """Test that AgentConfiguration raises ValueError for empty instructions."""
     with pytest.raises(
-        ValueError, match="AgentConfig.instructions must be a non-empty str"
+        ValueError, match="AgentConfiguration.instructions must be a non-empty str"
     ):
-        AgentConfig(name="test", model="gpt-4o-mini", instructions="   ")
+        AgentConfiguration(name="test", model="gpt-4o-mini", instructions="   ")
 
 
 def test_agent_config_with_path_template(tmp_path: Path) -> None:
-    """Test that AgentConfig serializes Path objects correctly."""
+    """Test that AgentConfiguration serializes Path objects correctly."""
     template_path = tmp_path / "template.jinja"
     template_path.write_text("Test template")
 
-    config = AgentConfig(
+    config = AgentConfiguration(
         name="test_agent",
         model="gpt-4o-mini",
         template_path=template_path,
@@ -193,6 +193,6 @@ def test_agent_config_with_path_template(tmp_path: Path) -> None:
     assert json_data["template_path"] == str(template_path)
 
     # Deserialize and verify
-    restored_config = AgentConfig.from_json(json_data)
+    restored_config = AgentConfiguration.from_json(json_data)
     assert isinstance(restored_config.template_path, Path)
     assert restored_config.template_path == template_path

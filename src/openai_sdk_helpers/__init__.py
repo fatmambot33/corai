@@ -54,8 +54,8 @@ from .config import OpenAISettings
 from .files_api import FilesAPIManager, FilePurpose
 from .vector_storage import VectorStorage, VectorStorageFileInfo, VectorStorageFileStats
 from .agent import (
-    AgentBase,
-    AgentConfig,
+    BaseAgent,
+    AgentConfiguration,
     AgentEnum,
     CoordinatorAgent,
     SummarizerAgent,
@@ -150,8 +150,8 @@ __all__ = [
     "TaskStructure",
     "PlanStructure",
     "AgentEnum",
-    "AgentBase",
-    "AgentConfig",
+    "BaseAgent",
+    "AgentConfiguration",
     "CoordinatorAgent",
     "SummarizerAgent",
     "TranslatorAgent",

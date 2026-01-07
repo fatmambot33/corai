@@ -1,4 +1,4 @@
-"""Tests for the AgentRegistry."""
+"""Tests for the AgentConfigurationRegistry."""
 
 from __future__ import annotations
 
@@ -7,16 +7,16 @@ from pathlib import Path
 import pytest
 
 from openai_sdk_helpers.agent.config import (
-    AgentConfig,
-    AgentRegistry,
+    AgentConfiguration,
+    AgentConfigurationRegistry,
     get_default_registry,
 )
 
 
 def test_agent_registry_basic_operations() -> None:
     """Test basic registry operations."""
-    registry = AgentRegistry()
-    config = AgentConfig(name="test_agent", model="gpt-4o-mini")
+    registry = AgentConfigurationRegistry()
+    config = AgentConfiguration(name="test_agent", model="gpt-4o-mini")
 
     # Register
     registry.register(config)
@@ -34,9 +34,9 @@ def test_agent_registry_basic_operations() -> None:
 
 def test_agent_registry_duplicate_name_raises() -> None:
     """Test that registering duplicate names raises ValueError."""
-    registry = AgentRegistry()
-    config1 = AgentConfig(name="duplicate", model="gpt-4o-mini")
-    config2 = AgentConfig(name="duplicate", model="gpt-4")
+    registry = AgentConfigurationRegistry()
+    config1 = AgentConfiguration(name="duplicate", model="gpt-4o-mini")
+    config2 = AgentConfiguration(name="duplicate", model="gpt-4")
 
     registry.register(config1)
 
@@ -46,7 +46,7 @@ def test_agent_registry_duplicate_name_raises() -> None:
 
 def test_agent_registry_get_nonexistent_raises() -> None:
     """Test that getting a nonexistent config raises KeyError."""
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
 
     with pytest.raises(KeyError, match="No configuration named"):
         registry.get("nonexistent")
@@ -54,9 +54,9 @@ def test_agent_registry_get_nonexistent_raises() -> None:
 
 def test_agent_registry_clear() -> None:
     """Test clearing the registry."""
-    registry = AgentRegistry()
-    config1 = AgentConfig(name="agent1", model="gpt-4o-mini")
-    config2 = AgentConfig(name="agent2", model="gpt-4")
+    registry = AgentConfigurationRegistry()
+    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini")
+    config2 = AgentConfiguration(name="agent2", model="gpt-4")
 
     registry.register(config1)
     registry.register(config2)
@@ -68,9 +68,9 @@ def test_agent_registry_clear() -> None:
 
 def test_agent_registry_multiple_configs() -> None:
     """Test registering and retrieving multiple configurations."""
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
     configs = [
-        AgentConfig(name=f"agent{i}", model="gpt-4o-mini") for i in range(5)
+        AgentConfiguration(name=f"agent{i}", model="gpt-4o-mini") for i in range(5)
     ]
 
     for config in configs:
@@ -95,10 +95,10 @@ def test_get_default_registry() -> None:
 
 def test_agent_registry_isolated_instances() -> None:
     """Test that separate registry instances are isolated."""
-    registry1 = AgentRegistry()
-    registry2 = AgentRegistry()
+    registry1 = AgentConfigurationRegistry()
+    registry2 = AgentConfigurationRegistry()
 
-    config = AgentConfig(name="test", model="gpt-4o-mini")
+    config = AgentConfiguration(name="test", model="gpt-4o-mini")
     registry1.register(config)
 
     assert "test" in registry1.list_names()
@@ -107,9 +107,9 @@ def test_agent_registry_isolated_instances() -> None:
 
 def test_agent_registry_save_to_directory(tmp_path: Path) -> None:
     """Test saving registry to directory."""
-    registry = AgentRegistry()
-    config1 = AgentConfig(name="agent1", model="gpt-4o-mini", description="First agent")
-    config2 = AgentConfig(name="agent2", model="gpt-4", description="Second agent")
+    registry = AgentConfigurationRegistry()
+    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="First agent")
+    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Second agent")
 
     registry.register(config1)
     registry.register(config2)
@@ -122,14 +122,14 @@ def test_agent_registry_save_to_directory(tmp_path: Path) -> None:
     assert (save_dir / "agent2.json").exists()
 
     # Verify content
-    loaded_config = AgentConfig.from_json_file(save_dir / "agent1.json")
+    loaded_config = AgentConfiguration.from_json_file(save_dir / "agent1.json")
     assert loaded_config.name == "agent1"
     assert loaded_config.description == "First agent"
 
 
 def test_agent_registry_save_empty_directory(tmp_path: Path) -> None:
     """Test saving empty registry creates directory but no files."""
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
     save_dir = tmp_path / "empty_agents"
 
     registry.save_to_directory(save_dir)

@@ -1,4 +1,4 @@
-"""Tests for new AgentConfig and AgentRegistry improvements."""
+"""Tests for new AgentConfiguration and AgentConfigurationRegistry improvements."""
 
 from __future__ import annotations
 
@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import AgentConfig, AgentRegistry
+from openai_sdk_helpers.agent.config import AgentConfiguration, AgentConfigurationRegistry
 
 
 def test_agent_config_replace_method() -> None:
-    """Test that AgentConfig.replace creates a new instance with changes."""
-    original = AgentConfig(
+    """Test that AgentConfiguration.replace creates a new instance with changes."""
+    original = AgentConfiguration(
         name="agent1",
         model="gpt-4o-mini",
         description="Original description",
@@ -35,8 +35,8 @@ def test_agent_config_replace_method() -> None:
 
 
 def test_agent_config_to_agent_base() -> None:
-    """Test that AgentConfig.to_agent_base creates an AgentBase instance."""
-    config = AgentConfig(name="test_agent", model="gpt-4o-mini")
+    """Test that AgentConfiguration.to_agent_base creates an BaseAgent instance."""
+    config = AgentConfiguration(name="test_agent", model="gpt-4o-mini")
     agent = config.to_agent_base()
 
     assert agent.agent_name == "test_agent"
@@ -46,8 +46,8 @@ def test_agent_config_to_agent_base() -> None:
 def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     """Test loading configurations from a directory."""
     # Create some config files
-    config1 = AgentConfig(name="agent1", model="gpt-4o-mini", description="First")
-    config2 = AgentConfig(name="agent2", model="gpt-4", description="Second")
+    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="First")
+    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Second")
 
     configs_dir = tmp_path / "configs"
     configs_dir.mkdir()
@@ -56,7 +56,7 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     config2.to_json_file(configs_dir / "agent2.json")
 
     # Load into registry
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
     count = registry.load_from_directory(configs_dir)
 
     assert count == 2
@@ -75,7 +75,7 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
 
 def test_agent_registry_load_from_directory_not_found() -> None:
     """Test that loading from non-existent directory raises error."""
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
 
     with pytest.raises(FileNotFoundError):
         registry.load_from_directory("/nonexistent/directory")
@@ -86,7 +86,7 @@ def test_agent_registry_load_from_directory_not_a_dir(tmp_path: Path) -> None:
     file_path = tmp_path / "not_a_dir.txt"
     file_path.write_text("test")
 
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
 
     with pytest.raises(NotADirectoryError):
         registry.load_from_directory(file_path)
@@ -98,14 +98,14 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
     configs_dir.mkdir()
 
     # Create valid config
-    config = AgentConfig(name="valid", model="gpt-4o-mini")
+    config = AgentConfiguration(name="valid", model="gpt-4o-mini")
     config.to_json_file(configs_dir / "valid.json")
 
     # Create invalid JSON file
     (configs_dir / "invalid.json").write_text("not valid json {")
 
     # Should load the valid one and warn about the invalid one
-    registry = AgentRegistry()
+    registry = AgentConfigurationRegistry()
     with pytest.warns(UserWarning, match="Failed to load configuration"):
         count = registry.load_from_directory(configs_dir)
 
@@ -116,9 +116,9 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
 def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     """Test saving and loading configurations maintains data integrity."""
     # Create registry with configs
-    registry1 = AgentRegistry()
-    config1 = AgentConfig(name="agent1", model="gpt-4o-mini", description="Test 1")
-    config2 = AgentConfig(name="agent2", model="gpt-4", description="Test 2")
+    registry1 = AgentConfigurationRegistry()
+    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="Test 1")
+    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Test 2")
     registry1.register(config1)
     registry1.register(config2)
 
@@ -127,7 +127,7 @@ def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     registry1.save_to_directory(save_dir)
 
     # Load into new registry
-    registry2 = AgentRegistry()
+    registry2 = AgentConfigurationRegistry()
     count = registry2.load_from_directory(save_dir)
 
     assert count == 2

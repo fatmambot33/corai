@@ -13,8 +13,8 @@ from jinja2 import Template
 from .runner import run_async, run_streamed, run_sync
 
 
-class AgentConfigLike(Protocol):
-    """Protocol describing the configuration attributes for AgentBase."""
+class AgentConfigurationLike(Protocol):
+    """Protocol describing the configuration attributes for BaseAgent."""
 
     @property
     def name(self) -> str:
@@ -82,10 +82,10 @@ class AgentConfigLike(Protocol):
         ...
 
 
-class AgentBase:
+class BaseAgent:
     """Factory for creating and configuring specialized agents.
 
-    ``AgentBase`` provides the foundation for building OpenAI agents with support
+    ``BaseAgent`` provides the foundation for building OpenAI agents with support
     for Jinja2 prompt templates, custom tools, handoffs for agent delegation,
     input and output guardrails for validation, session management for
     conversation history, and both synchronous and asynchronous execution modes.
@@ -95,13 +95,13 @@ class AgentBase:
     --------
     Create a basic agent from configuration:
 
-    >>> from openai_sdk_helpers.agent import AgentBase, AgentConfig
+    >>> from openai_sdk_helpers.agent import BaseAgent, AgentConfig
     >>> config = AgentConfig(
     ...     name="my_agent",
     ...     description="A custom agent",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
+    >>> agent = BaseAgent(config=config, default_model="gpt-4o-mini")
     >>> result = agent.run_sync("What is 2+2?")
 
     Use absolute path to template:
@@ -111,7 +111,7 @@ class AgentBase:
     ...     template_path="/absolute/path/to/template.jinja",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
+    >>> agent = BaseAgent(config=config, default_model="gpt-4o-mini")
 
     Use async execution:
 
@@ -124,7 +124,7 @@ class AgentBase:
     Methods
     -------
     from_config(config, run_context_wrapper, prompt_dir, default_model)
-        Instantiate a ``AgentBase`` from configuration.
+        Instantiate a ``BaseAgent`` from configuration.
     build_prompt_from_jinja(run_context_wrapper)
         Render the agent prompt using Jinja and optional context.
     get_prompt(run_context_wrapper, _)
@@ -145,16 +145,16 @@ class AgentBase:
 
     def __init__(
         self,
-        config: AgentConfigLike,
+        config: AgentConfigurationLike,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
-        """Initialize the AgentBase using a configuration object.
+        """Initialize the BaseAgent using a configuration object.
 
         Parameters
         ----------
-        config : AgentConfigLike
+        config : AgentConfigurationLike
             Configuration describing this agent.
         run_context_wrapper : RunContextWrapper or None, default=None
             Optional wrapper providing runtime context for prompt rendering.
@@ -209,17 +209,17 @@ class AgentBase:
     @classmethod
     def from_config(
         cls,
-        config: AgentConfigLike,
+        config: AgentConfigurationLike,
         *,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
-    ) -> AgentBase:
-        """Create an AgentBase instance from configuration.
+    ) -> BaseAgent:
+        """Create an BaseAgent instance from configuration.
 
         Parameters
         ----------
-        config : AgentConfigLike
+        config : AgentConfigurationLike
             Configuration describing the agent.
         run_context_wrapper : RunContextWrapper or None, default=None
             Optional wrapper providing runtime context.
@@ -233,7 +233,7 @@ class AgentBase:
 
         Returns
         -------
-        AgentBase
+        BaseAgent
             Instantiated agent.
         """
         return cls(
@@ -456,12 +456,12 @@ class AgentBase:
         )
         return tool_obj
 
-    def __enter__(self) -> AgentBase:
+    def __enter__(self) -> BaseAgent:
         """Enter the context manager for resource management.
 
         Returns
         -------
-        AgentBase
+        BaseAgent
             Self reference for use in with statements.
         """
         return self
@@ -489,7 +489,7 @@ class AgentBase:
 
         Examples
         --------
-        >>> agent = AgentBase(config, default_model="gpt-4o-mini")
+        >>> agent = BaseAgent(config, default_model="gpt-4o-mini")
         >>> try:
         ...     result = agent.run_sync("query")
         ... finally:
@@ -499,4 +499,4 @@ class AgentBase:
         pass
 
 
-__all__ = ["AgentConfigLike", "AgentBase"]
+__all__ = ["AgentConfigurationLike", "BaseAgent"]

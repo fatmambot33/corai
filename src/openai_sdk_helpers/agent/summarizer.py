@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure import SummaryStructure
-from .base import AgentBase
-from .config import AgentConfig
+from .base import BaseAgent
+from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class SummarizerAgent(AgentBase):
+class SummarizerAgent(BaseAgent):
     """Generate concise summaries from provided text.
 
     This agent uses OpenAI models to create structured summaries from longer-form
@@ -64,7 +64,7 @@ class SummarizerAgent(AgentBase):
         output_type : type, default=SummaryStructure
             Type describing the expected summary output.
         """
-        config = AgentConfig(
+        config = AgentConfiguration(
             name="summarizer",
             description="Summarize passages into concise findings.",
             output_type=output_type,

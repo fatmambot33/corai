@@ -13,8 +13,8 @@ from typing import Any, Callable, Dict, List, Optional
 
 from ..structure import TaskStructure, PlanStructure, PromptStructure
 from ..utils import JSONSerializable, ensure_directory, log
-from .base import AgentBase
-from .config import AgentConfig
+from .base import BaseAgent
+from .config import AgentConfiguration
 from ..structure.plan.enum import AgentEnum
 
 PromptFn = Callable[[str], PromptStructure]
@@ -23,7 +23,7 @@ ExecutePlanFn = Callable[[PlanStructure], List[str]]
 SummarizeFn = Callable[[List[str]], str]
 
 
-class CoordinatorAgent(AgentBase, JSONSerializable):
+class CoordinatorAgent(BaseAgent, JSONSerializable):
     """Coordinate agent plans while persisting project state and outputs.
 
     Methods
@@ -63,7 +63,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
         summarize_fn: SummarizeFn,
         module_data_path: Path,
         name: str,
-        config: Optional[AgentConfig] = None,
+        config: Optional[AgentConfiguration] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
@@ -83,7 +83,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
             Base path for persisting project artifacts.
         name : str
             Name of the parent module for data organization.
-        config : AgentConfig or None, default=None
+        config : AgentConfiguration or None, default=None
             Optional agent configuration describing prompts and metadata.
         prompt_dir : Path or None, default=None
             Optional directory holding prompt templates.
@@ -91,7 +91,7 @@ class CoordinatorAgent(AgentBase, JSONSerializable):
             Optional fallback model identifier.
         """
         if config is None:
-            config = AgentConfig(
+            config = AgentConfiguration(
                 name="coordinator_agent",
                 description="Coordinates agents for planning and summarization.",
             )

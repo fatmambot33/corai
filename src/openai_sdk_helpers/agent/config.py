@@ -1,4 +1,4 @@
-"""Configuration helpers for ``AgentBase``."""
+"""Configuration helpers for ``BaseAgent``."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from ..utils import JSONSerializable
 from ..utils.path_utils import ensure_directory
 
 
-class AgentRegistry:
-    """Registry for managing AgentConfig instances.
+class AgentConfigurationRegistry:
+    """Registry for managing AgentConfiguration instances.
 
     Provides centralized storage and retrieval of agent configurations,
     enabling reusable agent specs across the application. Configurations
@@ -23,7 +23,7 @@ class AgentRegistry:
     Methods
     -------
     register(config)
-        Add an AgentConfig to the registry.
+        Add an AgentConfiguration to the registry.
     get(name)
         Retrieve a configuration by name.
     list_names()
@@ -37,8 +37,8 @@ class AgentRegistry:
 
     Examples
     --------
-    >>> registry = AgentRegistry()
-    >>> config = AgentConfig(
+    >>> registry = AgentConfigurationRegistry()
+    >>> config = AgentConfiguration(
     ...     name="test_agent",
     ...     model="gpt-4o-mini"
     ... )
@@ -50,14 +50,14 @@ class AgentRegistry:
 
     def __init__(self) -> None:
         """Initialize an empty registry."""
-        self._configs: dict[str, AgentConfig] = {}
+        self._configs: dict[str, AgentConfiguration] = {}
 
-    def register(self, config: AgentConfig) -> None:
-        """Add an AgentConfig to the registry.
+    def register(self, config: AgentConfiguration) -> None:
+        """Add an AgentConfiguration to the registry.
 
         Parameters
         ----------
-        config : AgentConfig
+        config : AgentConfiguration
             Configuration to register.
 
         Raises
@@ -67,8 +67,8 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
-        >>> config = AgentConfig(name="test", model="gpt-4o-mini")
+        >>> registry = AgentConfigurationRegistry()
+        >>> config = AgentConfiguration(name="test", model="gpt-4o-mini")
         >>> registry.register(config)
         """
         if config.name in self._configs:
@@ -78,7 +78,7 @@ class AgentRegistry:
             )
         self._configs[config.name] = config
 
-    def get(self, name: str) -> AgentConfig:
+    def get(self, name: str) -> AgentConfiguration:
         """Retrieve a configuration by name.
 
         Parameters
@@ -88,7 +88,7 @@ class AgentRegistry:
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             The registered configuration.
 
         Raises
@@ -98,7 +98,7 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
+        >>> registry = AgentConfigurationRegistry()
         >>> config = registry.get("test_agent")
         """
         if name not in self._configs:
@@ -118,7 +118,7 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
+        >>> registry = AgentConfigurationRegistry()
         >>> registry.list_names()
         []
         """
@@ -129,7 +129,7 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
+        >>> registry = AgentConfigurationRegistry()
         >>> registry.clear()
         """
         self._configs.clear()
@@ -137,7 +137,7 @@ class AgentRegistry:
     def save_to_directory(self, path: Path | str) -> None:
         """Export all registered configurations to JSON files in a directory.
 
-        Serializes each registered AgentConfig to an individual JSON file
+        Serializes each registered AgentConfiguration to an individual JSON file
         named after the configuration. Creates the directory if it does not exist.
 
         Parameters
@@ -157,7 +157,7 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
+        >>> registry = AgentConfigurationRegistry()
         >>> registry.save_to_directory("./agents")
         >>> registry.save_to_directory(Path("exports"))
         """
@@ -177,7 +177,7 @@ class AgentRegistry:
         """Load all agent configurations from JSON files in a directory.
 
         Scans the directory for JSON files and attempts to load each as an
-        AgentConfig. Successfully loaded configurations are registered.
+        AgentConfiguration. Successfully loaded configurations are registered.
         Existing configurations with the same name will cause a ValueError.
 
         Parameters
@@ -199,7 +199,7 @@ class AgentRegistry:
 
         Examples
         --------
-        >>> registry = AgentRegistry()
+        >>> registry = AgentConfigurationRegistry()
         >>> count = registry.load_from_directory("./agents")
         >>> print(f"Loaded {count} configurations")
         """
@@ -213,7 +213,7 @@ class AgentRegistry:
         count = 0
         for json_file in sorted(dir_path.glob("*.json")):
             try:
-                config = AgentConfig.from_json_file(json_file)
+                config = AgentConfiguration.from_json_file(json_file)
                 self.register(config)
                 count += 1
             except Exception as exc:
@@ -229,29 +229,29 @@ class AgentRegistry:
 
 
 # Global default registry instance
-_default_registry = AgentRegistry()
+_default_registry = AgentConfigurationRegistry()
 
 
-def get_default_registry() -> AgentRegistry:
+def get_default_registry() -> AgentConfigurationRegistry:
     """Return the global default registry instance.
 
     Returns
     -------
-    AgentRegistry
+    AgentConfigurationRegistry
         Singleton registry for application-wide configuration storage.
 
     Examples
     --------
     >>> registry = get_default_registry()
-    >>> config = AgentConfig(name="test", model="gpt-4o-mini")
+    >>> config = AgentConfiguration(name="test", model="gpt-4o-mini")
     >>> registry.register(config)
     """
     return _default_registry
 
 
 @dataclass(frozen=True, slots=True)
-class AgentConfig(JSONSerializable):
-    """Immutable configuration for building an AgentBase.
+class AgentConfiguration(JSONSerializable):
+    """Immutable configuration for building an BaseAgent.
 
     Encapsulates all metadata required to define an agent including its
     instructions, tools, model settings, handoffs, guardrails, and session
@@ -302,9 +302,9 @@ class AgentConfig(JSONSerializable):
     instructions_text
         Return the resolved instruction content as a string.
     to_agent_base(run_context_wrapper, prompt_dir, default_model)
-        Create an AgentBase instance from this configuration.
+        Create an BaseAgent instance from this configuration.
     replace(**changes)
-        Create a new AgentConfig with specified fields replaced.
+        Create a new AgentConfiguration with specified fields replaced.
     to_json()
         Return a JSON-compatible dict (inherited from JSONSerializable).
     to_json_file(filepath)
@@ -316,7 +316,7 @@ class AgentConfig(JSONSerializable):
 
     Examples
     --------
-    >>> config = AgentConfig(
+    >>> config = AgentConfiguration(
     ...     name="summarizer",
     ...     description="Summarizes text",
     ...     model="gpt-4o-mini"
@@ -355,12 +355,12 @@ class AgentConfig(JSONSerializable):
             If instructions is a Path that doesn't point to a readable file.
         """
         if not self.name or not isinstance(self.name, str):
-            raise TypeError("AgentConfig.name must be a non-empty str")
+            raise TypeError("AgentConfiguration.name must be a non-empty str")
 
         if self.instructions is not None:
             if isinstance(self.instructions, str):
                 if not self.instructions.strip():
-                    raise ValueError("AgentConfig.instructions must be a non-empty str")
+                    raise ValueError("AgentConfiguration.instructions must be a non-empty str")
             elif isinstance(self.instructions, Path):
                 instruction_path = self.instructions.expanduser()
                 if not instruction_path.is_file():
@@ -408,9 +408,9 @@ class AgentConfig(JSONSerializable):
         prompt_dir: Path | None = None,
         default_model: str | None = None,
     ) -> Any:
-        """Create an AgentBase instance from this configuration.
+        """Create an BaseAgent instance from this configuration.
 
-        This is a convenience method that delegates to AgentBase.from_config().
+        This is a convenience method that delegates to BaseAgent.from_config().
 
         Parameters
         ----------
@@ -423,29 +423,29 @@ class AgentConfig(JSONSerializable):
 
         Returns
         -------
-        AgentBase
+        BaseAgent
             Configured agent instance ready for execution.
 
         Examples
         --------
-        >>> config = AgentConfig(name="helper", model="gpt-4o-mini")
+        >>> config = AgentConfiguration(name="helper", model="gpt-4o-mini")
         >>> agent = config.to_agent_base()
         >>> result = agent.run_sync("Hello!")
         """
         # Import here to avoid circular dependency
-        from .base import AgentBase
+        from .base import BaseAgent
 
-        return AgentBase.from_config(
+        return BaseAgent.from_config(
             config=self,
             run_context_wrapper=run_context_wrapper,
             prompt_dir=prompt_dir,
             default_model=default_model,
         )
 
-    def replace(self, **changes: Any) -> AgentConfig:
-        """Create a new AgentConfig with specified fields replaced.
+    def replace(self, **changes: Any) -> AgentConfiguration:
+        """Create a new AgentConfiguration with specified fields replaced.
 
-        Since AgentConfig is frozen (immutable), this method creates a new
+        Since AgentConfiguration is frozen (immutable), this method creates a new
         instance with the specified changes applied. This is useful for
         creating variations of a configuration.
 
@@ -456,12 +456,12 @@ class AgentConfig(JSONSerializable):
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             New configuration instance with changes applied.
 
         Examples
         --------
-        >>> config = AgentConfig(name="agent1", model="gpt-4o-mini")
+        >>> config = AgentConfiguration(name="agent1", model="gpt-4o-mini")
         >>> config2 = config.replace(name="agent2", description="Modified")
         >>> config2.name
         'agent2'
@@ -473,4 +473,4 @@ class AgentConfig(JSONSerializable):
         return replace(self, **changes)
 
 
-__all__ = ["AgentConfig", "AgentRegistry", "get_default_registry"]
+__all__ = ["AgentConfiguration", "AgentConfigurationRegistry", "get_default_registry"]
