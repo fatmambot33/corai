@@ -12,7 +12,7 @@ from openai_sdk_helpers.utils import (
 
 
 def example_with_image():
-    """Example: Analyze an image using automatic type detection.
+    """Analyze an image using automatic type detection.
 
     Images are automatically detected and sent as base64-encoded images.
     """
@@ -41,7 +41,7 @@ def example_with_image():
 
 
 def example_with_document():
-    """Example: Analyze a document using automatic type detection.
+    """Analyze a document using automatic type detection.
 
     Documents are automatically detected and sent as base64-encoded files.
     """
@@ -64,7 +64,7 @@ def example_with_document():
 
 
 def example_with_multiple_files():
-    """Example: Process both images and documents together.
+    """Process both images and documents together.
 
     The files parameter accepts a list and automatically detects each file type.
     """
@@ -87,7 +87,7 @@ def example_with_multiple_files():
 
 
 def example_using_vector_store():
-    """Example: Using vector stores for documents instead of base64.
+    """Use vector stores for documents instead of base64.
 
     By default, files use base64 encoding. Set use_vector_store=True to
     store documents in a vector store for RAG capabilities.
@@ -112,7 +112,7 @@ def example_using_vector_store():
 
 
 def example_from_problem_statement_images():
-    """Example directly from the problem statement - images."""
+    """Run the problem-statement image example."""
     # With openai-sdk-helpers, this is simplified:
     settings = OpenAISettings.from_env()
 
@@ -132,7 +132,7 @@ def example_from_problem_statement_images():
 
 
 def example_from_problem_statement_files():
-    """Example directly from the problem statement - files."""
+    """Run the problem-statement files example."""
     # With openai-sdk-helpers, file encoding is simplified:
     settings = OpenAISettings.from_env()
 

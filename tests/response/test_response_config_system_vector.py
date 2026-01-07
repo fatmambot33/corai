@@ -25,13 +25,7 @@ def _mock_vector_store_client(monkeypatch, store_names: list[str]) -> None:
         def list(self):
             stores = []
             for store_name in store_names:
-
-                class Store:
-                    pass
-
-                Store.id = f"{store_name}_id"
-                Store.name = store_name
-                stores.append(Store())
+                stores.append(SimpleNamespace(id=f"{store_name}_id", name=store_name))
             return type("obj", (), {"data": stores})()
 
     dummy_client = DummyClient()

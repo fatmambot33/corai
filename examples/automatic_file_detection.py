@@ -10,7 +10,7 @@ from openai_sdk_helpers.response import BaseResponse
 
 
 def example_automatic_detection():
-    """Example: Automatic file type detection.
+    """Demonstrate automatic file type detection.
 
     Images and documents are automatically handled based on MIME type.
     """
@@ -32,7 +32,7 @@ def example_automatic_detection():
 
 
 def example_with_single_image():
-    """Example: Analyzing a single image.
+    """Analyze a single image.
 
     Images are automatically detected and sent as base64-encoded images.
     """
@@ -54,7 +54,7 @@ def example_with_single_image():
 
 
 def example_with_single_document():
-    """Example: Analyzing a single document.
+    """Analyze a single document.
 
     Non-image files are sent as base64-encoded file data by default.
     """
@@ -76,7 +76,7 @@ def example_with_single_document():
 
 
 def example_with_vector_store():
-    """Example: Using vector store for RAG.
+    """Use a vector store for RAG.
 
     Documents can optionally be uploaded to a vector store for
     retrieval-augmented generation (RAG).
@@ -101,7 +101,7 @@ def example_with_vector_store():
 
 
 def example_mixed_files():
-    """Example: Mix of images and documents.
+    """Process a mix of images and documents.
 
     All files are provided in one list. The system automatically
     categorizes them and handles them appropriately.
@@ -130,7 +130,7 @@ def example_mixed_files():
 
 
 def example_from_problem_statement():
-    """Example directly from the problem statement.
+    """Run examples directly from the problem statement.
 
     Simplified to use automatic type detection.
     """

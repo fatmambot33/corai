@@ -303,7 +303,6 @@ class BaseResponse(Generic[T]):
         BaseResponse
             Instance of ``cls`` configured from ``config``.
         """
-
         handlers = tool_handlers or {}
 
         output_instructions = ""

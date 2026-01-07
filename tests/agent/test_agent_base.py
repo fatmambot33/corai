@@ -22,6 +22,12 @@ class MockConfig(BaseModel):
 
     name: str
     instructions: str  # Now required, matching AgentConfiguration
+
+    @property
+    def instructions_text(self) -> str:
+        """Expose instructions text to satisfy AgentConfigurationLike protocol."""
+        return self.instructions
+
     description: str | None = None
     model: str | None = None
     template_path: str | None = None
