@@ -108,8 +108,12 @@ def test_agent_registry_isolated_instances() -> None:
 def test_agent_registry_save_to_directory(tmp_path: Path) -> None:
     """Test saving registry to directory."""
     registry = AgentConfigurationRegistry()
-    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="First agent")
-    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Second agent")
+    config1 = AgentConfiguration(
+        name="agent1", model="gpt-4o-mini", description="First agent"
+    )
+    config2 = AgentConfiguration(
+        name="agent2", model="gpt-4", description="Second agent"
+    )
 
     registry.register(config1)
     registry.register(config2)

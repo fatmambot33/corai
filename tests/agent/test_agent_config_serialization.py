@@ -163,7 +163,9 @@ def test_agent_config_from_json_file_not_found() -> None:
 
 def test_agent_config_validation_empty_name() -> None:
     """Test that AgentConfiguration raises TypeError for empty name."""
-    with pytest.raises(TypeError, match="AgentConfiguration.name must be a non-empty str"):
+    with pytest.raises(
+        TypeError, match="AgentConfiguration.name must be a non-empty str"
+    ):
         AgentConfiguration(name="", model="gpt-4o-mini")
 
 

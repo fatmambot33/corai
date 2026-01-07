@@ -360,7 +360,9 @@ class AgentConfiguration(JSONSerializable):
         if self.instructions is not None:
             if isinstance(self.instructions, str):
                 if not self.instructions.strip():
-                    raise ValueError("AgentConfiguration.instructions must be a non-empty str")
+                    raise ValueError(
+                        "AgentConfiguration.instructions must be a non-empty str"
+                    )
             elif isinstance(self.instructions, Path):
                 instruction_path = self.instructions.expanduser()
                 if not instruction_path.is_file():

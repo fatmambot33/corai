@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import AgentConfiguration, AgentConfigurationRegistry
+from openai_sdk_helpers.agent.config import (
+    AgentConfiguration,
+    AgentConfigurationRegistry,
+)
 
 
 def test_agent_config_replace_method() -> None:
@@ -46,7 +49,9 @@ def test_agent_config_to_agent_base() -> None:
 def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     """Test loading configurations from a directory."""
     # Create some config files
-    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="First")
+    config1 = AgentConfiguration(
+        name="agent1", model="gpt-4o-mini", description="First"
+    )
     config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Second")
 
     configs_dir = tmp_path / "configs"
@@ -117,7 +122,9 @@ def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     """Test saving and loading configurations maintains data integrity."""
     # Create registry with configs
     registry1 = AgentConfigurationRegistry()
-    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini", description="Test 1")
+    config1 = AgentConfiguration(
+        name="agent1", model="gpt-4o-mini", description="Test 1"
+    )
     config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Test 2")
     registry1.register(config1)
     registry1.register(config2)
