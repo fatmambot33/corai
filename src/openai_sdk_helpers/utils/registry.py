@@ -133,7 +133,7 @@ class BaseRegistry(Generic[T]):
             # Call to_json_file on the config
             getattr(config, "to_json_file")(filepath)
 
-    def load_from_directory(self, path: Path | str, config_class: type[T]) -> int:
+    def load_from_directory(self, path: Path | str, *, config_class: type[T]) -> int:
         """Load all configurations from JSON files in a directory.
 
         Scans the directory for JSON files and attempts to load each as a

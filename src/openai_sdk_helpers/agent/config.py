@@ -34,13 +34,18 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
     'test_agent'
     """
 
-    def load_from_directory(self, path: Path | str) -> int:
+    def load_from_directory(
+        self, path: Path | str, *, config_class: type["AgentConfiguration"] | None = None
+    ) -> int:
         """Load all agent configurations from JSON files in a directory.
 
         Parameters
         ----------
         path : Path or str
             Directory path containing JSON configuration files.
+        config_class : type[AgentConfiguration], optional
+            The configuration class to use for deserialization.
+            Defaults to AgentConfiguration.
 
         Returns
         -------
@@ -60,7 +65,9 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
         >>> count = registry.load_from_directory("./agents")
         >>> print(f"Loaded {count} configurations")
         """
-        return super().load_from_directory(path, AgentConfiguration)
+        if config_class is None:
+            config_class = AgentConfiguration
+        return super().load_from_directory(path, config_class=config_class)
 
 
 # Global default registry instance
