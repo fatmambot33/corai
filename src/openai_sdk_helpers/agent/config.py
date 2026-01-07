@@ -479,5 +479,53 @@ class AgentConfiguration(JSONSerializable):
 
         return replace(self, **changes)
 
+    @classmethod
+    def from_json(cls, data: dict[str, Any]) -> AgentConfiguration:
+        """Create an AgentConfiguration from JSON data.
+
+        Overrides the default JSONSerializable.from_json to properly handle
+        the instructions field, converting string paths that look like file
+        paths back to Path objects for proper file loading.
+
+        Parameters
+        ----------
+        data : dict[str, Any]
+            Dictionary containing the configuration data.
+
+        Returns
+        -------
+        AgentConfiguration
+            New configuration instance.
+
+        Notes
+        -----
+        This method attempts to preserve the original type of the instructions
+        field. If instructions is a string that represents an existing file path,
+        it will be converted to a Path object to ensure proper file loading
+        behavior is maintained across JSON round-trips.
+        """
+        # Make a copy to avoid modifying the input
+        data = data.copy()
+
+        # Handle instructions field: if it's a string path to an existing file,
+        # convert it back to Path for proper file loading
+        if "instructions" in data and data["instructions"] is not None:
+            instructions_value = data["instructions"]
+            if isinstance(instructions_value, str):
+                # Check if it looks like a file path and the file exists
+                # This preserves the intended behavior for file-based instructions
+                try:
+                    potential_path = Path(instructions_value)
+                    # Only convert to Path if it's an existing file
+                    # This way, plain text instructions stay as strings
+                    if potential_path.exists() and potential_path.is_file():
+                        data["instructions"] = potential_path
+                except (OSError, ValueError):
+                    # If path parsing fails, keep it as a string (likely plain text)
+                    pass
+
+        # Use the parent class method for the rest
+        return super(AgentConfiguration, cls).from_json(data)
+
 
 __all__ = ["AgentConfiguration", "AgentConfigurationRegistry", "get_default_registry"]
