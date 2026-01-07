@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -178,7 +179,8 @@ class AgentConfigurationRegistry:
 
         Scans the directory for JSON files and attempts to load each as an
         AgentConfiguration. Successfully loaded configurations are registered.
-        Existing configurations with the same name will cause a ValueError.
+        If a file fails to load, a warning is issued and processing continues
+        with the remaining files.
 
         Parameters
         ----------
@@ -194,8 +196,8 @@ class AgentConfigurationRegistry:
         ------
         FileNotFoundError
             If the directory does not exist.
-        ValueError
-            If a configuration with the same name is already registered.
+        NotADirectoryError
+            If the path is not a directory.
 
         Examples
         --------
@@ -218,8 +220,6 @@ class AgentConfigurationRegistry:
                 count += 1
             except Exception as exc:
                 # Log warning but continue processing other files
-                import warnings
-
                 warnings.warn(
                     f"Failed to load configuration from {json_file}: {exc}",
                     stacklevel=2,

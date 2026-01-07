@@ -11,10 +11,15 @@ from openai_sdk_helpers.response.base import BaseResponse
 
 
 class _StubBaseAgent(BaseAgent):
-    """Minimal BaseAgent subclass for testing async aliases."""
+    """Minimal BaseAgent subclass for testing async aliases.
+
+    Note: Intentionally bypasses parent __init__ to set up minimal test fixture
+    without requiring full agent initialization (templates, config validation, etc).
+    """
 
     def __init__(self) -> None:
         # Bypass the parent initializer by setting the required attributes.
+        # This is intentional for testing - we don't want full agent setup.
         self._output_type = str
         self._run_context_wrapper = None
         self.agent_name = "stub"
