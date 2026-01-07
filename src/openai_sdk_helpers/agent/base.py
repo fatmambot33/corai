@@ -225,7 +225,7 @@ class BaseAgent:
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> BaseAgent:
-        """Create an BaseAgent instance from configuration.
+        """Create a BaseAgent instance from configuration.
 
         Parameters
         ----------
