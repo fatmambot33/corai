@@ -56,6 +56,7 @@ from ..utils import (
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
+    from .config import ResponseConfiguration
 
 T = TypeVar("T", bound=BaseStructure)
 ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
@@ -253,10 +254,80 @@ class BaseResponse(Generic[T]):
                 ),
             )
 
+            # Add retrieval guidance to system instructions to encourage RAG usage
+            try:
+                store_names = ", ".join(system_vector_store)
+            except Exception:
+                store_names = "attached vector stores"
+            guidance_text = (
+                "Retrieval guidance: You have access to a file_search tool "
+                f"connected to vector store(s) {store_names}. When relevant, "
+                "use file_search to retrieve supporting passages before answering. "
+                "Cite or reference retrieved content when helpful."
+            )
+            system_content.append(
+                ResponseInputTextParam(type="input_text", text=guidance_text)
+            )
+
         self.messages = ResponseMessages()
         self.messages.add_system_message(content=system_content)
         if self._data_path is not None:
             self.save()
+
+    @classmethod
+    def from_configuration(
+        cls: type[RB],
+        config: "ResponseConfiguration[Any, T]",
+        *,
+        openai_settings: OpenAISettings,
+        tool_handlers: dict[str, ToolHandler] | None = None,
+        add_output_instructions: bool = True,
+    ) -> RB:
+        """Construct a response instance from a configuration object.
+
+        Parameters
+        ----------
+        config : ResponseConfiguration
+            Configuration describing the response inputs, outputs, and tools.
+        openai_settings : OpenAISettings
+            OpenAI authentication and model configuration used for the response.
+        tool_handlers : dict[str, ToolHandler] or None, default None
+            Mapping of tool names to callable handlers. Defaults to an empty
+            dictionary when not provided.
+        add_output_instructions : bool, default True
+            Append structured output instructions when an output structure is
+            present.
+
+        Returns
+        -------
+        BaseResponse
+            Instance of ``cls`` configured from ``config``.
+        """
+
+        handlers = tool_handlers or {}
+
+        output_instructions = ""
+        if config.output_structure is not None and add_output_instructions:
+            output_instructions = config.output_structure.get_prompt(
+                add_enum_values=False
+            )
+
+        instructions = (
+            f"{config.instructions_text}\n{output_instructions}"
+            if output_instructions
+            else config.instructions_text
+        )
+
+        return cls(
+            name=config.name,
+            instructions=instructions,
+            tools=config.tools,
+            output_structure=config.output_structure,
+            system_vector_store=config.system_vector_store,
+            data_path=config.data_path,
+            tool_handlers=handlers,
+            openai_settings=openai_settings,
+        )
 
     @property
     def name(self) -> str:
