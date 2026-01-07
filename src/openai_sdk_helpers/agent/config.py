@@ -251,7 +251,7 @@ def get_default_registry() -> AgentConfigurationRegistry:
 
 @dataclass(frozen=True, slots=True)
 class AgentConfiguration(JSONSerializable):
-    """Immutable configuration for building an BaseAgent.
+    """Immutable configuration for building a BaseAgent.
 
     Encapsulates all metadata required to define an agent including its
     instructions, tools, model settings, handoffs, guardrails, and session
