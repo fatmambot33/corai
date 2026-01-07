@@ -34,7 +34,9 @@ def test_run_sync(mock_runner_run, mock_run_coroutine, mock_agent):
 
     runner.run_sync(mock_agent, input="test_input")
 
-    mock_runner_run.assert_called_once_with(mock_agent, "test_input", context=None)
+    mock_runner_run.assert_called_once_with(
+        mock_agent, "test_input", context=None, session=None
+    )
     assert mock_run_coroutine.called
 
 
@@ -46,5 +48,7 @@ def test_run_streamed(mock_run_streamed, mock_agent):
 
     result = runner.run_streamed(mock_agent, input="test_input")
 
-    mock_run_streamed.assert_called_once_with(mock_agent, "test_input", context=None)
+    mock_run_streamed.assert_called_once_with(
+        mock_agent, "test_input", context=None, session=None
+    )
     assert result == mock_result

@@ -118,6 +118,7 @@ def test_translator_run_sync_forwards_context():
         fake_agent,
         "Hola",
         context={"formality": "casual", "target_language": "English"},
+        session=None,
     )
     fake_result.final_output_as.assert_called_once_with(str)
     assert result == "translated"

@@ -161,9 +161,17 @@ class JSONSerializable:
                         origin = get_origin(field_type)
                         if origin is Union:
                             type_args = get_args(field_type)
-                            # Check if Path is one of the union types
+                            # Only convert to Path if:
+                            # 1. Path is in the union AND
+                            # 2. str is NOT in the union (to avoid converting string fields)
+                            #    OR the field name suggests it's a path (contains "path")
                             if Path in type_args:
-                                should_convert_to_path = True
+                                if str not in type_args:
+                                    # Path-only union (e.g., Union[Path, None])
+                                    should_convert_to_path = True
+                                elif "path" in key.lower():
+                                    # Field name contains "path", likely meant to be a path
+                                    should_convert_to_path = True
 
                     # Convert string to Path if needed
                     if (

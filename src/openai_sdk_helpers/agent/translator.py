@@ -5,12 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import AgentBase
-from .config import AgentConfig
+from .base import BaseAgent
+from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class TranslatorAgent(AgentBase):
+class TranslatorAgent(BaseAgent):
     """Translate text into a target language.
 
     This agent provides language translation services using OpenAI models,
@@ -63,8 +63,9 @@ class TranslatorAgent(AgentBase):
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
         """
-        config = AgentConfig(
+        config = AgentConfiguration(
             name="translator",
+            instructions="Agent instructions",
             description="Translate text into the requested language.",
             output_type=str,
         )

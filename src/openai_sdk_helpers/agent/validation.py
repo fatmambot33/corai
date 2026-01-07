@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure.validation import ValidationResultStructure
-from .base import AgentBase
-from .config import AgentConfig
+from .base import BaseAgent
+from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class ValidatorAgent(AgentBase):
+class ValidatorAgent(BaseAgent):
     """Check user prompts and agent responses against safety guardrails.
 
     This agent validates inputs and outputs to ensure they comply with safety
@@ -64,8 +64,9 @@ class ValidatorAgent(AgentBase):
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
         """
-        config = AgentConfig(
+        config = AgentConfiguration(
             name="validator",
+            instructions="Agent instructions",
             description="Validate user input and agent output against guardrails.",
             output_type=ValidationResultStructure,
         )

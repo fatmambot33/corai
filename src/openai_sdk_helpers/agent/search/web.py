@@ -16,7 +16,7 @@ from ...structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
-from ..config import AgentConfig
+from ..config import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
 
@@ -46,16 +46,17 @@ class WebAgentPlanner(SearchPlanner[WebSearchPlanStructure]):
         """
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the web planner agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output type.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="web_planner",
+            instructions="Agent instructions",
             description="Agent that plans web searches based on a user query.",
             output_type=WebSearchPlanStructure,
         )
@@ -94,16 +95,17 @@ class WebSearchToolAgent(
             max_concurrent_searches=MAX_CONCURRENT_SEARCHES,
         )
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the web search tool agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, input type, and tools.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="web_search",
+            instructions="Agent instructions",
             description="Agent that performs web searches and summarizes results.",
             input_type=WebSearchPlanStructure,
             tools=[WebSearchTool()],
@@ -185,16 +187,17 @@ class WebAgentWriter(SearchWriter[WebSearchReportStructure]):
         """
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the web writer agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output type.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="web_writer",
+            instructions="Agent instructions",
             description="Agent that writes a report based on web search results.",
             output_type=WebSearchReportStructure,
         )

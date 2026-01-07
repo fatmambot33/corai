@@ -6,15 +6,20 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.agent.base import AgentBase
+from openai_sdk_helpers.agent.base import BaseAgent
 from openai_sdk_helpers.response.base import BaseResponse
 
 
-class _StubAgentBase(AgentBase):
-    """Minimal AgentBase subclass for testing async aliases."""
+class _StubBaseAgent(BaseAgent):
+    """Minimal BaseAgent subclass for testing async aliases.
+
+    Note: Intentionally bypasses parent __init__ to set up minimal test fixture
+    without requiring full agent initialization (templates, config validation, etc).
+    """
 
     def __init__(self) -> None:
         # Bypass the parent initializer by setting the required attributes.
+        # This is intentional for testing - we don't want full agent setup.
         self._output_type = str
         self._run_context_wrapper = None
         self.agent_name = "stub"
@@ -22,6 +27,10 @@ class _StubAgentBase(AgentBase):
         self.model = "model"
         self._tools = None
         self._model_settings = None
+        self._handoffs = None
+        self._input_guardrails = None
+        self._output_guardrails = None
+        self._session = None
         self._template = MagicMock(render=MagicMock(return_value=""))
 
     def get_agent(self) -> Any:  # pragma: no cover - mocked in tests
@@ -46,14 +55,14 @@ def test_agent_base_run_aliases(
     mock_run_agent: AsyncMock,
     mock_run_agent_streamed: MagicMock,
 ) -> None:
-    """Ensure AgentBase convenience helpers call the private runners directly."""
+    """Ensure BaseAgent convenience helpers call the private runners directly."""
 
     mock_run_agent.return_value = "async-result"
     mock_run_agent_sync.return_value = "sync-result"
     mock_run_agent_streamed.return_value = MagicMock(
         final_output_as=lambda *_: "stream-result"
     )
-    agent = _StubAgentBase()
+    agent = _StubBaseAgent()
 
     result_run = agent.run_sync(input="hello")
     result_run_async = asyncio.run(agent.run_async(input="hello"))

@@ -14,7 +14,7 @@ from openai_sdk_helpers.agent.search.base import (
     SearchToolAgent,
     SearchWriter,
 )
-from openai_sdk_helpers.agent.config import AgentConfig
+from openai_sdk_helpers.agent.config import AgentConfiguration
 
 
 # Mock Pydantic models for testing
@@ -46,9 +46,10 @@ class MockReportStructure(BaseModel):
 class TestSearchPlanner(SearchPlanner[MockPlanStructure]):
     """Concrete planner implementation for testing."""
 
-    def _configure_agent(self) -> AgentConfig:
-        return AgentConfig(
+    def _configure_agent(self) -> AgentConfiguration:
+        return AgentConfiguration(
             name="test_planner",
+            instructions="Test instructions",
             description="Test planner",
             output_type=MockPlanStructure,
         )
@@ -59,9 +60,10 @@ class TestSearchToolAgent(
 ):
     """Concrete tool agent implementation for testing."""
 
-    def _configure_agent(self) -> AgentConfig:
-        return AgentConfig(
+    def _configure_agent(self) -> AgentConfiguration:
+        return AgentConfiguration(
             name="test_tool",
+            instructions="Test instructions",
             description="Test tool",
             input_type=MockPlanStructure,
         )
@@ -74,9 +76,10 @@ class TestSearchToolAgent(
 class TestSearchWriter(SearchWriter[MockReportStructure]):
     """Concrete writer implementation for testing."""
 
-    def _configure_agent(self) -> AgentConfig:
-        return AgentConfig(
+    def _configure_agent(self) -> AgentConfiguration:
+        return AgentConfiguration(
             name="test_writer",
+            instructions="Test instructions",
             description="Test writer",
             output_type=MockReportStructure,
         )
@@ -111,8 +114,9 @@ class TestSearchPlannerClass:
         with patch.object(
             TestSearchPlanner,
             "_configure_agent",
-            return_value=AgentConfig(
+            return_value=AgentConfiguration(
                 name="test_planner",
+                instructions="Test instructions",
                 description="Test planner",
                 output_type=MockPlanStructure,
             ),

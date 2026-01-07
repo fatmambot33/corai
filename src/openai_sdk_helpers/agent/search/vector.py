@@ -16,7 +16,7 @@ from ...structure.vector_search import (
     VectorSearchReportStructure,
 )
 from ...vector_storage import VectorStorage
-from ..config import AgentConfig
+from ..config import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
 
@@ -46,16 +46,17 @@ class VectorSearchPlanner(SearchPlanner[VectorSearchPlanStructure]):
         """
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector planner agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output type.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="vector_planner",
+            instructions="Agent instructions",
             description="Plan vector searches based on a user query.",
             output_type=VectorSearchPlanStructure,
         )
@@ -117,16 +118,17 @@ class VectorSearchTool(
             max_concurrent_searches=max_concurrent_searches,
         )
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector search tool agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and input type.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="vector_search",
+            instructions="Agent instructions",
             description="Perform vector searches based on a search plan.",
             input_type=VectorSearchPlanStructure,
             output_type=VectorSearchItemResultsStructure,
@@ -199,16 +201,17 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
         """
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector writer agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output type.
         """
-        return AgentConfig(
+        return AgentConfiguration(
             name="vector_writer",
+            instructions="Agent instructions",
             description="Write a report based on search results.",
             output_type=VectorSearchReportStructure,
         )

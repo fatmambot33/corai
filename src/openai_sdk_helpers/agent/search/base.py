@@ -12,8 +12,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generic, List, Optional, TypeVar, Union
 
-from ..base import AgentBase
-from ..config import AgentConfig
+from ..base import BaseAgent
+from ..config import AgentConfiguration
 
 # Type variables for search workflow components
 ItemType = TypeVar("ItemType")  # Search item structure (e.g., WebSearchItemStructure)
@@ -23,7 +23,7 @@ ReportType = TypeVar("ReportType")  # Final report structure
 OutputType = TypeVar("OutputType")  # Generic output type
 
 
-class SearchPlanner(AgentBase, Generic[PlanType]):
+class SearchPlanner(BaseAgent, Generic[PlanType]):
     """Generic planner agent for search workflows.
 
     Subclasses implement specific planner logic by overriding the
@@ -34,7 +34,7 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
     run_agent(query)
         Generate a search plan for the provided query.
     _configure_agent()
-        Return AgentConfig for this planner instance.
+        Return AgentConfiguration for this planner instance.
     """
 
     def __init__(
@@ -59,17 +59,17 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
         )
 
     @abstractmethod
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for this planner.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output_type set.
 
         Examples
         --------
-        >>> config = AgentConfig(
+        >>> config = AgentConfiguration(
         ...     name="web_planner",
         ...     description="Plan web searches",
         ...     output_type=WebSearchPlanStructure,
@@ -98,7 +98,7 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
         return result
 
 
-class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
+class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
     """Generic tool agent for executing search workflows.
 
     Executes individual searches in a plan with concurrency control.
@@ -112,7 +112,7 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
     run_search(item)
         Execute a single search item.
     _configure_agent()
-        Return AgentConfig for this tool agent.
+        Return AgentConfiguration for this tool agent.
     """
 
     def __init__(
@@ -142,17 +142,17 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
         )
 
     @abstractmethod
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for this tool agent.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, input_type, and tools set.
 
         Examples
         --------
-        >>> config = AgentConfig(
+        >>> config = AgentConfiguration(
         ...     name="web_search",
         ...     description="Perform web searches",
         ...     input_type=WebSearchPlanStructure,
@@ -205,7 +205,7 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
         return [result for result in results if result is not None]
 
 
-class SearchWriter(AgentBase, Generic[ReportType]):
+class SearchWriter(BaseAgent, Generic[ReportType]):
     """Generic writer agent for search workflow reports.
 
     Synthesizes search results into a final report. Subclasses implement
@@ -216,7 +216,7 @@ class SearchWriter(AgentBase, Generic[ReportType]):
     run_agent(query, search_results)
         Generate a report from search results.
     _configure_agent()
-        Return AgentConfig for this writer instance.
+        Return AgentConfiguration for this writer instance.
     """
 
     def __init__(
@@ -241,17 +241,17 @@ class SearchWriter(AgentBase, Generic[ReportType]):
         )
 
     @abstractmethod
-    def _configure_agent(self) -> AgentConfig:
+    def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for this writer.
 
         Returns
         -------
-        AgentConfig
+        AgentConfiguration
             Configuration with name, description, and output_type set.
 
         Examples
         --------
-        >>> config = AgentConfig(
+        >>> config = AgentConfiguration(
         ...     name="web_writer",
         ...     description="Write web search report",
         ...     output_type=WebSearchReportStructure,

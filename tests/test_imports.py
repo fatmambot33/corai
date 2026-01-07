@@ -31,5 +31,5 @@ def test_load_modules_by_path():
 def test_top_level_exports():
     import openai_sdk_helpers as sdk
 
-    assert hasattr(sdk, "AgentBase")
+    assert hasattr(sdk, "BaseAgent")
     assert hasattr(sdk, "BaseResponse")
