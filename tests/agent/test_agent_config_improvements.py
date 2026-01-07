@@ -38,7 +38,7 @@ def test_agent_config_replace_method() -> None:
 
 
 def test_agent_config_to_agent_base() -> None:
-    """Test that AgentConfiguration.create_agent creates an BaseAgent instance."""
+    """Test that AgentConfiguration.create_agent creates a BaseAgent instance."""
     config = AgentConfiguration(name="test_agent", model="gpt-4o-mini")
     agent = config.create_agent()
 
