@@ -35,7 +35,10 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
     """
 
     def load_from_directory(
-        self, path: Path | str, *, config_class: type["AgentConfiguration"] | None = None
+        self,
+        path: Path | str,
+        *,
+        config_class: type["AgentConfiguration"] | None = None,
     ) -> int:
         """Load all agent configurations from JSON files in a directory.
 
