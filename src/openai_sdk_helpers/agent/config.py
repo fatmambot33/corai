@@ -302,7 +302,7 @@ class AgentConfiguration(JSONSerializable):
     instructions_text
         Return the resolved instruction content as a string.
     create_agent(run_context_wrapper, prompt_dir, default_model)
-        Create an BaseAgent instance from this configuration.
+        Create a BaseAgent instance from this configuration.
     replace(**changes)
         Create a new AgentConfiguration with specified fields replaced.
     to_json()
