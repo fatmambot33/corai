@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -11,37 +10,23 @@ from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, Session
 from agents.model_settings import ModelSettings
 
 from ..utils import JSONSerializable
-from ..utils.path_utils import ensure_directory
+from ..utils.registry import BaseRegistry
+from ..utils.instructions import resolve_instructions_from_path
 
 
-class AgentConfigurationRegistry:
+class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
     """Registry for managing AgentConfiguration instances.
 
-    Provides centralized storage and retrieval of agent configurations,
-    enabling reusable agent specs across the application. Configurations
-    are stored by name and can be retrieved or listed as needed.
-
-    Methods
-    -------
-    register(config)
-        Add an AgentConfiguration to the registry.
-    get(name)
-        Retrieve a configuration by name.
-    list_names()
-        Return all registered configuration names.
-    clear()
-        Remove all registered configurations.
-    save_to_directory(path)
-        Export all registered configurations to JSON files.
-    load_from_directory(path)
-        Load configurations from JSON files in a directory.
+    Inherits from BaseRegistry to provide centralized storage and retrieval
+    of agent configurations, enabling reusable agent specs across the application.
 
     Examples
     --------
     >>> registry = AgentConfigurationRegistry()
     >>> config = AgentConfiguration(
     ...     name="test_agent",
-    ...     model="gpt-4o-mini"
+    ...     model="gpt-4o-mini",
+    ...     instructions="Test instructions"
     ... )
     >>> registry.register(config)
     >>> retrieved = registry.get("test_agent")
@@ -49,140 +34,8 @@ class AgentConfigurationRegistry:
     'test_agent'
     """
 
-    def __init__(self) -> None:
-        """Initialize an empty registry."""
-        self._configs: dict[str, AgentConfiguration] = {}
-
-    def register(self, config: AgentConfiguration) -> None:
-        """Add an AgentConfiguration to the registry.
-
-        Parameters
-        ----------
-        config : AgentConfiguration
-            Configuration to register.
-
-        Raises
-        ------
-        ValueError
-            If a configuration with the same name is already registered.
-
-        Examples
-        --------
-        >>> registry = AgentConfigurationRegistry()
-        >>> config = AgentConfiguration(
-        ...     name="test", model="gpt-4o-mini", instructions="Test instructions"
-        ... )
-        >>> registry.register(config)
-        """
-        if config.name in self._configs:
-            raise ValueError(
-                f"Configuration '{config.name}' is already registered. "
-                "Use a unique name or clear the registry first."
-            )
-        self._configs[config.name] = config
-
-    def get(self, name: str) -> AgentConfiguration:
-        """Retrieve a configuration by name.
-
-        Parameters
-        ----------
-        name : str
-            Configuration name to look up.
-
-        Returns
-        -------
-        AgentConfiguration
-            The registered configuration.
-
-        Raises
-        ------
-        KeyError
-            If no configuration with the given name exists.
-
-        Examples
-        --------
-        >>> registry = AgentConfigurationRegistry()
-        >>> config = registry.get("test_agent")
-        """
-        if name not in self._configs:
-            raise KeyError(
-                f"No configuration named '{name}' found. "
-                f"Available: {list(self._configs.keys())}"
-            )
-        return self._configs[name]
-
-    def list_names(self) -> list[str]:
-        """Return all registered configuration names.
-
-        Returns
-        -------
-        list[str]
-            Sorted list of configuration names.
-
-        Examples
-        --------
-        >>> registry = AgentConfigurationRegistry()
-        >>> registry.list_names()
-        []
-        """
-        return sorted(self._configs.keys())
-
-    def clear(self) -> None:
-        """Remove all registered configurations.
-
-        Examples
-        --------
-        >>> registry = AgentConfigurationRegistry()
-        >>> registry.clear()
-        """
-        self._configs.clear()
-
-    def save_to_directory(self, path: Path | str) -> None:
-        """Export all registered configurations to JSON files in a directory.
-
-        Serializes each registered AgentConfiguration to an individual JSON file
-        named after the configuration. Creates the directory if it does not exist.
-
-        Parameters
-        ----------
-        path : Path or str
-            Directory path where JSON files will be saved. Will be created if
-            it does not already exist.
-
-        Returns
-        -------
-        None
-
-        Raises
-        ------
-        OSError
-            If the directory cannot be created or files cannot be written.
-
-        Examples
-        --------
-        >>> registry = AgentConfigurationRegistry()
-        >>> registry.save_to_directory("./agents")
-        >>> registry.save_to_directory(Path("exports"))
-        """
-        dir_path = ensure_directory(Path(path))
-        config_names = self.list_names()
-
-        if not config_names:
-            return
-
-        for config_name in config_names:
-            config = self.get(config_name)
-            filename = f"{config_name}.json"
-            filepath = dir_path / filename
-            config.to_json_file(filepath)
-
     def load_from_directory(self, path: Path | str) -> int:
         """Load all agent configurations from JSON files in a directory.
-
-        Scans the directory for JSON files and attempts to load each as an
-        AgentConfiguration. Successfully loaded configurations are registered.
-        If a file fails to load, a warning is issued and processing continues
-        with the remaining files.
 
         Parameters
         ----------
@@ -207,27 +60,7 @@ class AgentConfigurationRegistry:
         >>> count = registry.load_from_directory("./agents")
         >>> print(f"Loaded {count} configurations")
         """
-        dir_path = Path(path)
-        if not dir_path.exists():
-            raise FileNotFoundError(f"Directory not found: {dir_path}")
-
-        if not dir_path.is_dir():
-            raise NotADirectoryError(f"Path is not a directory: {dir_path}")
-
-        count = 0
-        for json_file in sorted(dir_path.glob("*.json")):
-            try:
-                config = AgentConfiguration.from_json_file(json_file)
-                self.register(config)
-                count += 1
-            except Exception as exc:
-                # Log warning but continue processing other files
-                warnings.warn(
-                    f"Failed to load configuration from {json_file}: {exc}",
-                    stacklevel=2,
-                )
-
-        return count
+        return super().load_from_directory(path, AgentConfiguration)
 
 
 # Global default registry instance
@@ -404,15 +237,7 @@ class AgentConfiguration(JSONSerializable):
 
     def _resolve_instructions(self) -> str:
         """Resolve instructions from string or file path."""
-        if isinstance(self.instructions, Path):
-            instruction_path = self.instructions.expanduser()
-            try:
-                return instruction_path.read_text(encoding="utf-8")
-            except OSError as exc:
-                raise ValueError(
-                    f"Unable to read instructions at '{instruction_path}': {exc}"
-                ) from exc
-        return self.instructions
+        return resolve_instructions_from_path(self.instructions)
 
     def create_agent(
         self,
