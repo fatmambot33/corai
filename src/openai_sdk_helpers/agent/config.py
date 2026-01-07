@@ -301,7 +301,7 @@ class AgentConfiguration(JSONSerializable):
         Validate configuration invariants after initialization.
     instructions_text
         Return the resolved instruction content as a string.
-    to_agent_base(run_context_wrapper, prompt_dir, default_model)
+    create_agent(run_context_wrapper, prompt_dir, default_model)
         Create an BaseAgent instance from this configuration.
     replace(**changes)
         Create a new AgentConfiguration with specified fields replaced.
@@ -402,7 +402,7 @@ class AgentConfiguration(JSONSerializable):
                 ) from exc
         return self.instructions
 
-    def to_agent_base(
+    def create_agent(
         self,
         run_context_wrapper: Any = None,
         prompt_dir: Path | None = None,
@@ -410,7 +410,7 @@ class AgentConfiguration(JSONSerializable):
     ) -> Any:
         """Create an BaseAgent instance from this configuration.
 
-        This is a convenience method that delegates to BaseAgent.from_config().
+        This is a convenience method that delegates to BaseAgent.from_configuration().
 
         Parameters
         ----------
@@ -429,13 +429,13 @@ class AgentConfiguration(JSONSerializable):
         Examples
         --------
         >>> config = AgentConfiguration(name="helper", model="gpt-4o-mini")
-        >>> agent = config.to_agent_base()
+        >>> agent = config.create_agent()
         >>> result = agent.run_sync("Hello!")
         """
         # Import here to avoid circular dependency
         from .base import BaseAgent
 
-        return BaseAgent.from_config(
+        return BaseAgent.from_configuration(
             config=self,
             run_context_wrapper=run_context_wrapper,
             prompt_dir=prompt_dir,

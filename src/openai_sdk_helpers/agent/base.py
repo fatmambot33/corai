@@ -5,7 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
 
-from agents import Agent, RunResult, RunResultStreaming, Runner
+from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, RunResult, RunResultStreaming, Runner, Session
+from agents.model_settings import ModelSettings
 from agents.run_context import RunContextWrapper
 from agents.tool import FunctionTool, Tool
 from jinja2 import Template
@@ -32,52 +33,52 @@ class AgentConfigurationLike(Protocol):
         ...
 
     @property
-    def template_path(self) -> Optional[Any]:
+    def template_path(self) -> Optional[str | Path]:
         """Template path."""
         ...
 
     @property
-    def instructions(self) -> Optional[Any]:
+    def instructions(self) -> Optional[str | Path]:
         """Instructions."""
         ...
 
     @property
-    def input_type(self) -> Optional[Any]:
+    def input_type(self) -> Optional[type]:
         """Input type."""
         ...
 
     @property
-    def output_type(self) -> Optional[Any]:
+    def output_type(self) -> Optional[type]:
         """Output type."""
         ...
 
     @property
-    def tools(self) -> Optional[Any]:
+    def tools(self) -> Optional[list]:
         """Tools."""
         ...
 
     @property
-    def model_settings(self) -> Optional[Any]:
+    def model_settings(self) -> Optional[ModelSettings]:
         """Model settings."""
         ...
 
     @property
-    def handoffs(self) -> Optional[Any]:
+    def handoffs(self) -> Optional[list[Agent | Handoff]]:
         """Handoffs."""
         ...
 
     @property
-    def input_guardrails(self) -> Optional[Any]:
+    def input_guardrails(self) -> Optional[list[InputGuardrail]]:
         """Input guardrails."""
         ...
 
     @property
-    def output_guardrails(self) -> Optional[Any]:
+    def output_guardrails(self) -> Optional[list[OutputGuardrail]]:
         """Output guardrails."""
         ...
 
     @property
-    def session(self) -> Optional[Any]:
+    def session(self) -> Optional[Session]:
         """Session."""
         ...
 
@@ -123,7 +124,7 @@ class BaseAgent:
 
     Methods
     -------
-    from_config(config, run_context_wrapper, prompt_dir, default_model)
+    from_configuration(config, run_context_wrapper, prompt_dir, default_model)
         Instantiate a ``BaseAgent`` from configuration.
     build_prompt_from_jinja(run_context_wrapper)
         Render the agent prompt using Jinja and optional context.
@@ -207,7 +208,7 @@ class BaseAgent:
         self._instructions = getattr(config, "instructions", None)
 
     @classmethod
-    def from_config(
+    def from_configuration(
         cls,
         config: AgentConfigurationLike,
         *,
