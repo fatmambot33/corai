@@ -257,6 +257,11 @@ class AgentConfiguration(JSONSerializable):
     instructions, tools, model settings, handoffs, guardrails, and session
     management. Inherits from JSONSerializable to support serialization.
 
+    This dataclass is frozen (immutable) to ensure thread-safety and
+    enable use as dictionary keys. All list-type fields use None as the
+    default value rather than mutable defaults like [] to avoid issues
+    with shared state across instances.
+
     Parameters
     ----------
     name : str
