@@ -96,8 +96,8 @@ class BaseAgent:
     --------
     Create a basic agent from configuration:
 
-    >>> from openai_sdk_helpers.agent import BaseAgent, AgentConfig
-    >>> config = AgentConfig(
+    >>> from openai_sdk_helpers.agent import BaseAgent, AgentConfiguration
+    >>> config = AgentConfiguration(
     ...     name="my_agent",
     ...     description="A custom agent",
     ...     model="gpt-4o-mini"
@@ -107,7 +107,7 @@ class BaseAgent:
 
     Use absolute path to template:
 
-    >>> config = AgentConfig(
+    >>> config = AgentConfiguration(
     ...     name="my_agent",
     ...     template_path="/absolute/path/to/template.jinja",
     ...     model="gpt-4o-mini"
