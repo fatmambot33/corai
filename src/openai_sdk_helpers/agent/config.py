@@ -410,7 +410,7 @@ class AgentConfiguration(JSONSerializable):
         prompt_dir: Path | None = None,
         default_model: str | None = None,
     ) -> Any:
-        """Create an BaseAgent instance from this configuration.
+        """Create a BaseAgent instance from this configuration.
 
         This is a convenience method that delegates to BaseAgent.from_configuration().
 
