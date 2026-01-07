@@ -17,7 +17,7 @@ from agents import (
 )
 from agents.model_settings import ModelSettings
 from agents.run_context import RunContextWrapper
-from agents.tool import FunctionTool, Tool
+from agents.tool import Tool
 from jinja2 import Template
 
 from .runner import run_async, run_streamed, run_sync
