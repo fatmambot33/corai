@@ -69,7 +69,9 @@ class AgentConfigurationRegistry:
         Examples
         --------
         >>> registry = AgentConfigurationRegistry()
-        >>> config = AgentConfiguration(name="test", model="gpt-4o-mini")
+        >>> config = AgentConfiguration(
+        ...     name="test", model="gpt-4o-mini", instructions="Test instructions"
+        ... )
         >>> registry.register(config)
         """
         if config.name in self._configs:
@@ -243,7 +245,9 @@ def get_default_registry() -> AgentConfigurationRegistry:
     Examples
     --------
     >>> registry = get_default_registry()
-    >>> config = AgentConfiguration(name="test", model="gpt-4o-mini")
+    >>> config = AgentConfiguration(
+    ...     name="test", model="gpt-4o-mini", instructions="Test instructions"
+    ... )
     >>> registry.register(config)
     """
     return _default_registry
@@ -266,9 +270,9 @@ class AgentConfiguration(JSONSerializable):
     ----------
     name : str
         Unique identifier for the agent. Must be a non-empty string.
-    instructions : str or Path, optional
+    instructions : str or Path
         Plain text instructions or a path to a Jinja template file whose
-        contents are loaded at runtime. Default is None.
+        contents are loaded at runtime. Required field.
     description : str, optional
         Short description of the agent's purpose. Default is None.
     model : str, optional
@@ -331,7 +335,7 @@ class AgentConfiguration(JSONSerializable):
     """
 
     name: str
-    instructions: Optional[str | Path] = None
+    instructions: str | Path
     description: Optional[str] = None
     model: Optional[str] = None
     template_path: Optional[str | Path] = None
@@ -348,12 +352,13 @@ class AgentConfiguration(JSONSerializable):
         """Validate configuration invariants after initialization.
 
         Ensures that the name is a non-empty string and that instructions
-        or template_path are properly formatted if provided.
+        are properly formatted.
 
         Raises
         ------
         TypeError
             If name is not a non-empty string.
+            If instructions is not a string or Path.
         ValueError
             If instructions is an empty string.
         FileNotFoundError
@@ -362,18 +367,21 @@ class AgentConfiguration(JSONSerializable):
         if not self.name or not isinstance(self.name, str):
             raise TypeError("AgentConfiguration.name must be a non-empty str")
 
-        if self.instructions is not None:
-            if isinstance(self.instructions, str):
-                if not self.instructions.strip():
-                    raise ValueError(
-                        "AgentConfiguration.instructions must be a non-empty str"
-                    )
-            elif isinstance(self.instructions, Path):
-                instruction_path = self.instructions.expanduser()
-                if not instruction_path.is_file():
-                    raise FileNotFoundError(
-                        f"Instruction template not found: {instruction_path}"
-                    )
+        # Validate instructions (required field, like in Response module)
+        instructions_value = self.instructions
+        if isinstance(instructions_value, str):
+            if not instructions_value.strip():
+                raise ValueError(
+                    "AgentConfiguration.instructions must be a non-empty str"
+                )
+        elif isinstance(instructions_value, Path):
+            instruction_path = instructions_value.expanduser()
+            if not instruction_path.is_file():
+                raise FileNotFoundError(
+                    f"Instruction template not found: {instruction_path}"
+                )
+        else:
+            raise TypeError("AgentConfiguration.instructions must be a str or Path")
 
         if self.template_path is not None and isinstance(self.template_path, Path):
             # Validate template_path if it's a Path object
@@ -384,21 +392,18 @@ class AgentConfiguration(JSONSerializable):
                 pass
 
     @property
-    def instructions_text(self) -> str | None:
+    def instructions_text(self) -> str:
         """Return the resolved instruction text.
 
         Returns
         -------
-        str or None
-            Plain-text instructions, loading template files when necessary,
-            or None if no instructions are configured.
+        str
+            Plain-text instructions, loading template files when necessary.
         """
         return self._resolve_instructions()
 
-    def _resolve_instructions(self) -> str | None:
+    def _resolve_instructions(self) -> str:
         """Resolve instructions from string or file path."""
-        if self.instructions is None:
-            return None
         if isinstance(self.instructions, Path):
             instruction_path = self.instructions.expanduser()
             try:
@@ -435,7 +440,9 @@ class AgentConfiguration(JSONSerializable):
 
         Examples
         --------
-        >>> config = AgentConfiguration(name="helper", model="gpt-4o-mini")
+        >>> config = AgentConfiguration(
+        ...     name="helper", model="gpt-4o-mini", instructions="Help the user"
+        ... )
         >>> agent = config.create_agent()
         >>> result = agent.run_sync("Hello!")
         """
@@ -468,7 +475,9 @@ class AgentConfiguration(JSONSerializable):
 
         Examples
         --------
-        >>> config = AgentConfiguration(name="agent1", model="gpt-4o-mini")
+        >>> config = AgentConfiguration(
+        ...     name="agent1", model="gpt-4o-mini", instructions="Agent instructions"
+        ... )
         >>> config2 = config.replace(name="agent2", description="Modified")
         >>> config2.name
         'agent2'

@@ -66,6 +66,7 @@ class SummarizerAgent(BaseAgent):
         """
         config = AgentConfiguration(
             name="summarizer",
+            instructions="Agent instructions",
             description="Summarize passages into concise findings.",
             output_type=output_type,
         )

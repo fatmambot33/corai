@@ -47,8 +47,13 @@ class AgentConfigurationLike(Protocol):
         ...
 
     @property
-    def instructions(self) -> Optional[str | Path]:
+    def instructions(self) -> str | Path:
         """Instructions."""
+        ...
+
+    @property
+    def instructions_text(self) -> str:
+        """Resolved instructions text."""
         ...
 
     @property
@@ -192,21 +197,20 @@ class BaseAgent:
 
         # Build template from file or fall back to instructions
         if prompt_path is None:
-            # No template path - use instructions if available
-            instructions_text = ""
-            # Try to get resolved instructions text
+            # No template path - use instructions (always available now)
             if hasattr(config, "instructions_text"):
-                # AgentConfiguration has this property
-                resolved = getattr(config, "instructions_text")
-                instructions_text = resolved if resolved is not None else ""
-            elif config.instructions is not None:
+                # AgentConfiguration has this property - use it for proper resolution
+                instructions_text = config.instructions_text
+            else:
                 # Fall back to resolving instructions ourselves
                 if isinstance(config.instructions, Path):
                     try:
-                        instructions_text = config.instructions.read_text(encoding="utf-8")
+                        instructions_text = config.instructions.read_text(
+                            encoding="utf-8"
+                        )
                     except OSError:
-                        pass  # Leave empty if file can't be read
-                elif isinstance(config.instructions, str):
+                        instructions_text = ""  # Leave empty if file can't be read
+                else:
                     instructions_text = config.instructions
             self._template = Template(instructions_text)
         elif prompt_path.exists():

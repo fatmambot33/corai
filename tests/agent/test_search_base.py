@@ -49,6 +49,7 @@ class TestSearchPlanner(SearchPlanner[MockPlanStructure]):
     def _configure_agent(self) -> AgentConfiguration:
         return AgentConfiguration(
             name="test_planner",
+            instructions="Test instructions",
             description="Test planner",
             output_type=MockPlanStructure,
         )
@@ -62,6 +63,7 @@ class TestSearchToolAgent(
     def _configure_agent(self) -> AgentConfiguration:
         return AgentConfiguration(
             name="test_tool",
+            instructions="Test instructions",
             description="Test tool",
             input_type=MockPlanStructure,
         )
@@ -77,6 +79,7 @@ class TestSearchWriter(SearchWriter[MockReportStructure]):
     def _configure_agent(self) -> AgentConfiguration:
         return AgentConfiguration(
             name="test_writer",
+            instructions="Test instructions",
             description="Test writer",
             output_type=MockReportStructure,
         )
@@ -113,6 +116,7 @@ class TestSearchPlannerClass:
             "_configure_agent",
             return_value=AgentConfiguration(
                 name="test_planner",
+                instructions="Test instructions",
                 description="Test planner",
                 output_type=MockPlanStructure,
             ),

@@ -93,6 +93,7 @@ class CoordinatorAgent(BaseAgent, JSONSerializable):
         if config is None:
             config = AgentConfiguration(
                 name="coordinator_agent",
+                instructions="Coordinate agents for planning and summarization.",
                 description="Coordinates agents for planning and summarization.",
             )
         super().__init__(

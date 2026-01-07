@@ -65,6 +65,7 @@ class TranslatorAgent(BaseAgent):
         """
         config = AgentConfiguration(
             name="translator",
+            instructions="Agent instructions",
             description="Translate text into the requested language.",
             output_type=str,
         )

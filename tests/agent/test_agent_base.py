@@ -21,10 +21,10 @@ class MockConfig(BaseModel):
     """Mock agent configuration."""
 
     name: str
+    instructions: str  # Now required, matching AgentConfiguration
     description: str | None = None
     model: str | None = None
     template_path: str | None = None
-    instructions: str | None = None
     input_type: Any | None = None
     output_type: Any | None = None
     tools: Any | None = None
@@ -38,7 +38,9 @@ class MockConfig(BaseModel):
 @pytest.fixture
 def mock_config():
     """Return a mock agent configuration."""
-    return MockConfig(name="test_agent", model="test_model")
+    return MockConfig(
+        name="test_agent", model="test_model", instructions="Test instructions"
+    )
 
 
 @pytest.fixture
@@ -72,6 +74,7 @@ def test_base_agent_initialization_with_absolute_template_path(tmp_path: Path):
     config = MockConfig(
         name="test_agent",
         model="test_model",
+        instructions="Test instructions",
         template_path=str(template_file.resolve()),
     )
     agent = BaseAgent(config=config)
@@ -95,7 +98,7 @@ def test_get_agent(mock_agent, mock_config):
     agent.get_agent()
     mock_agent.assert_called_once_with(
         name="test_agent",
-        instructions=".",
+        instructions="Test instructions",
         model="test_model",
     )
 

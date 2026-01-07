@@ -66,6 +66,7 @@ class ValidatorAgent(BaseAgent):
         """
         config = AgentConfiguration(
             name="validator",
+            instructions="Agent instructions",
             description="Validate user input and agent output against guardrails.",
             output_type=ValidationResultStructure,
         )

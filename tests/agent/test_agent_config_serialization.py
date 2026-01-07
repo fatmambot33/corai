@@ -14,6 +14,7 @@ def test_agent_config_to_json() -> None:
     """Test that AgentConfiguration can be serialized to JSON."""
     config = AgentConfiguration(
         name="test_agent",
+        instructions="Test instructions",
         description="A test agent",
         model="gpt-4o-mini",
         template_path="/tmp/template.jinja",
@@ -26,7 +27,7 @@ def test_agent_config_to_json() -> None:
     assert json_data["description"] == "A test agent"
     assert json_data["model"] == "gpt-4o-mini"
     assert json_data["template_path"] == "/tmp/template.jinja"
-    assert json_data["instructions"] is None
+    assert json_data["instructions"] == "Test instructions"
     assert json_data["tools"] is None
 
 
@@ -34,6 +35,7 @@ def test_agent_config_to_json_file(tmp_path: Path) -> None:
     """Test that AgentConfiguration can be written to a JSON file."""
     config = AgentConfiguration(
         name="test_agent",
+        instructions="Test instructions",
         description="A test agent",
         model="gpt-4o-mini",
     )
@@ -57,6 +59,7 @@ def test_agent_config_json_serialization_with_none_fields() -> None:
     """Test JSON serialization with None fields."""
     config = AgentConfiguration(
         name="minimal_agent",
+        instructions="Test instructions",
         model="gpt-4o-mini",
     )
 
@@ -66,7 +69,7 @@ def test_agent_config_json_serialization_with_none_fields() -> None:
     assert json_data["model"] == "gpt-4o-mini"
     assert json_data["description"] is None
     assert json_data["template_path"] is None
-    assert json_data["instructions"] is None
+    assert json_data["instructions"] == "Test instructions"
     assert json_data["tools"] is None
     assert json_data["handoffs"] is None
     assert json_data["input_guardrails"] is None
@@ -108,7 +111,7 @@ def test_agent_config_from_json_file(tmp_path: Path) -> None:
         "name": "test_agent",
         "description": "A test agent",
         "model": "gpt-4o-mini",
-        "instructions": None,
+        "instructions": "Test instructions",
         "template_path": None,
         "input_type": None,
         "output_type": None,
@@ -166,7 +169,7 @@ def test_agent_config_validation_empty_name() -> None:
     with pytest.raises(
         TypeError, match="AgentConfiguration.name must be a non-empty str"
     ):
-        AgentConfiguration(name="", model="gpt-4o-mini")
+        AgentConfiguration(name="", instructions="Test", model="gpt-4o-mini")
 
 
 def test_agent_config_validation_empty_instructions() -> None:
@@ -184,6 +187,7 @@ def test_agent_config_with_path_template(tmp_path: Path) -> None:
 
     config = AgentConfiguration(
         name="test_agent",
+        instructions="Test instructions",
         model="gpt-4o-mini",
         template_path=template_path,
     )

@@ -16,7 +16,9 @@ from openai_sdk_helpers.agent.config import (
 def test_agent_registry_basic_operations() -> None:
     """Test basic registry operations."""
     registry = AgentConfigurationRegistry()
-    config = AgentConfiguration(name="test_agent", model="gpt-4o-mini")
+    config = AgentConfiguration(
+        name="test_agent", model="gpt-4o-mini", instructions="Test instructions"
+    )
 
     # Register
     registry.register(config)
@@ -35,8 +37,12 @@ def test_agent_registry_basic_operations() -> None:
 def test_agent_registry_duplicate_name_raises() -> None:
     """Test that registering duplicate names raises ValueError."""
     registry = AgentConfigurationRegistry()
-    config1 = AgentConfiguration(name="duplicate", model="gpt-4o-mini")
-    config2 = AgentConfiguration(name="duplicate", model="gpt-4")
+    config1 = AgentConfiguration(
+        name="duplicate", model="gpt-4o-mini", instructions="Test instructions"
+    )
+    config2 = AgentConfiguration(
+        name="duplicate", model="gpt-4", instructions="Test instructions"
+    )
 
     registry.register(config1)
 
@@ -55,8 +61,12 @@ def test_agent_registry_get_nonexistent_raises() -> None:
 def test_agent_registry_clear() -> None:
     """Test clearing the registry."""
     registry = AgentConfigurationRegistry()
-    config1 = AgentConfiguration(name="agent1", model="gpt-4o-mini")
-    config2 = AgentConfiguration(name="agent2", model="gpt-4")
+    config1 = AgentConfiguration(
+        name="agent1", model="gpt-4o-mini", instructions="Test instructions"
+    )
+    config2 = AgentConfiguration(
+        name="agent2", model="gpt-4", instructions="Test instructions"
+    )
 
     registry.register(config1)
     registry.register(config2)
@@ -70,7 +80,10 @@ def test_agent_registry_multiple_configs() -> None:
     """Test registering and retrieving multiple configurations."""
     registry = AgentConfigurationRegistry()
     configs = [
-        AgentConfiguration(name=f"agent{i}", model="gpt-4o-mini") for i in range(5)
+        AgentConfiguration(
+            name=f"agent{i}", model="gpt-4o-mini", instructions="Test instructions"
+        )
+        for i in range(5)
     ]
 
     for config in configs:
@@ -98,7 +111,9 @@ def test_agent_registry_isolated_instances() -> None:
     registry1 = AgentConfigurationRegistry()
     registry2 = AgentConfigurationRegistry()
 
-    config = AgentConfiguration(name="test", model="gpt-4o-mini")
+    config = AgentConfiguration(
+        name="test", model="gpt-4o-mini", instructions="Test instructions"
+    )
     registry1.register(config)
 
     assert "test" in registry1.list_names()
@@ -109,10 +124,16 @@ def test_agent_registry_save_to_directory(tmp_path: Path) -> None:
     """Test saving registry to directory."""
     registry = AgentConfigurationRegistry()
     config1 = AgentConfiguration(
-        name="agent1", model="gpt-4o-mini", description="First agent"
+        name="agent1",
+        model="gpt-4o-mini",
+        description="First agent",
+        instructions="Test instructions",
     )
     config2 = AgentConfiguration(
-        name="agent2", model="gpt-4", description="Second agent"
+        name="agent2",
+        model="gpt-4",
+        description="Second agent",
+        instructions="Test instructions",
     )
 
     registry.register(config1)

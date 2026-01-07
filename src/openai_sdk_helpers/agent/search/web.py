@@ -56,6 +56,7 @@ class WebAgentPlanner(SearchPlanner[WebSearchPlanStructure]):
         """
         return AgentConfiguration(
             name="web_planner",
+            instructions="Agent instructions",
             description="Agent that plans web searches based on a user query.",
             output_type=WebSearchPlanStructure,
         )
@@ -104,6 +105,7 @@ class WebSearchToolAgent(
         """
         return AgentConfiguration(
             name="web_search",
+            instructions="Agent instructions",
             description="Agent that performs web searches and summarizes results.",
             input_type=WebSearchPlanStructure,
             tools=[WebSearchTool()],
@@ -195,6 +197,7 @@ class WebAgentWriter(SearchWriter[WebSearchReportStructure]):
         """
         return AgentConfiguration(
             name="web_writer",
+            instructions="Agent instructions",
             description="Agent that writes a report based on web search results.",
             output_type=WebSearchReportStructure,
         )

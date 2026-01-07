@@ -16,6 +16,7 @@ def test_agent_config_replace_method() -> None:
     """Test that AgentConfiguration.replace creates a new instance with changes."""
     original = AgentConfiguration(
         name="agent1",
+        instructions="Test instructions",
         model="gpt-4o-mini",
         description="Original description",
     )
@@ -39,7 +40,9 @@ def test_agent_config_replace_method() -> None:
 
 def test_agent_config_to_agent_base() -> None:
     """Test that AgentConfiguration.create_agent creates a BaseAgent instance."""
-    config = AgentConfiguration(name="test_agent", model="gpt-4o-mini")
+    config = AgentConfiguration(
+        name="test_agent", model="gpt-4o-mini", instructions="Test instructions"
+    )
     agent = config.create_agent()
 
     assert agent.agent_name == "test_agent"
@@ -50,9 +53,17 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     """Test loading configurations from a directory."""
     # Create some config files
     config1 = AgentConfiguration(
-        name="agent1", model="gpt-4o-mini", description="First"
+        name="agent1",
+        model="gpt-4o-mini",
+        description="First",
+        instructions="Test instructions",
     )
-    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Second")
+    config2 = AgentConfiguration(
+        name="agent2",
+        model="gpt-4",
+        description="Second",
+        instructions="Test instructions",
+    )
 
     configs_dir = tmp_path / "configs"
     configs_dir.mkdir()
@@ -103,7 +114,9 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
     configs_dir.mkdir()
 
     # Create valid config
-    config = AgentConfiguration(name="valid", model="gpt-4o-mini")
+    config = AgentConfiguration(
+        name="valid", model="gpt-4o-mini", instructions="Test instructions"
+    )
     config.to_json_file(configs_dir / "valid.json")
 
     # Create invalid JSON file
@@ -123,9 +136,17 @@ def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     # Create registry with configs
     registry1 = AgentConfigurationRegistry()
     config1 = AgentConfiguration(
-        name="agent1", model="gpt-4o-mini", description="Test 1"
+        name="agent1",
+        model="gpt-4o-mini",
+        description="Test 1",
+        instructions="Test instructions",
     )
-    config2 = AgentConfiguration(name="agent2", model="gpt-4", description="Test 2")
+    config2 = AgentConfiguration(
+        name="agent2",
+        model="gpt-4",
+        description="Test 2",
+        instructions="Test instructions",
+    )
     registry1.register(config1)
     registry1.register(config2)
 

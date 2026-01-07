@@ -56,6 +56,7 @@ class VectorSearchPlanner(SearchPlanner[VectorSearchPlanStructure]):
         """
         return AgentConfiguration(
             name="vector_planner",
+            instructions="Agent instructions",
             description="Plan vector searches based on a user query.",
             output_type=VectorSearchPlanStructure,
         )
@@ -127,6 +128,7 @@ class VectorSearchTool(
         """
         return AgentConfiguration(
             name="vector_search",
+            instructions="Agent instructions",
             description="Perform vector searches based on a search plan.",
             input_type=VectorSearchPlanStructure,
             output_type=VectorSearchItemResultsStructure,
@@ -209,6 +211,7 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
         """
         return AgentConfiguration(
             name="vector_writer",
+            instructions="Agent instructions",
             description="Write a report based on search results.",
             output_type=VectorSearchReportStructure,
         )
