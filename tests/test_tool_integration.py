@@ -72,9 +72,7 @@ def test_unwrap_and_async_handler_integration():
             estimated_reach=75000,
         )
 
-    handler = tool_handler_factory(
-        async_propose_targeting, input_model=TargetingInput
-    )
+    handler = tool_handler_factory(async_propose_targeting, input_model=TargetingInput)
 
     # Arguments wrapped by snake_case tool name
     tool_call = MockToolCall(
@@ -159,7 +157,7 @@ def test_unwrap_with_async_in_event_loop():
 
 def test_parse_tool_arguments_directly():
     """Test parse_tool_arguments function handles all wrapper cases."""
-    # Test direct usage without handler factory
+    # Test parse_tool_arguments directly without going through handler factory
 
     # Wrapped by exact tool name
     result = parse_tool_arguments(

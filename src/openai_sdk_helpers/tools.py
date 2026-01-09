@@ -185,22 +185,21 @@ def tool_handler_factory(
             try:
                 loop = asyncio.get_running_loop()
                 # We're inside an event loop, need to run in thread
-                result_container: list[Any] = []
-                exception_container: list[Exception] = []
+                result_holder: dict[str, Any] = {"value": None, "exception": None}
 
                 def _thread_func() -> None:
                     try:
-                        result_container.append(asyncio.run(func(**call_kwargs)))
+                        result_holder["value"] = asyncio.run(func(**call_kwargs))
                     except Exception as exc:
-                        exception_container.append(exc)
+                        result_holder["exception"] = exc
 
                 thread = threading.Thread(target=_thread_func)
                 thread.start()
                 thread.join()
 
-                if exception_container:
-                    raise exception_container[0]
-                result = result_container[0]
+                if result_holder["exception"]:
+                    raise result_holder["exception"]
+                result = result_holder["value"]
             except RuntimeError:
                 # No event loop running, can use asyncio.run directly
                 result = asyncio.run(func(**call_kwargs))

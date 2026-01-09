@@ -115,9 +115,11 @@ def _to_snake_case(name: str) -> str:
     >>> _to_snake_case("MyToolName")
     'my_tool_name'
     """
-    # Insert underscore before capital letters (except at start)
+    # First regex: Insert underscore before uppercase letters followed by
+    # lowercase letters (e.g., "Tool" in "ExampleTool" becomes "_Tool")
     s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-    # Insert underscore before capital letters preceded by lowercase
+    # Second regex: Insert underscore between lowercase/digit and uppercase
+    # (e.g., "e3" followed by "T" becomes "e3_T")
     return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 

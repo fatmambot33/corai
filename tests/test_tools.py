@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -578,7 +579,6 @@ def test_parse_tool_arguments_flat_dict_unchanged():
 
 def test_tool_handler_factory_with_async_function():
     """Test tool handler factory with async function."""
-    import asyncio
 
     async def async_search(query: str, limit: int = 10):
         await asyncio.sleep(0.001)  # Simulate async work
@@ -597,7 +597,6 @@ def test_tool_handler_factory_with_async_function():
 
 def test_tool_handler_factory_async_with_validation():
     """Test async tool handler with Pydantic validation."""
-    import asyncio
 
     async def async_search(query: str, limit: int = 10):
         await asyncio.sleep(0.001)
@@ -615,7 +614,6 @@ def test_tool_handler_factory_async_with_validation():
 
 def test_tool_handler_factory_async_raises_validation_error():
     """Test that async handlers properly raise validation errors."""
-    import asyncio
 
     async def async_tool(query: str, limit: int):
         await asyncio.sleep(0.001)
@@ -632,7 +630,6 @@ def test_tool_handler_factory_async_raises_validation_error():
 
 def test_tool_handler_factory_async_inside_event_loop():
     """Test async handler when already inside an event loop."""
-    import asyncio
 
     async def async_tool(value: int):
         await asyncio.sleep(0.001)
@@ -652,7 +649,6 @@ def test_tool_handler_factory_async_inside_event_loop():
 
 def test_tool_handler_factory_async_complex_return():
     """Test async handler with complex return types."""
-    import asyncio
 
     async def async_complex_tool(items: list[str]):
         await asyncio.sleep(0.001)
