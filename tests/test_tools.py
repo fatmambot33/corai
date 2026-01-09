@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -511,3 +512,158 @@ def test_tool_spec_with_different_io_structures():
     # All should use PromptStructure as input (have "prompt" field)
     for tool in tools:
         assert "prompt" in tool["parameters"]["properties"]
+
+
+# Tests for wrapper unwrapping functionality
+# ===========================================
+
+
+def test_parse_tool_arguments_unwraps_matching_wrapper():
+    """Test that parse_tool_arguments unwraps arguments wrapped by class name."""
+    # Wrapper matches tool name exactly
+    args = '{"ExampleTool": {"key": "value", "number": 42}}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"key": "value", "number": 42}
+
+
+def test_parse_tool_arguments_unwraps_snake_case_wrapper():
+    """Test unwrapping with snake_case wrapper key."""
+    # Wrapper is snake_case version of tool name
+    args = '{"example_tool": {"key": "value"}}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"key": "value"}
+
+
+def test_parse_tool_arguments_unwraps_case_insensitive():
+    """Test case-insensitive wrapper unwrapping."""
+    # Wrapper key differs only in case
+    args = '{"exampletool": {"key": "value"}}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"key": "value"}
+
+
+def test_parse_tool_arguments_no_unwrap_multiple_keys():
+    """Test that multi-key dicts are not unwrapped."""
+    # Multiple keys - should not unwrap even if one matches
+    args = '{"ExampleTool": {"key": "value"}, "other": "data"}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"ExampleTool": {"key": "value"}, "other": "data"}
+
+
+def test_parse_tool_arguments_no_unwrap_non_dict_value():
+    """Test that wrappers with non-dict values are not unwrapped."""
+    # Value is not a dict
+    args = '{"ExampleTool": "string_value"}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"ExampleTool": "string_value"}
+
+
+def test_parse_tool_arguments_no_unwrap_non_matching():
+    """Test that non-matching wrappers are not unwrapped."""
+    # Wrapper doesn't match tool name
+    args = '{"DifferentTool": {"key": "value"}}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"DifferentTool": {"key": "value"}}
+
+
+def test_parse_tool_arguments_flat_dict_unchanged():
+    """Test that flat dicts without wrappers work as before."""
+    args = '{"key": "value", "number": 42}'
+    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    assert result == {"key": "value", "number": 42}
+
+
+# Tests for async tool handler support
+# =====================================
+
+
+def test_tool_handler_factory_with_async_function():
+    """Test tool handler factory with async function."""
+
+    async def async_search(query: str, limit: int = 10):
+        await asyncio.sleep(0.001)  # Simulate async work
+        return {"query": query, "limit": limit, "async": True}
+
+    handler = tool_handler_factory(async_search)
+
+    tool_call = MockToolCall('{"query": "test", "limit": 5}')
+    result = handler(tool_call)
+
+    parsed = json.loads(result)
+    assert parsed["query"] == "test"
+    assert parsed["limit"] == 5
+    assert parsed["async"] is True
+
+
+def test_tool_handler_factory_async_with_validation():
+    """Test async tool handler with Pydantic validation."""
+
+    async def async_search(query: str, limit: int = 10):
+        await asyncio.sleep(0.001)
+        return SampleOutput(results=[f"async result for {query}"], count=1)
+
+    handler = tool_handler_factory(async_search, input_model=SampleInput)
+
+    tool_call = MockToolCall('{"query": "async test", "limit": 20}')
+    result = handler(tool_call)
+
+    parsed = json.loads(result)
+    assert parsed["results"] == ["async result for async test"]
+    assert parsed["count"] == 1
+
+
+def test_tool_handler_factory_async_raises_validation_error():
+    """Test that async handlers properly raise validation errors."""
+
+    async def async_tool(query: str, limit: int):
+        await asyncio.sleep(0.001)
+        return {}
+
+    handler = tool_handler_factory(async_tool, input_model=SampleInput)
+
+    # Missing required field 'query'
+    tool_call = MockToolCall('{"limit": 10}', name="async_search")
+
+    with pytest.raises(ValidationError):
+        handler(tool_call)
+
+
+def test_tool_handler_factory_async_inside_event_loop():
+    """Test async handler when already inside an event loop."""
+
+    async def async_tool(value: int):
+        await asyncio.sleep(0.001)
+        return {"result": value * 2}
+
+    handler = tool_handler_factory(async_tool)
+
+    async def test_in_loop():
+        tool_call = MockToolCall('{"value": 21}')
+        result = handler(tool_call)
+        parsed = json.loads(result)
+        assert parsed["result"] == 42
+
+    # Run the test inside an event loop
+    asyncio.run(test_in_loop())
+
+
+def test_tool_handler_factory_async_complex_return():
+    """Test async handler with complex return types."""
+
+    async def async_complex_tool(items: list[str]):
+        await asyncio.sleep(0.001)
+        return {
+            "processed": [item.upper() for item in items],
+            "count": len(items),
+            "nested": {"status": "success"},
+        }
+
+    handler = tool_handler_factory(async_complex_tool)
+
+    tool_call = MockToolCall('{"items": ["a", "b", "c"]}')
+    result = handler(tool_call)
+
+    parsed = json.loads(result)
+    assert parsed["processed"] == ["A", "B", "C"]
+    assert parsed["count"] == 3
+    assert parsed["nested"]["status"] == "success"
