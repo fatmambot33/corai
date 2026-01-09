@@ -10,7 +10,9 @@ definitions from named metadata structures.
 
 from __future__ import annotations
 
+import asyncio
 import inspect
+import threading
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias, TypeVar
 
@@ -81,7 +83,7 @@ def tool_handler_factory(
     The returned handler:
     1. Parses tool_call.arguments using parse_tool_arguments
     2. Validates arguments with input_model if provided
-    3. Calls func with validated/parsed arguments
+    3. Calls func with validated/parsed arguments (handles both sync and async)
     4. Serializes the result using serialize_tool_result
 
     Parameters
@@ -124,7 +126,13 @@ def tool_handler_factory(
     ...     limit: int = 10
     >>> def search_tool(query: str, limit: int = 10):
     ...     return {"results": [f"Result for {query}"]}
-    >>> handler = tool_handler_factory(search_tool, SearchInput)
+    >>> handler = tool_handler_factory(search_tool, input_model=SearchInput)
+
+    With async function:
+
+    >>> async def async_search_tool(query: str, limit: int = 10):
+    ...     return {"results": [f"Result for {query}"]}
+    >>> handler = tool_handler_factory(async_search_tool)
 
     The handler can then be used with OpenAI tool calls:
 
@@ -135,6 +143,7 @@ def tool_handler_factory(
     >>> tool_call = ToolCall()
     >>> result = handler(tool_call)  # doctest: +SKIP
     """
+    is_async = inspect.iscoroutinefunction(func)
 
     def handler(tool_call: Any) -> str:
         """Handle tool execution with parsing, validation, and serialization.
@@ -170,15 +179,33 @@ def tool_handler_factory(
         else:
             call_kwargs = parsed_args
 
-        # Execute function (sync only - async functions not supported)
-        if inspect.iscoroutinefunction(func):
-            raise TypeError(
-                f"Async functions are not supported by tool_handler_factory. "
-                f"Function '{func.__name__}' is async. "
-                "Wrap async functions in a synchronous adapter before passing to tool_handler_factory."
-            )
+        # Execute function (sync or async with event loop detection)
+        if is_async:
+            # Handle async function with proper event loop detection
+            try:
+                loop = asyncio.get_running_loop()
+                # We're inside an event loop, need to run in thread
+                result_container: list[Any] = []
+                exception_container: list[Exception] = []
 
-        result = func(**call_kwargs)
+                def _thread_func() -> None:
+                    try:
+                        result_container.append(asyncio.run(func(**call_kwargs)))
+                    except Exception as exc:
+                        exception_container.append(exc)
+
+                thread = threading.Thread(target=_thread_func)
+                thread.start()
+                thread.join()
+
+                if exception_container:
+                    raise exception_container[0]
+                result = result_container[0]
+            except RuntimeError:
+                # No event loop running, can use asyncio.run directly
+                result = asyncio.run(func(**call_kwargs))
+        else:
+            result = func(**call_kwargs)
 
         # Serialize result
         return serialize_tool_result(result)
