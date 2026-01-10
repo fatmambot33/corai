@@ -56,8 +56,6 @@ from .json import (
     to_jsonable,
 )
 
-# Alias for internal backward compatibility
-JSONSerializable = DataclassJSONSerializable
 
 from .path_utils import check_filepath, ensure_directory
 from openai_sdk_helpers.logging_config import log
@@ -99,7 +97,6 @@ __all__ = [
     "coerce_dict",
     "to_jsonable",
     "coerce_jsonable",
-    "JSONSerializable",
     "DataclassJSONSerializable",
     "BaseModelJSONSerializable",
     "customJSONEncoder",
