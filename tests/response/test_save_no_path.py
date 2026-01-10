@@ -1,8 +1,17 @@
+from pathlib import Path
+
+from openai_sdk_helpers import environment
 from openai_sdk_helpers.response.base import BaseResponse
 
 
-def test_save_skips_without_path(caplog, openai_settings):
-    """Test that save() saves to default path when no explicit path is configured."""
+def test_save_defaults_to_data_path(monkeypatch, tmp_path, openai_settings):
+    """Test that save() writes to the default data path when no filepath is provided."""
+    data_root = tmp_path / "data"
+
+    def fake_get_data_path(name: str) -> Path:
+        return data_root / name
+
+    monkeypatch.setattr(environment, "get_data_path", fake_get_data_path)
     r = BaseResponse(
         name="test",
         instructions="hi",
@@ -11,7 +20,12 @@ def test_save_skips_without_path(caplog, openai_settings):
         tool_handlers={},
         openai_settings=openai_settings,
     )
-    caplog.set_level("INFO")
-    r.save()  # Should save to default location
-    # Verify that it saved successfully to the default path
-    assert any("Saved messages to" in m for m in caplog.messages)
+    r.save()
+
+    expected_path = (
+        data_root
+        / "baseresponse"
+        / "test"
+        / f"{str(r.uuid).lower()}.json"
+    )
+    assert expected_path.exists()
