@@ -203,7 +203,7 @@ class BaseResponse(Generic[T]):
         self._name = name
 
         # Resolve data_path with class name appended
-        class_name = self.__class__.__name__.lower()
+        class_name = self.__class__.__name__
         if data_path is not None:
             data_path_obj = Path(data_path)
             if data_path_obj.name == class_name:
@@ -213,7 +213,7 @@ class BaseResponse(Generic[T]):
         else:
             from ..environment import get_data_path
 
-            self._data_path = get_data_path(class_name)
+            self._data_path = get_data_path(self.__class__.__name__)
 
         self._instructions = instructions
         self._tools = tools if tools is not None else []

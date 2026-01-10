@@ -55,7 +55,7 @@ from .json import (
     get_module_qualname,
     to_jsonable,
 )
-
+from .registry import BaseRegistry
 
 from .path_utils import check_filepath, ensure_directory
 from openai_sdk_helpers.logging_config import log
@@ -134,4 +134,6 @@ __all__ = [
     "create_image_data_url",
     "create_file_data_url",
     "is_image_file",
+    # Registry
+    "BaseRegistry",
 ]

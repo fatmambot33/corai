@@ -206,8 +206,10 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
 
     def gen_response(
         self,
+        *,
         openai_settings: OpenAISettings,
-        tool_handlers: dict[str, ToolHandler] = {},
+        data_path: Optional[Path]=None,
+        tool_handlers: dict[str, ToolHandler] | None = None,
     ) -> BaseResponse[TOut]:
         """Generate a BaseResponse instance based on the configuration.
 
@@ -225,24 +227,15 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         BaseResponse[TOut]
             An instance of BaseResponse configured with ``openai_settings``.
         """
-        output_instructions = ""
-        if self.output_structure is not None and self.add_output_instructions:
-            output_instructions = self.output_structure.get_prompt(
-                add_enum_values=False
-            )
 
-        instructions = (
-            f"{self.instructions_text}\n{output_instructions}"
-            if output_instructions
-            else self.instructions_text
-        )
 
         return BaseResponse[TOut](
             name=self.name,
-            instructions=instructions,
+            instructions=self.instructions_text,
             tools=self.tools,
             output_structure=self.output_structure,
             system_vector_store=self.system_vector_store,
+            data_path=data_path,
             tool_handlers=tool_handlers,
             openai_settings=openai_settings,
         )

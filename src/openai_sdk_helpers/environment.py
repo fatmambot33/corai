@@ -40,7 +40,7 @@ def get_data_path(name: str) -> Path:
     Returns
     -------
     Path
-        Directory path under ~/.openai-sdk-helpers specific to name.
+        Directory path under ~/openai-sdk-helpers specific to name.
         The directory is created if it does not exist.
 
     Examples
@@ -50,6 +50,7 @@ def get_data_path(name: str) -> Path:
     >>> path.exists()
     True
     """
-    base = Path.home() / ".openai-sdk-helpers"
+    # Use the workspace 'data' directory, with a subdirectory for the module name
+    base = Path(__file__).parent.parent.parent / "data"
     path = base / name
     return ensure_directory(path)

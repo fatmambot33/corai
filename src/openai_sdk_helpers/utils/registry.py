@@ -6,9 +6,10 @@ import warnings
 from pathlib import Path
 from typing import Generic, TypeVar
 
+from ..utils.json.data_class import DataclassJSONSerializable
 from .path_utils import ensure_directory
 
-T = TypeVar("T")
+T = TypeVar("T", bound=DataclassJSONSerializable)
 
 
 class BaseRegistry(Generic[T]):
@@ -42,6 +43,17 @@ class BaseRegistry(Generic[T]):
     def __init__(self) -> None:
         """Initialize an empty registry."""
         self._configs: dict[str, T] = {}
+
+    @property
+    def configs(self) -> dict[str, T]:
+        """Return the internal configuration mapping.
+
+        Returns
+        -------
+        dict[str, T]
+            Mapping of configuration names to instances.
+        """
+        return self._configs
 
     def register(self, config: T) -> None:
         """Add a configuration to the registry.
@@ -121,7 +133,7 @@ class BaseRegistry(Generic[T]):
             If the directory cannot be created or files cannot be written.
         """
         dir_path = ensure_directory(Path(path))
-        config_names = self.list_names()
+        config_names = self.configs
 
         if not config_names:
             return
@@ -129,9 +141,8 @@ class BaseRegistry(Generic[T]):
         for config_name in config_names:
             config = self.get(config_name)
             filename = f"{config_name}.json"
-            filepath = dir_path / filename
-            # Call to_json_file on the config
-            getattr(config, "to_json_file")(filepath)
+            filepath = dir_path / config.__class__.__name__ / filename
+            config.to_json_file(filepath)
 
     def load_from_directory(self, path: Path | str, *, config_class: type[T]) -> int:
         """Load all configurations from JSON files in a directory.
@@ -170,7 +181,7 @@ class BaseRegistry(Generic[T]):
         count = 0
         for json_file in sorted(dir_path.glob("*.json")):
             try:
-                config = getattr(config_class, "from_json_file")(json_file)
+                config = config_class.from_json_file(json_file)
                 self.register(config)
                 count += 1
             except Exception as exc:
