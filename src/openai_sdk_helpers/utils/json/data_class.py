@@ -1,73 +1,24 @@
-"""JSON serialization helpers for helper types."""
+"""Dataclass JSON serialization mixin.
+
+This module provides the DataclassJSONSerializable mixin for dataclasses,
+adding to_json, to_json_file, from_json, and from_json_file methods.
+"""
 
 from __future__ import annotations
 
 import json
 from dataclasses import asdict, fields, is_dataclass
-from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any, TypeVar, Union, get_args, get_origin, get_type_hints
 
-from .path_utils import check_filepath
+from ..path_utils import check_filepath
+from .utils import _to_jsonable, customJSONEncoder
 
-T = TypeVar("T", bound="JSONSerializable")
-
-
-def _to_jsonable(value: Any) -> Any:
-    """Convert common helper types to JSON-serializable forms."""
-    from openai_sdk_helpers.structure.base import BaseStructure
-
-    if value is None:
-        return None
-    if isinstance(value, Enum):
-        return value.value
-    if isinstance(value, Path):
-        return str(value)
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if is_dataclass(value) and not isinstance(value, type):
-        return {k: _to_jsonable(v) for k, v in asdict(value).items()}
-    if hasattr(value, "model_dump"):
-        model_dump = getattr(value, "model_dump")
-        return model_dump()
-    if isinstance(value, dict):
-        return {str(k): _to_jsonable(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set)):
-        return [_to_jsonable(v) for v in value]
-    if isinstance(value, BaseStructure):
-        return value.model_dump()
-    return value
+T = TypeVar("T", bound="DataclassJSONSerializable")
 
 
-def coerce_jsonable(value: Any) -> Any:
-    """Convert value into a JSON-serializable representation."""
-    from openai_sdk_helpers.response.base import BaseResponse
-
-    if value is None:
-        return None
-    if isinstance(value, BaseResponse):
-        return coerce_jsonable(value.messages.to_json())
-    if is_dataclass(value) and not isinstance(value, type):
-        return {key: coerce_jsonable(item) for key, item in asdict(value).items()}
-    coerced = _to_jsonable(value)
-    try:
-        json.dumps(coerced)
-        return coerced
-    except TypeError:
-        return str(coerced)
-
-
-class customJSONEncoder(json.JSONEncoder):
-    """JSON encoder for common helper types like enums and paths."""
-
-    def default(self, o: Any) -> Any:  # noqa: D401
-        """Return JSON-serializable representation of ``o``."""
-        return _to_jsonable(o)
-
-
-class JSONSerializable:
-    """Mixin for classes that can be serialized to and from JSON.
+class DataclassJSONSerializable:
+    """Mixin for dataclasses that can be serialized to and from JSON.
 
     Methods
     -------
@@ -79,10 +30,28 @@ class JSONSerializable:
         Create an instance from a JSON-compatible dict (class method).
     from_json_file(filepath)
         Load an instance from a JSON file (class method).
+
+    Examples
+    --------
+    >>> from dataclasses import dataclass
+    >>> from pathlib import Path
+    >>> @dataclass
+    ... class MyData(DataclassJSONSerializable):
+    ...     name: str
+    ...     path: Path
+    >>> instance = MyData(name="test", path=Path("/tmp/data"))
+    >>> json_data = instance.to_json()
+    >>> restored = MyData.from_json(json_data)
     """
 
     def to_json(self) -> dict[str, Any]:
-        """Return a JSON-compatible dict representation."""
+        """Return a JSON-compatible dict representation.
+
+        Returns
+        -------
+        dict[str, Any]
+            Serialized data dictionary.
+        """
         if is_dataclass(self) and not isinstance(self, type):
             return {k: _to_jsonable(v) for k, v in asdict(self).items()}
         if hasattr(self, "model_dump"):
@@ -223,8 +192,4 @@ class JSONSerializable:
         return cls.from_json(data)
 
 
-__all__ = [
-    "coerce_jsonable",
-    "JSONSerializable",
-    "customJSONEncoder",
-]
+__all__ = ["DataclassJSONSerializable"]

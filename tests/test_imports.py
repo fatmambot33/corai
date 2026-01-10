@@ -21,7 +21,7 @@ def test_load_modules_by_path():
     _load("openai_sdk_helpers.environment", "environment.py")
     _load("openai_sdk_helpers.utils.coercion", os.path.join("utils", "coercion.py"))
     _load("openai_sdk_helpers.utils.path_utils", os.path.join("utils", "path_utils.py"))
-    _load("openai_sdk_helpers.utils.json_utils", os.path.join("utils", "json_utils.py"))
+    _load("openai_sdk_helpers.utils.json", os.path.join("utils", "json", "__init__.py"))
     _load(
         "openai_sdk_helpers.vector_storage.types",
         os.path.join("vector_storage", "types.py"),

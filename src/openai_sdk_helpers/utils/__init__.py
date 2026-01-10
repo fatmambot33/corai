@@ -21,8 +21,8 @@ coercion
     Numeric coercion helpers and list normalization.
 path_utils
     File and path helpers.
-json_utils
-    JSON encoding helpers and mixins.
+json
+    JSON encoding helpers and mixins for dataclasses and Pydantic models.
 logging_config
     Centralized logger factory and convenience log helper.
 validation
@@ -45,11 +45,20 @@ from .coercion import (
     coerce_optional_int,
     ensure_list,
 )
-from .json_utils import (
-    JSONSerializable,
+from .json import (
+    BaseModelJSONSerializable,
+    DataclassJSONSerializable,
     coerce_jsonable,
     customJSONEncoder,
+    decode_module_qualname,
+    encode_module_qualname,
+    get_module_qualname,
+    to_jsonable,
 )
+
+# Alias for internal backward compatibility
+JSONSerializable = DataclassJSONSerializable
+
 from .path_utils import check_filepath, ensure_directory
 from openai_sdk_helpers.logging_config import log
 from .validation import (
@@ -88,9 +97,15 @@ __all__ = [
     "coerce_optional_float",
     "coerce_optional_int",
     "coerce_dict",
+    "to_jsonable",
     "coerce_jsonable",
     "JSONSerializable",
+    "DataclassJSONSerializable",
+    "BaseModelJSONSerializable",
     "customJSONEncoder",
+    "get_module_qualname",
+    "encode_module_qualname",
+    "decode_module_qualname",
     "log",
     # Validation helpers
     "validate_non_empty_string",
