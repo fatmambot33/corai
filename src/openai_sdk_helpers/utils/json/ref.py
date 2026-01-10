@@ -33,13 +33,10 @@ def get_module_qualname(obj: Any) -> tuple[str, str] | None:
     >>> get_module_qualname(MyClass)
     ('__main__', 'MyClass')
     """
-    try:
-        module = getattr(obj, "__module__", None)
-        qualname = getattr(obj, "__qualname__", None)
-        if module and qualname:
-            return (module, qualname)
-    except Exception:
-        pass
+    module = getattr(obj, "__module__", None)
+    qualname = getattr(obj, "__qualname__", None)
+    if module and qualname:
+        return (module, qualname)
     return None
 
 
