@@ -11,13 +11,16 @@ import pytest
 # Import normally instead of dynamic loading
 from openai_sdk_helpers.environment import get_data_path
 from openai_sdk_helpers.utils.coercion import ensure_list
-from openai_sdk_helpers.utils.json_utils import (
-    JSONSerializable,
-    customJSONEncoder,
+from openai_sdk_helpers.utils.json import (
+    DataclassJSONSerializable,
     coerce_jsonable,
+    customJSONEncoder,
 )
 from openai_sdk_helpers.utils.path_utils import check_filepath
 from openai_sdk_helpers.logging_config import log
+
+# Backward compatibility alias
+JSONSerializable = DataclassJSONSerializable
 
 
 def test_ensure_list_behavior():
@@ -279,3 +282,26 @@ def test_path_deserialization_in_dataclass(tmp_path):
     assert isinstance(instance.file_path, Path)
     assert str(instance.file_path) == "/tmp/test.txt"
     assert instance.name == "test"
+
+
+def test_private_properties_not_serialized():
+    """Test that private properties (starting with underscore) are not serialized."""
+    from openai_sdk_helpers.utils import to_jsonable
+
+    # Test with dict
+    data = {"public": "visible", "_private": "hidden", "__very_private": "also_hidden"}
+    result = to_jsonable(data)
+    assert "public" in result
+    assert "_private" not in result
+    assert "__very_private" not in result
+
+    # Test with object __dict__
+    class TestObj:
+        def __init__(self):
+            self.public = "visible"
+            self._private = "hidden"
+
+    obj = TestObj()
+    result = to_jsonable(obj.__dict__)
+    assert "public" in result
+    assert "_private" not in result
