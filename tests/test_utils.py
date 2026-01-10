@@ -122,24 +122,25 @@ def test_to_jsonable_exports():
 def test_reference_encoding_helpers():
     """Test get_module_qualname, encode_module_qualname, decode_module_qualname."""
     from openai_sdk_helpers.utils import (
-        get_module_qualname,
-        encode_module_qualname,
         decode_module_qualname,
+        encode_module_qualname,
+        get_module_qualname,
     )
 
     # Test with Path class
     result = get_module_qualname(Path)
     assert result is not None
-    assert result[0] == "pathlib"
+    # Module could be "pathlib" or "pathlib._local" depending on Python version
+    assert result[0].startswith("pathlib")
     assert result[1] == "Path"
 
     # Test encoding
     encoded = encode_module_qualname(Path)
     assert encoded is not None
-    assert encoded["module"] == "pathlib"
+    assert encoded["module"].startswith("pathlib")
     assert encoded["qualname"] == "Path"
 
-    # Test decoding
+    # Test decoding - use the actual encoded module for round-trip test
     decoded = decode_module_qualname(encoded)
     assert decoded is Path
 
