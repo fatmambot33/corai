@@ -147,7 +147,11 @@ def coerce_jsonable(value: Any) -> Any:
     if isinstance(value, BaseResponse):
         return coerce_jsonable(value.messages.to_json())
     if is_dataclass(value) and not isinstance(value, type):
-        return {key: coerce_jsonable(item) for key, item in asdict(value).items()}
+        return {
+            key: coerce_jsonable(item)
+            for key, item in asdict(value).items()
+            if not (isinstance(key, str) and key.startswith("_"))
+        }
     coerced = _to_jsonable(value)
     try:
         json.dumps(coerced)
