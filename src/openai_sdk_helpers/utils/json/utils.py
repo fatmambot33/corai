@@ -76,7 +76,11 @@ def _to_jsonable(value: Any) -> Any:
     if isinstance(value, datetime):
         return value.isoformat()
     if is_dataclass(value) and not isinstance(value, type):
-        return {k: _to_jsonable(v) for k, v in asdict(value).items()}
+        return {
+            k: _to_jsonable(v)
+            for k, v in asdict(value).items()
+            if not str(k).startswith("_")
+        }
     # Check for BaseStructure class (not instance) before model_dump check
     if isinstance(value, type):
         try:
