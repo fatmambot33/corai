@@ -193,10 +193,16 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         str
             Plain-text instructions, loading template files when necessary.
         """
-        return self._resolve_instructions()
+        resolved_instructions: str = resolve_instructions_from_path(self.instructions)
+        output_instructions = ""
+        if self.output_structure is not None and self.add_output_instructions:
+            output_instructions = self.output_structure.get_prompt(
+                add_enum_values=False
+            )
+            if output_instructions:
+                return f"{resolved_instructions}\n{output_instructions}"
 
-    def _resolve_instructions(self) -> str:
-        return resolve_instructions_from_path(self.instructions)
+        return resolved_instructions
 
     def gen_response(
         self,

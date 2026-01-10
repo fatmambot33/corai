@@ -310,21 +310,9 @@ class BaseResponse(Generic[T]):
         """
         handlers = tool_handlers or {}
 
-        output_instructions = ""
-        if config.output_structure is not None and config.add_output_instructions:
-            output_instructions = config.output_structure.get_prompt(
-                add_enum_values=False
-            )
-
-        instructions = (
-            f"{config.instructions_text}\n{output_instructions}"
-            if output_instructions
-            else config.instructions_text
-        )
-
         return cls(
             name=config.name,
-            instructions=instructions,
+            instructions=config.instructions_text,
             tools=config.tools,
             output_structure=config.output_structure,
             system_vector_store=config.system_vector_store,
