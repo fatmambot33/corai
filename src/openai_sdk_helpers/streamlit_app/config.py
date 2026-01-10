@@ -11,14 +11,15 @@ import importlib.util
 from pathlib import Path
 from types import ModuleType
 from typing import Callable, Sequence, cast
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from openai_sdk_helpers.response.base import BaseResponse
 from openai_sdk_helpers.structure.base import BaseStructure
 from openai_sdk_helpers.utils import ensure_list
+from ..utils.json import BaseModelJSONSerializable
 
 
-class StreamlitAppConfig(BaseModel):
+class StreamlitAppConfig(BaseModelJSONSerializable):
     """Validated configuration for Streamlit chat applications.
 
     Manages all settings required to run a configuration-driven Streamlit

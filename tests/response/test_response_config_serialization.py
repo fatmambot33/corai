@@ -19,7 +19,7 @@ def test_response_config_to_json() -> None:
         input_structure=None,
         output_structure=None,
         system_vector_store=["store1", "store2"],
-        data_path=Path("/tmp/test_data"),
+        add_output_instructions=False,
     )
 
     json_data = config.to_json()
@@ -31,8 +31,7 @@ def test_response_config_to_json() -> None:
     assert json_data["input_structure"] is None
     assert json_data["output_structure"] is None
     assert json_data["system_vector_store"] == ["store1", "store2"]
-    # Path should be converted to string
-    assert json_data["data_path"] == "/tmp/test_data"
+    assert json_data["add_output_instructions"] is False
 
 
 def test_response_config_to_json_file(tmp_path: Path) -> None:
@@ -44,6 +43,7 @@ def test_response_config_to_json_file(tmp_path: Path) -> None:
         input_structure=None,
         output_structure=None,
         system_vector_store=["store1"],
+        add_output_instructions=True,
     )
 
     json_file = tmp_path / "config.json"
@@ -75,7 +75,7 @@ def test_response_config_json_serialization_with_none_fields() -> None:
 
     assert json_data["name"] == "minimal_config"
     assert json_data["system_vector_store"] is None
-    assert json_data["data_path"] is None
+    assert json_data["add_output_instructions"] is True
 
 
 def test_response_config_from_json() -> None:
@@ -87,7 +87,7 @@ def test_response_config_from_json() -> None:
         "input_structure": None,
         "output_structure": None,
         "system_vector_store": ["store1", "store2"],
-        "data_path": "/tmp/test_data",
+        "add_output_instructions": False,
     }
 
     config = ResponseConfiguration.from_json(json_data)
@@ -98,9 +98,7 @@ def test_response_config_from_json() -> None:
     assert config.input_structure is None
     assert config.output_structure is None
     assert config.system_vector_store == ["store1", "store2"]
-    # String should be converted back to Path
-    assert isinstance(config.data_path, Path)
-    assert str(config.data_path) == "/tmp/test_data"
+    assert config.add_output_instructions is False
 
 
 def test_response_config_from_json_file(tmp_path: Path) -> None:
@@ -112,7 +110,7 @@ def test_response_config_from_json_file(tmp_path: Path) -> None:
         "input_structure": None,
         "output_structure": None,
         "system_vector_store": ["store1"],
-        "data_path": None,
+        "add_output_instructions": True,
     }
 
     json_file = tmp_path / "config.json"
@@ -124,7 +122,7 @@ def test_response_config_from_json_file(tmp_path: Path) -> None:
     assert config.name == "test_config"
     assert config.instructions == "Test instructions"
     assert config.system_vector_store == ["store1"]
-    assert config.data_path is None
+    assert config.add_output_instructions is True
 
 
 def test_response_config_round_trip_serialization() -> None:
@@ -136,7 +134,7 @@ def test_response_config_round_trip_serialization() -> None:
         input_structure=None,
         output_structure=None,
         system_vector_store=["store1", "store2"],
-        data_path=Path("/tmp/round_trip"),
+        add_output_instructions=False,
     )
 
     # Serialize to JSON
@@ -152,7 +150,10 @@ def test_response_config_round_trip_serialization() -> None:
     assert restored_config.input_structure == original_config.input_structure
     assert restored_config.output_structure == original_config.output_structure
     assert restored_config.system_vector_store == original_config.system_vector_store
-    assert restored_config.data_path == original_config.data_path
+    assert (
+        restored_config.add_output_instructions
+        == original_config.add_output_instructions
+    )
 
 
 def test_response_config_from_json_file_not_found() -> None:

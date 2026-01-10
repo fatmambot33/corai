@@ -88,11 +88,10 @@ def test_output_instructions_can_be_skipped(openai_settings) -> None:
         tools=None,
         input_structure=None,
         output_structure=_SampleOutput,
+        add_output_instructions=False,
     )
 
-    response = config.gen_response(
-        openai_settings=openai_settings, add_output_instructions=False
-    )
+    response = config.gen_response(openai_settings=openai_settings)
 
     expected_instructions = config.instructions_text
 
@@ -103,24 +102,26 @@ def test_no_output_structure_ignores_add_output_instructions(
     openai_settings,
 ) -> None:
     """Test that when output_structure is None, add_output_instructions has no effect."""
-    config = ResponseConfiguration(
+    config_true = ResponseConfiguration(
         name="unit",
         instructions="Base instructions",
         tools=None,
         input_structure=None,
         output_structure=None,
+        add_output_instructions=True,
+    )
+    config_false = ResponseConfiguration(
+        name="unit",
+        instructions="Base instructions",
+        tools=None,
+        input_structure=None,
+        output_structure=None,
+        add_output_instructions=False,
     )
 
-    # Test with add_output_instructions=True (default)
-    response_with_flag = config.gen_response(
-        openai_settings=openai_settings, add_output_instructions=True
-    )
-
-    # Test with add_output_instructions=False
-    response_without_flag = config.gen_response(
-        openai_settings=openai_settings, add_output_instructions=False
-    )
+    response_with_flag = config_true.gen_response(openai_settings=openai_settings)
+    response_without_flag = config_false.gen_response(openai_settings=openai_settings)
 
     # Both should produce the same result: just the base instructions
-    assert response_with_flag._instructions == config.instructions_text
-    assert response_without_flag._instructions == config.instructions_text
+    assert response_with_flag._instructions == config_true.instructions_text
+    assert response_without_flag._instructions == config_false.instructions_text

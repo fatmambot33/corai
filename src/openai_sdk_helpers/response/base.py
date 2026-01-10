@@ -53,6 +53,7 @@ from ..utils import (
     ensure_list,
     log,
 )
+from ..utils.json import BaseModelJSONSerializable
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
@@ -81,8 +82,15 @@ class BaseResponse(Generic[T]):
         Unique identifier for this response session.
     name : str
         Lowercase class name used for path construction.
+    instructions_text : str
+        System instructions provided to the OpenAI API for context.
     messages : ResponseMessages
         Complete message history for this session.
+    output_structure : type[T] | None
+        Structure class used to parse tool call outputs, or None.
+    tools : list | None
+        Tool definitions provided to the OpenAI API, or None.
+
 
     Methods
     -------
@@ -279,9 +287,9 @@ class BaseResponse(Generic[T]):
         cls: type[RB],
         config: "ResponseConfiguration[Any, T]",
         *,
-        openai_settings: OpenAISettings,
+        data_path: Path | str | None = None,
         tool_handlers: dict[str, ToolHandler] | None = None,
-        add_output_instructions: bool = True,
+        openai_settings: OpenAISettings,
     ) -> RB:
         """Construct a response instance from a configuration object.
 
@@ -294,9 +302,6 @@ class BaseResponse(Generic[T]):
         tool_handlers : dict[str, ToolHandler] or None, default None
             Mapping of tool names to callable handlers. Defaults to an empty
             dictionary when not provided.
-        add_output_instructions : bool, default True
-            Append structured output instructions when an output structure is
-            present.
 
         Returns
         -------
@@ -306,7 +311,7 @@ class BaseResponse(Generic[T]):
         handlers = tool_handlers or {}
 
         output_instructions = ""
-        if config.output_structure is not None and add_output_instructions:
+        if config.output_structure is not None and config.add_output_instructions:
             output_instructions = config.output_structure.get_prompt(
                 add_enum_values=False
             )
@@ -323,7 +328,7 @@ class BaseResponse(Generic[T]):
             tools=config.tools,
             output_structure=config.output_structure,
             system_vector_store=config.system_vector_store,
-            data_path=config.data_path,
+            data_path=data_path,
             tool_handlers=handlers,
             openai_settings=openai_settings,
         )
@@ -338,6 +343,39 @@ class BaseResponse(Generic[T]):
             Name used for organizing artifacts and naming vector stores.
         """
         return self._name
+
+    @property
+    def instructions_text(self) -> str:
+        """Return the system instructions for this response.
+
+        Returns
+        -------
+        str
+            System instructions provided to the OpenAI API.
+        """
+        return self._instructions
+
+    @property
+    def tools(self) -> list | None:
+        """Return the tool definitions for this response.
+
+        Returns
+        -------
+        list or None
+            Tool definitions provided to the OpenAI API, or None.
+        """
+        return self._tools
+
+    @property
+    def output_structure(self) -> type[T] | None:
+        """Return the output structure class for this response.
+
+        Returns
+        -------
+        type[BaseStructure] or None
+            Structure class used to parse tool call outputs, or None.
+        """
+        return self._output_structure
 
     def _build_input(
         self,

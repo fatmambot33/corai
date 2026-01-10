@@ -16,10 +16,11 @@ from openai.types.responses.response_function_tool_call_param import (
     ResponseFunctionToolCallParam,
 )
 from openai.types.responses.response_input_param import FunctionCallOutput
+from ..utils.json.data_class import DataclassJSONSerializable
 
 
 @dataclass
-class ResponseToolCall:
+class ResponseToolCall(DataclassJSONSerializable):
     """Container for tool call data in a conversation.
 
     Stores the complete information about a tool invocation including

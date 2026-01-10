@@ -24,12 +24,12 @@ from openai.types.responses.response_input_param import (
 )
 from openai.types.responses.response_output_message import ResponseOutputMessage
 
-from ..utils import JSONSerializable
+from ..utils.json.data_class import DataclassJSONSerializable
 from .tool_call import ResponseToolCall
 
 
 @dataclass
-class ResponseMessage(JSONSerializable):
+class ResponseMessage(DataclassJSONSerializable):
     """Single message exchanged with the OpenAI API.
 
     Represents a complete message with role, content, timestamp, and
@@ -91,7 +91,7 @@ class ResponseMessage(JSONSerializable):
 
 
 @dataclass
-class ResponseMessages(JSONSerializable):
+class ResponseMessages(DataclassJSONSerializable):
     """Collection of messages in a conversation.
 
     Manages the complete history of messages exchanged during an OpenAI

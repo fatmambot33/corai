@@ -5,12 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, Optional, Sequence, Type, TypeVar
-from openai.types.responses.response_text_config_param import ResponseTextConfigParam
 
 from ..config import OpenAISettings
 from ..structure.base import BaseStructure
 from ..response.base import BaseResponse, ToolHandler
-from ..utils import JSONSerializable
+from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import BaseRegistry
 from ..utils.instructions import resolve_instructions_from_path
 
@@ -43,10 +42,6 @@ class ResponseRegistry(BaseRegistry["ResponseConfiguration"]):
     pass
 
 
-# Global default registry instance
-_default_registry = ResponseRegistry()
-
-
 def get_default_registry() -> ResponseRegistry:
     """Return the global default registry instance.
 
@@ -65,13 +60,13 @@ def get_default_registry() -> ResponseRegistry:
 
 
 @dataclass(frozen=True, slots=True)
-class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
+class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
     """
     Represent an immutable configuration describing input and output structures.
 
     Encapsulate all metadata required to define how a request is interpreted and
     how a response is structured, while enforcing strict type and runtime safety.
-    Inherits from JSONSerializable to support serialization to JSON format.
+    Inherits from DataclassJSONSerializable to support serialization to JSON format.
 
     Parameters
     ----------
@@ -142,7 +137,7 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
     input_structure: Optional[Type[TIn]]
     output_structure: Optional[Type[TOut]]
     system_vector_store: Optional[list[str]] = None
-    data_path: Optional[Path | str] = None
+    add_output_instructions: bool = True
 
     def __post_init__(self) -> None:
         """
@@ -207,7 +202,6 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
         self,
         openai_settings: OpenAISettings,
         tool_handlers: dict[str, ToolHandler] = {},
-        add_output_instructions: bool = True,
     ) -> BaseResponse[TOut]:
         """Generate a BaseResponse instance based on the configuration.
 
@@ -219,8 +213,6 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
         tool_handlers : dict[str, Callable], optional
             Mapping of tool names to handler callables. Defaults to an empty
             dictionary when not provided.
-        add_output_instructions : bool, default=True
-            Whether to append the structured output prompt to the instructions.
 
         Returns
         -------
@@ -228,7 +220,7 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
             An instance of BaseResponse configured with ``openai_settings``.
         """
         output_instructions = ""
-        if self.output_structure is not None and add_output_instructions:
+        if self.output_structure is not None and self.add_output_instructions:
             output_instructions = self.output_structure.get_prompt(
                 add_enum_values=False
             )
@@ -245,7 +237,10 @@ class ResponseConfiguration(JSONSerializable, Generic[TIn, TOut]):
             tools=self.tools,
             output_structure=self.output_structure,
             system_vector_store=self.system_vector_store,
-            data_path=self.data_path,
             tool_handlers=tool_handlers,
             openai_settings=openai_settings,
         )
+
+
+# Global default registry instance
+_default_registry = ResponseRegistry()

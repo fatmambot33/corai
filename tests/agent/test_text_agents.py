@@ -107,7 +107,7 @@ def test_translator_run_sync_forwards_context():
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
         patch(
-            "openai_sdk_helpers.agent.base.Runner.run", return_value=fake_result
+            "openai_sdk_helpers.agent.runner.Runner.run", return_value=fake_result
         ) as mock_run_sync,
     ):
         result = agent.run_sync(

@@ -10,14 +10,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, TypeVar
-
+from pydantic import BaseModel
 from ..path_utils import check_filepath
 from .utils import _to_jsonable, customJSONEncoder
 
 P = TypeVar("P", bound="BaseModelJSONSerializable")
 
 
-class BaseModelJSONSerializable:
+class BaseModelJSONSerializable(BaseModel):
     """Pydantic BaseModel subclass with JSON serialization support.
 
     Adds to_json(), to_json_file(path), from_json(data), from_json_file(path),

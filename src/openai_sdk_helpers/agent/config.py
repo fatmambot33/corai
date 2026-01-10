@@ -9,7 +9,7 @@ from typing import Any, Optional
 from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, Session
 from agents.model_settings import ModelSettings
 
-from ..utils import JSONSerializable
+from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import BaseRegistry
 from ..utils.instructions import resolve_instructions_from_path
 
@@ -73,10 +73,6 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
         return super().load_from_directory(path, config_class=config_class)
 
 
-# Global default registry instance
-_default_registry = AgentConfigurationRegistry()
-
-
 def get_default_registry() -> AgentConfigurationRegistry:
     """Return the global default registry instance.
 
@@ -97,12 +93,12 @@ def get_default_registry() -> AgentConfigurationRegistry:
 
 
 @dataclass(frozen=True, slots=True)
-class AgentConfiguration(JSONSerializable):
+class AgentConfiguration(DataclassJSONSerializable):
     """Immutable configuration for building a BaseAgent.
 
     Encapsulates all metadata required to define an agent including its
     instructions, tools, model settings, handoffs, guardrails, and session
-    management. Inherits from JSONSerializable to support serialization.
+    management. Inherits from DataclassJSONSerializable to support serialization.
 
     This dataclass is frozen (immutable) to ensure thread-safety and
     enable use as dictionary keys. All list-type fields use None as the
@@ -371,5 +367,8 @@ class AgentConfiguration(JSONSerializable):
         # Use the parent class method for the rest
         return super(AgentConfiguration, cls).from_json(data)
 
+
+# Global default registry instance
+_default_registry = AgentConfigurationRegistry()
 
 __all__ = ["AgentConfiguration", "AgentConfigurationRegistry", "get_default_registry"]

@@ -12,7 +12,6 @@ import ast
 import inspect
 import json
 import logging
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -32,13 +31,13 @@ from openai.types.responses.response_text_config_param import ResponseTextConfig
 
 # Internal imports
 
-from ..utils import check_filepath, customJSONEncoder, log
+from ..utils import check_filepath, log, BaseModelJSONSerializable
 
 T = TypeVar("T", bound="BaseStructure")
 DEFAULT_DATA_PATH: Path | None = None
 
 
-class BaseStructure(BaseModel):
+class BaseStructure(BaseModelJSONSerializable):
     """Base class for structured output models with schema generation.
 
     Provides Pydantic-based schema definition and serialization utilities
@@ -461,96 +460,6 @@ class BaseStructure(BaseModel):
         with file_path.open("w", encoding="utf-8") as file_handle:
             json.dump(schema, file_handle, indent=2, ensure_ascii=False)
         return file_path
-
-    def to_json(self) -> dict[str, Any]:
-        """Serialize the instance to a JSON-compatible dictionary.
-
-        Converts the Pydantic model instance to a dictionary suitable for
-        JSON serialization. Enum members are converted to their values,
-        and nested structures are recursively processed.
-
-        Returns
-        -------
-        dict[str, Any]
-            Model instance serialized as a dictionary with JSON-compatible types.
-
-        Examples
-        --------
-        >>> instance = MyStructure(title="Test", score=0.95)
-        >>> data = instance.to_json()
-        >>> print(json.dumps(data))
-        """
-
-        def convert(obj: Any) -> Any:
-            if isinstance(obj, Enum):
-                return obj.value
-            if isinstance(obj, BaseStructure):
-                return obj.to_json()
-            if isinstance(obj, Mapping):
-                return {str(k): convert(v) for k, v in obj.items()}
-            if isinstance(obj, Sequence) and not isinstance(
-                obj, (str, bytes, bytearray)
-            ):
-                return [convert(item) for item in obj]
-            return obj
-
-        payload = convert(self.model_dump())
-
-        def is_list_field(field) -> bool:
-            annotation = getattr(field, "annotation", None)
-            if annotation is None:
-                return False
-
-            origins_to_match = {list, Sequence, tuple, set}
-
-            origin = get_origin(annotation)
-            if origin in origins_to_match or annotation in origins_to_match:
-                return True
-
-            # Check for Union types (e.g., list[str] | None)
-            if origin is not None:
-                # Handle Union by checking args
-                args = get_args(annotation)
-                return any(
-                    get_origin(arg) in origins_to_match or arg in origins_to_match
-                    for arg in args
-                )
-            return False
-
-        for name, field in self.__class__.model_fields.items():
-            if name not in payload:
-                continue
-            if not is_list_field(field):
-                continue
-            value = payload[name]
-            if value is None:
-                continue
-            if isinstance(value, (str, bytes, bytearray)):
-                payload[name] = [value]
-            elif not isinstance(value, list):
-                payload[name] = [value]
-
-        return payload
-
-    def to_json_file(self, filepath: str) -> str:
-        """Write :meth:`to_json` output to ``filepath``.
-
-        Parameters
-        ----------
-        filepath : str
-            Destination path for the JSON file.
-
-        Returns
-        -------
-        str
-            Path to the written file.
-        """
-        check_filepath(fullfilepath=filepath)
-        with open(file=filepath, mode="w", encoding="utf-8") as f:
-            json.dump(
-                self.to_json(), f, ensure_ascii=False, indent=4, cls=customJSONEncoder
-            )
-        return filepath
 
     @classmethod
     def _extract_enum_class(cls, field_type: Any) -> type[Enum] | None:
