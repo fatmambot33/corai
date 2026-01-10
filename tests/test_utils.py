@@ -109,3 +109,173 @@ def test_coerce_jsonable_serializes_structures_and_dataclasses():
     assert serialized["structure"]["message"] == "hello"
     assert serialized["wrapper"]["content"] == "a/b"
     assert json.dumps(serialized)
+
+
+def test_to_jsonable_exports():
+    """Test that to_jsonable is properly exported."""
+    from openai_sdk_helpers.utils import to_jsonable
+
+    result = to_jsonable({"key": "value"})
+    assert result == {"key": "value"}
+
+
+def test_reference_encoding_helpers():
+    """Test get_module_qualname, encode_module_qualname, decode_module_qualname."""
+    from openai_sdk_helpers.utils import (
+        get_module_qualname,
+        encode_module_qualname,
+        decode_module_qualname,
+    )
+
+    # Test with Path class
+    result = get_module_qualname(Path)
+    assert result is not None
+    assert result[0] == "pathlib"
+    assert result[1] == "Path"
+
+    # Test encoding
+    encoded = encode_module_qualname(Path)
+    assert encoded is not None
+    assert encoded["module"] == "pathlib"
+    assert encoded["qualname"] == "Path"
+
+    # Test decoding
+    decoded = decode_module_qualname(encoded)
+    assert decoded is Path
+
+    # Test with invalid input
+    assert decode_module_qualname({}) is None
+    assert decode_module_qualname({"module": "fake_module"}) is None
+
+
+def test_basestructure_class_encoding():
+    """Test that BaseStructure classes are encoded with __structure_class__ marker."""
+    from openai_sdk_helpers.structure.base import BaseStructure
+    from openai_sdk_helpers.utils import to_jsonable
+
+    class TestStructure(BaseStructure):
+        value: str
+
+    # Test encoding of the class (not instance)
+    encoded = to_jsonable(TestStructure)
+    assert isinstance(encoded, dict)
+    assert encoded.get("__structure_class__") is True
+    assert "module" in encoded
+    assert "qualname" in encoded
+
+
+def test_dataclass_json_serializable_alias():
+    """Test that DataclassJSONSerializable is properly aliased."""
+    from openai_sdk_helpers.utils import DataclassJSONSerializable
+
+    @dataclass
+    class TestData(DataclassJSONSerializable):
+        name: str
+        count: int
+
+    instance = TestData(name="test", count=5)
+    json_data = instance.to_json()
+    assert json_data["name"] == "test"
+    assert json_data["count"] == 5
+
+    # Test round-trip
+    restored = TestData.from_json(json_data)
+    assert restored.name == "test"
+    assert restored.count == 5
+
+
+def test_basemodel_json_serializable(tmp_path):
+    """Test BaseModelJSONSerializable for Pydantic models."""
+    from pydantic import BaseModel
+    from openai_sdk_helpers.utils import BaseModelJSONSerializable
+
+    class TestModel(BaseModelJSONSerializable, BaseModel):
+        name: str
+        value: int
+
+    # Test to_json
+    instance = TestModel(name="test", value=42)
+    json_data = instance.to_json()
+    assert json_data["name"] == "test"
+    assert json_data["value"] == 42
+
+    # Test from_json
+    restored = TestModel.from_json(json_data)
+    assert restored.name == "test"
+    assert restored.value == 42
+
+    # Test file I/O
+    filepath = tmp_path / "model.json"
+    saved_path = instance.to_json_file(filepath)
+    assert Path(saved_path).exists()
+
+    loaded = TestModel.from_json_file(filepath)
+    assert loaded.name == "test"
+    assert loaded.value == 42
+
+
+def test_basemodel_serialization_hooks():
+    """Test _serialize_fields and _deserialize_fields hooks."""
+    from pydantic import BaseModel
+    from openai_sdk_helpers.utils import BaseModelJSONSerializable
+
+    class CustomModel(BaseModelJSONSerializable, BaseModel):
+        value: int
+
+        def _serialize_fields(self, data: dict) -> dict:
+            # Add a custom field during serialization
+            data["doubled"] = data["value"] * 2
+            return data
+
+        @classmethod
+        def _deserialize_fields(cls, data: dict) -> dict:
+            # Remove the custom field during deserialization
+            data = data.copy()
+            data.pop("doubled", None)
+            return data
+
+    instance = CustomModel(value=5)
+    json_data = instance.to_json()
+    assert json_data["value"] == 5
+    assert json_data["doubled"] == 10
+
+    # Test round-trip with hooks
+    restored = CustomModel.from_json(json_data)
+    assert restored.value == 5
+
+
+def test_to_jsonable_with_sets():
+    """Test that sets are converted to lists."""
+    from openai_sdk_helpers.utils import to_jsonable
+
+    data = {"numbers": {1, 2, 3}}
+    result = to_jsonable(data)
+    assert isinstance(result["numbers"], list)
+    assert set(result["numbers"]) == {1, 2, 3}
+
+
+def test_encoder_with_datetime():
+    """Test customJSONEncoder with datetime."""
+    from openai_sdk_helpers.utils import customJSONEncoder
+
+    dt = datetime(2023, 1, 15, 10, 30, 45)
+    encoded = json.dumps({"timestamp": dt}, cls=customJSONEncoder)
+    data = json.loads(encoded)
+    assert "2023-01-15" in data["timestamp"]
+    assert "10:30:45" in data["timestamp"]
+
+
+def test_path_deserialization_in_dataclass(tmp_path):
+    """Test that Path fields are correctly deserialized."""
+    from openai_sdk_helpers.utils import DataclassJSONSerializable
+
+    @dataclass
+    class PathData(DataclassJSONSerializable):
+        file_path: Path
+        name: str
+
+    json_data = {"file_path": "/tmp/test.txt", "name": "test"}
+    instance = PathData.from_json(json_data)
+    assert isinstance(instance.file_path, Path)
+    assert str(instance.file_path) == "/tmp/test.txt"
+    assert instance.name == "test"

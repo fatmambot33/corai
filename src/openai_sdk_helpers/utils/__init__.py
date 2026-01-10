@@ -47,8 +47,14 @@ from .coercion import (
 )
 from .json_utils import (
     JSONSerializable,
+    DataclassJSONSerializable,
+    BaseModelJSONSerializable,
+    to_jsonable,
     coerce_jsonable,
     customJSONEncoder,
+    get_module_qualname,
+    encode_module_qualname,
+    decode_module_qualname,
 )
 from .path_utils import check_filepath, ensure_directory
 from openai_sdk_helpers.logging_config import log
@@ -88,9 +94,15 @@ __all__ = [
     "coerce_optional_float",
     "coerce_optional_int",
     "coerce_dict",
+    "to_jsonable",
     "coerce_jsonable",
     "JSONSerializable",
+    "DataclassJSONSerializable",
+    "BaseModelJSONSerializable",
     "customJSONEncoder",
+    "get_module_qualname",
+    "encode_module_qualname",
+    "decode_module_qualname",
     "log",
     # Validation helpers
     "validate_non_empty_string",
