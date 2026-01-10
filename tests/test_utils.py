@@ -19,9 +19,6 @@ from openai_sdk_helpers.utils.json import (
 from openai_sdk_helpers.utils.path_utils import check_filepath
 from openai_sdk_helpers.logging_config import log
 
-# Backward compatibility alias
-JSONSerializable = DataclassJSONSerializable
-
 
 def test_ensure_list_behavior():
     assert ensure_list(None) == []
@@ -42,7 +39,7 @@ def test_json_serializable_and_encoder(tmp_path):
         RED = "red"
 
     @dataclass
-    class Dummy(JSONSerializable):
+    class Dummy(DataclassJSONSerializable):
         name: str = "x"
         path: Path = Path("a/b")
         color: Color = Color.RED

@@ -56,8 +56,9 @@ from .json import (
     to_jsonable,
 )
 
-# Backward compatibility alias
+# Alias for internal backward compatibility
 JSONSerializable = DataclassJSONSerializable
+
 from .path_utils import check_filepath, ensure_directory
 from openai_sdk_helpers.logging_config import log
 from .validation import (
