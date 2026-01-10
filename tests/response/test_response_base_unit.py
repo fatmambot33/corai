@@ -59,10 +59,15 @@ def test_close_skips_external_stores(response_base):
 
 def test_save(response_base, tmp_path):
     """Test the save method."""
-    response_base._save_path = tmp_path
+    response_base._data_path = tmp_path / "baseresponse"
+    expected_path = (
+        response_base._data_path
+        / response_base.name
+        / f"{str(response_base.uuid).lower()}.json"
+    )
     with patch.object(response_base.messages, "to_json_file") as mock_to_json_file:
         response_base.save()
-        mock_to_json_file.assert_called_once()
+        mock_to_json_file.assert_called_once_with(str(expected_path))
 
 
 def test_attach_vector_store_adds_file_search(response_base):

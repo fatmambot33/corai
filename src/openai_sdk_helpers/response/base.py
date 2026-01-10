@@ -803,7 +803,7 @@ class BaseResponse(Generic[T]):
         """Serialize the message history to a JSON file.
 
         Saves the complete conversation history to disk. The target path
-        is determined by filepath parameter, or data_path if configured.
+        is determined by filepath parameter, or the configured data_path.
 
         Parameters
         ----------
@@ -813,8 +813,9 @@ class BaseResponse(Generic[T]):
 
         Notes
         -----
-        If no filepath is provided and no data_path was configured during
-        initialization, the save operation is silently skipped.
+        If no filepath is provided, the save operation always writes to
+        the session data path (data_path / name / uuid.json). The data path
+        is configured during initialization and defaults to get_data_path().
 
         Examples
         --------
