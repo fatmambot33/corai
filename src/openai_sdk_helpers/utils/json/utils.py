@@ -78,12 +78,18 @@ def _to_jsonable(value: Any) -> Any:
     if is_dataclass(value) and not isinstance(value, type):
         return {k: _to_jsonable(v) for k, v in asdict(value).items()}
     # Check for BaseStructure class (not instance) before model_dump check
-    if isinstance(value, type) and issubclass(value, BaseStructure):
-        encoded = encode_module_qualname(value)
-        if encoded:
-            encoded["__structure_class__"] = True
-            return encoded
-        return str(value)
+    if isinstance(value, type):
+        try:
+            if issubclass(value, BaseStructure):
+                encoded = encode_module_qualname(value)
+                if encoded:
+                    encoded["__structure_class__"] = True
+                    return encoded
+                return str(value)
+        except TypeError:
+            # Some type-like objects may pass isinstance(value, type) but
+            # still not be valid arguments to issubclass; ignore these.
+            pass
     if isinstance(value, BaseStructure):
         return value.model_dump()
     # Check for model_dump on instances (after class checks)
