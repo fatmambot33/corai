@@ -148,7 +148,7 @@ async def demonstrate_async_support():
 # Example 3: Sync tool still works as before
 # ===========================================
 def sync_tool(name: str, value: int) -> dict:
-    """Synchronous tool for comparison."""
+    """Synchronize tool for comparison."""
     return {"name": name, "doubled": value * 2}
 
 

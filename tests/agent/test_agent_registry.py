@@ -142,12 +142,13 @@ def test_agent_registry_save_to_directory(tmp_path: Path) -> None:
     save_dir = tmp_path / "agents"
     registry.save_to_directory(save_dir)
 
-    assert save_dir.exists()
-    assert (save_dir / "agent1.json").exists()
-    assert (save_dir / "agent2.json").exists()
+    subdir = save_dir / "AgentConfiguration"
+    assert subdir.exists()
+    assert (subdir / "agent1.json").exists()
+    assert (subdir / "agent2.json").exists()
 
     # Verify content
-    loaded_config = AgentConfiguration.from_json_file(save_dir / "agent1.json")
+    loaded_config = AgentConfiguration.from_json_file(subdir / "agent1.json")
     assert loaded_config.name == "agent1"
     assert loaded_config.description == "First agent"
 

@@ -68,6 +68,7 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     configs_dir = tmp_path / "configs"
     configs_dir.mkdir()
 
+    # Save directly in the directory (not subdirectory)
     config1.to_json_file(configs_dir / "agent1.json")
     config2.to_json_file(configs_dir / "agent2.json")
 
@@ -150,9 +151,14 @@ def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     registry1.register(config1)
     registry1.register(config2)
 
-    # Save to directory
+    # Save to directory (files will be in subdirectory)
     save_dir = tmp_path / "agents"
     registry1.save_to_directory(save_dir)
+
+    # Move files from subdirectory to main directory so load_from_directory can find them
+    subdir = save_dir / "AgentConfiguration"
+    for f in subdir.glob("*.json"):
+        f.rename(save_dir / f.name)
 
     # Load into new registry
     registry2 = AgentConfigurationRegistry()

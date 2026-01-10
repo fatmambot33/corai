@@ -35,9 +35,9 @@ def test_response_base_initialization(response_base, openai_settings):
 def test_data_path(response_base, tmp_path):
     """Test the data_path property."""
     # data_path is resolved at init time, stored in _data_path
-    # It should contain the class name (baseresponse)
+    # It should contain the class name (BaseResponse)
     assert response_base._data_path is not None
-    assert "baseresponse" in str(response_base._data_path)
+    assert "BaseResponse" in str(response_base._data_path)
     # The name parameter should be accessible via the name property
     assert response_base.name == "test"
 

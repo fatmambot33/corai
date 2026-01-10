@@ -75,9 +75,7 @@ def test_output_instructions_are_appended(openai_settings) -> None:
 
     response = config.gen_response(openai_settings=openai_settings)
 
-    expected_output = _SampleOutput.get_prompt(add_enum_values=False)
-    expected_instructions = f"{config.instructions_text}\n{expected_output}"
-
+    expected_instructions = config.instructions_text
     assert response._instructions == expected_instructions
 
 

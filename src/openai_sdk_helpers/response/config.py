@@ -208,7 +208,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         self,
         *,
         openai_settings: OpenAISettings,
-        data_path: Optional[Path]=None,
+        data_path: Optional[Path] = None,
         tool_handlers: dict[str, ToolHandler] | None = None,
     ) -> BaseResponse[TOut]:
         """Generate a BaseResponse instance based on the configuration.
@@ -227,8 +227,6 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         BaseResponse[TOut]
             An instance of BaseResponse configured with ``openai_settings``.
         """
-
-
         return BaseResponse[TOut](
             name=self.name,
             instructions=self.instructions_text,
