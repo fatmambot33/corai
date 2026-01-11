@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from openai_sdk_helpers.agent.base import BaseAgent
+from openai_sdk_helpers.structure import SummaryStructure
 from openai_sdk_helpers.response.base import BaseResponse
 
 
@@ -20,9 +21,9 @@ class _StubBaseAgent(BaseAgent):
     def __init__(self) -> None:
         # Bypass the parent initializer by setting the required attributes.
         # This is intentional for testing - we don't want full agent setup.
-        self._output_type = str
+        self._output_type = SummaryStructure
         self._run_context_wrapper = None
-        self.agent_name = "stub"
+        self._name = "stub"
         self.description = ""
         self.model = "model"
         self._tools = None
@@ -66,7 +67,7 @@ def test_agent_base_run_aliases(
 
     result_run = agent.run_sync(input="hello")
     result_run_async = asyncio.run(agent.run_async(input="hello"))
-    result_stream = agent.run_streamed(input="hello", output_type=str)
+    result_stream = agent.run_streamed(input="hello", output_type=SummaryStructure)
 
     assert result_run == "sync-result"
     assert result_run_async == "async-result"

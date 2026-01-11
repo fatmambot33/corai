@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 from ..structure import SummaryStructure
+from ..structure.base import BaseStructure
 from .base import BaseAgent
 from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
@@ -25,7 +26,7 @@ class SummarizerAgent(BaseAgent):
         packaged ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Fallback model identifier when not specified elsewhere.
-    output_type : type, default=SummaryStructure
+    output_type : type[BaseStructure], default=SummaryStructure
         Type describing the expected summary output.
 
     Examples
@@ -60,7 +61,7 @@ class SummarizerAgent(BaseAgent):
         *,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
-        output_type: type[Any] = SummaryStructure,
+        output_type: Type[BaseStructure] = SummaryStructure,
     ) -> None:
         """Initialize the summarizer agent configuration.
 
@@ -71,7 +72,7 @@ class SummarizerAgent(BaseAgent):
             packaged ``prompt`` directory when not provided.
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
-        output_type : type, default=SummaryStructure
+        output_type : type[BaseStructure], default=SummaryStructure
             Type describing the expected summary output.
 
         Raises

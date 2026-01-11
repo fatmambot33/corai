@@ -27,6 +27,8 @@ SummaryStructure
     Basic summary with topic breakdown.
 ExtendedSummaryStructure
     Enhanced summary with additional metadata.
+TranslationStructure
+    Structured translation output.
 WebSearchStructure
     Web search results structure.
 WebSearchPlanStructure
@@ -74,6 +76,7 @@ from .plan import *
 from .prompt import PromptStructure
 from .responses import *
 from .summary import *
+from .translation import TranslationStructure
 from .validation import ValidationResultStructure
 from .vector_search import *
 from .web_search import *
@@ -93,6 +96,7 @@ __all__ = [
     "SummaryTopic",
     "SummaryStructure",
     "ExtendedSummaryStructure",
+    "TranslationStructure",
     "WebSearchStructure",
     "WebSearchPlanStructure",
     "WebSearchItemStructure",
