@@ -76,6 +76,33 @@ class BaseResponse(Generic[T]):
     file attachments via vector stores, and optional parsing into typed
     structured output models. Sessions can be persisted to disk and restored.
 
+    Parameters
+    ----------
+    name : str
+        Name for this response session, used for organizing artifacts
+        and naming vector stores.
+    instructions : str
+        System instructions provided to the OpenAI API for context.
+    tools : list or None
+        Tool definitions for the OpenAI API request. Pass None for no tools.
+    output_structure : type[BaseStructure] or None
+        Structure class used to parse tool call outputs. When provided,
+        the schema is automatically generated using the structure's
+        response_format() method. Pass None for unstructured responses.
+    system_vector_store : list[str] or None, default None
+        Optional list of vector store names to attach as system context.
+    data_path : Path, str, or None, default None
+        Optional absolute directory path for storing artifacts. If not provided,
+        defaults to get_data_path(class_name). Session files are saved as
+        data_path / uuid.json.
+    tool_handlers : dict[str, ToolHandler] or None, default None
+        Mapping from tool names to callable handlers. Each handler receives
+        a ResponseFunctionToolCall and returns a string or any serializable
+        result. Defaults to an empty dict when not provided.
+    openai_settings : OpenAISettings or None, default None
+        Fully configured OpenAI settings with API key and default model.
+        Required for normal operation.
+
     Attributes
     ----------
     uuid : UUID
@@ -307,6 +334,17 @@ class BaseResponse(Generic[T]):
         -------
         BaseResponse
             Instance of ``cls`` configured from ``config``.
+
+        Raises
+        ------
+        ValueError
+            If the configuration is invalid.
+
+        Examples
+        --------
+        >>> config = ResponseConfiguration(...)
+        >>> settings = OpenAISettings.from_env()
+        >>> response = BaseResponse.from_configuration(config, openai_settings=settings)
         """
         handlers = tool_handlers or {}
 
@@ -329,6 +367,11 @@ class BaseResponse(Generic[T]):
         -------
         str
             Name used for organizing artifacts and naming vector stores.
+
+        Examples
+        --------
+        >>> response.name
+        'my_session'
         """
         return self._name
 
@@ -340,6 +383,11 @@ class BaseResponse(Generic[T]):
         -------
         str
             System instructions provided to the OpenAI API.
+
+        Examples
+        --------
+        >>> response.instructions_text
+        'You are a helpful assistant.'
         """
         return self._instructions
 
@@ -351,6 +399,11 @@ class BaseResponse(Generic[T]):
         -------
         list or None
             Tool definitions provided to the OpenAI API, or None.
+
+        Examples
+        --------
+        >>> response.tools
+        []
         """
         return self._tools
 
@@ -362,6 +415,11 @@ class BaseResponse(Generic[T]):
         -------
         type[BaseStructure] or None
             Structure class used to parse tool call outputs, or None.
+
+        Examples
+        --------
+        >>> response.output_structure
+        None
         """
         return self._output_structure
 
@@ -625,6 +683,14 @@ class BaseResponse(Generic[T]):
         T or None
             Parsed response object of type output_structure, or None.
 
+        Raises
+        ------
+        RuntimeError
+            If the API returns no output.
+            If a tool handler raises an exception.
+        ValueError
+            If the API invokes a tool with no registered handler.
+
         Examples
         --------
         >>> # Automatic type detection
@@ -697,10 +763,22 @@ class BaseResponse(Generic[T]):
         T or None
             Parsed response object of type output_structure, or None.
 
+        Raises
+        ------
+        RuntimeError
+            If the API returns no output.
+            If a tool handler raises an exception.
+        ValueError
+            If the API invokes a tool with no registered handler.
+
         Notes
         -----
         This method exists for API consistency but does not currently
         provide true streaming functionality.
+
+        Examples
+        --------
+        >>> result = response.run_streamed("Analyze these files")
         """
         return asyncio.run(
             self.run_async(
@@ -717,6 +795,10 @@ class BaseResponse(Generic[T]):
         -------
         ResponseMessage or None
             Latest tool message, or None if no tool messages exist.
+
+        Examples
+        --------
+        >>> message = response.get_last_tool_message()
         """
         return self.messages.get_last_tool_message()
 
@@ -727,6 +809,10 @@ class BaseResponse(Generic[T]):
         -------
         ResponseMessage or None
             Latest user message, or None if no user messages exist.
+
+        Examples
+        --------
+        >>> message = response.get_last_user_message()
         """
         return self.messages.get_last_user_message()
 
@@ -737,6 +823,10 @@ class BaseResponse(Generic[T]):
         -------
         ResponseMessage or None
             Latest assistant message, or None if no assistant messages exist.
+
+        Examples
+        --------
+        >>> message = response.get_last_assistant_message()
         """
         return self.messages.get_last_assistant_message()
 
@@ -816,6 +906,11 @@ class BaseResponse(Generic[T]):
         If no filepath is provided, the save operation always writes to
         the session data path (data_path / name / uuid.json). The data path
         is configured during initialization and defaults to get_data_path().
+
+        Raises
+        ------
+        IOError
+            If the file cannot be written to disk.
 
         Examples
         --------
