@@ -22,5 +22,5 @@ def test_save_defaults_to_data_path(monkeypatch, tmp_path, openai_settings):
     )
     r.save()
 
-    expected_path = data_root / "baseresponse" / "test" / f"{str(r.uuid).lower()}.json"
+    expected_path = data_root / "BaseResponse" / "test" / f"{str(r.uuid).lower()}.json"
     assert expected_path.exists()
