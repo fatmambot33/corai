@@ -225,7 +225,7 @@ class BaseAgent(DataclassJSONSerializable):
             raise FileNotFoundError(
                 f"Prompt template for agent '{name}' not found at {prompt_path}."
             )
-                # Store instructions if provided directly in config
+            # Store instructions if provided directly in config
         self._instructions = config.instructions_text
 
         self.agent_name = name
@@ -255,7 +255,6 @@ class BaseAgent(DataclassJSONSerializable):
         self._output_guardrails = config.output_guardrails
         self._session = config.session
         self._run_context_wrapper = run_context_wrapper
-
 
     def _build_prompt_from_jinja(self) -> str:
         """Render the instructions prompt for this agent.
