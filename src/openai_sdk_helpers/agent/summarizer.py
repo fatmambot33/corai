@@ -18,6 +18,16 @@ class SummarizerAgent(BaseAgent):
     content. The output follows the ``SummaryStructure`` format by default but
     can be customized with a different output type.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Optional directory containing Jinja prompt templates. Defaults to the
+        packaged ``prompt`` directory when not provided.
+    default_model : str or None, default=None
+        Fallback model identifier when not specified elsewhere.
+    output_type : type, default=SummaryStructure
+        Type describing the expected summary output.
+
     Examples
     --------
     Basic usage with default settings:
@@ -63,6 +73,15 @@ class SummarizerAgent(BaseAgent):
             Fallback model identifier when not specified elsewhere.
         output_type : type, default=SummaryStructure
             Type describing the expected summary output.
+
+        Raises
+        ------
+        ValueError
+            If the default model is not provided.
+
+        Examples
+        --------
+        >>> summarizer = SummarizerAgent(default_model="gpt-4o-mini")
         """
         config = AgentConfiguration(
             name="summarizer",
@@ -91,6 +110,11 @@ class SummarizerAgent(BaseAgent):
         -------
         Any
             Structured summary produced by the agent.
+
+        Raises
+        ------
+        APIError
+            If the OpenAI API call fails.
         """
         context: Optional[Dict[str, Any]] = None
         if metadata:

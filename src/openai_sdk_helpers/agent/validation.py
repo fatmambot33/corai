@@ -18,6 +18,14 @@ class ValidatorAgent(BaseAgent):
     policies and usage guidelines, returning structured validation results with
     recommended actions.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Optional directory containing Jinja prompt templates. Defaults to the
+        packaged ``prompt`` directory when not provided.
+    default_model : str or None, default=None
+        Fallback model identifier when not specified elsewhere.
+
     Examples
     --------
     Validate user input:
@@ -63,6 +71,15 @@ class ValidatorAgent(BaseAgent):
             packaged ``prompt`` directory when not provided.
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
+
+        Raises
+        ------
+        ValueError
+            If the default model is not provided.
+
+        Examples
+        --------
+        >>> validator = ValidatorAgent(default_model="gpt-4o-mini")
         """
         config = AgentConfiguration(
             name="validator",
@@ -102,6 +119,19 @@ class ValidatorAgent(BaseAgent):
         -------
         ValidationResultStructure
             Structured validation result describing any violations and actions.
+
+        Raises
+        ------
+        APIError
+            If the OpenAI API call fails.
+
+        Examples
+        --------
+        >>> import asyncio
+        >>> async def main():
+        ...     result = await validator.run_agent("Safe input")
+        ...     return result
+        >>> asyncio.run(main())
         """
         context: Dict[str, Any] = {"user_input": user_input}
         if agent_output is not None:

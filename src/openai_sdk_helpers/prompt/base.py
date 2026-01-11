@@ -32,6 +32,12 @@ class PromptRenderer:
     prompt package directory) or can be specified with absolute paths.
     Autoescape is disabled by default since prompts are plain text.
 
+    Parameters
+    ----------
+    base_dir : Path or None, default None
+        Base directory containing Jinja2 templates. If None, uses the
+        prompt package directory containing built-in templates.
+
     Attributes
     ----------
     base_dir : Path

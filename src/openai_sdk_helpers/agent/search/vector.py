@@ -26,24 +26,32 @@ MAX_CONCURRENT_SEARCHES = 10
 class VectorSearchPlanner(SearchPlanner[VectorSearchPlanStructure]):
     """Plan vector searches to satisfy a user query.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Directory containing prompt templates.
+    default_model : str or None, default=None
+        Default model identifier to use when not defined in config.
+
     Methods
     -------
     run_agent(query)
         Generate a vector search plan for the provided query.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> planner = VectorSearchPlanner(default_model="gpt-4o-mini")
     """
 
     def __init__(
         self, prompt_dir: Optional[Path] = None, default_model: Optional[str] = None
     ) -> None:
-        """Initialize the planner agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path or None, default=None
-            Directory containing prompt templates.
-        default_model : str or None, default=None
-            Default model identifier to use when not defined in config.
-        """
+        """Initialize the planner agent."""
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
     def _configure_agent(self) -> AgentConfiguration:
@@ -71,12 +79,37 @@ class VectorSearchTool(
 ):
     """Execute vector searches defined in a search plan.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Directory containing prompt templates.
+    default_model : str or None, default=None
+        Default model identifier to use when not defined in config.
+    store_name : str or None, default=None
+        Name of the vector store to query.
+    max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES
+        Maximum number of concurrent vector search tasks to run.
+    vector_storage : VectorStorage or None, default=None
+        Optional preconfigured vector storage instance to reuse.
+    vector_storage_factory : Callable or None, default=None
+        Factory for constructing a VectorStorage when one is not provided.
+        Receives ``store_name`` as an argument.
+
     Methods
     -------
     run_agent(search_plan)
         Execute searches described by the plan.
     run_search(item)
         Perform a single vector search and summarise the result.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> tool = VectorSearchTool(default_model="gpt-4o-mini", store_name="my_store")
     """
 
     def __init__(
@@ -89,24 +122,7 @@ class VectorSearchTool(
         vector_storage: Optional[VectorStorage] = None,
         vector_storage_factory: Optional[Callable[[str], VectorStorage]] = None,
     ) -> None:
-        """Initialize the search tool agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path or None, default=None
-            Directory containing prompt templates.
-        default_model : str or None, default=None
-            Default model identifier to use when not defined in config.
-        store_name : str or None, default=None
-            Name of the vector store to query.
-        max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES
-            Maximum number of concurrent vector search tasks to run.
-        vector_storage : VectorStorage or None, default=None
-            Optional preconfigured vector storage instance to reuse.
-        vector_storage_factory : Callable or None, default=None
-            Factory for constructing a VectorStorage when one is not provided.
-            Receives ``store_name`` as an argument.
-        """
+        """Initialize the search tool agent."""
         self._vector_storage: Optional[VectorStorage] = None
         self._store_name = store_name or "editorial"
         self._vector_storage_factory = vector_storage_factory
@@ -181,24 +197,32 @@ class VectorSearchTool(
 class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
     """Generate reports summarizing vector search results.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Directory containing prompt templates.
+    default_model : str or None, default=None
+        Default model identifier to use when not defined in config.
+
     Methods
     -------
     run_agent(query, search_results)
         Compile a final report from search results.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> writer = VectorSearchWriter(default_model="gpt-4o-mini")
     """
 
     def __init__(
         self, prompt_dir: Optional[Path] = None, default_model: Optional[str] = None
     ) -> None:
-        """Initialize the writer agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path or None, default=None
-            Directory containing prompt templates.
-        default_model : str or None, default=None
-            Default model identifier to use when not defined in config.
-        """
+        """Initialize the writer agent."""
         super().__init__(prompt_dir=prompt_dir, default_model=default_model)
 
     def _configure_agent(self) -> AgentConfiguration:
@@ -224,6 +248,22 @@ class VectorSearch:
     searches, executes them concurrently against a vector store, and generates
     comprehensive reports. It combines ``VectorSearchPlanner``,
     ``VectorSearchTool``, and ``VectorSearchWriter`` into a single workflow.
+
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Directory containing prompt templates.
+    default_model : str or None, default=None
+        Default model identifier to use when not defined in config.
+    vector_store_name : str or None, default=None
+        Name of the vector store to query.
+    max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES
+        Maximum number of concurrent search tasks to run.
+    vector_storage : VectorStorage or None, default=None
+        Optional preconfigured vector storage instance to reuse.
+    vector_storage_factory : callable, default=None
+        Factory used to construct a VectorStorage when one is not provided.
+        Receives ``vector_store_name`` as an argument.
 
     Examples
     --------
@@ -256,6 +296,11 @@ class VectorSearch:
         Convenience asynchronous entry point for the workflow.
     run_vector_agent_sync(search_query)
         Convenience synchronous entry point for the workflow.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
     """
 
     def __init__(
@@ -268,24 +313,7 @@ class VectorSearch:
         vector_storage: Optional[VectorStorage] = None,
         vector_storage_factory: Optional[Callable[[str], VectorStorage]] = None,
     ) -> None:
-        """Create the main VectorSearch agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path or None, default=None
-            Directory containing prompt templates.
-        default_model : str or None, default=None
-            Default model identifier to use when not defined in config.
-        vector_store_name : str or None, default=None
-            Name of the vector store to query.
-        max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES
-            Maximum number of concurrent search tasks to run.
-        vector_storage : VectorStorage or None, default=None
-            Optional preconfigured vector storage instance to reuse.
-        vector_storage_factory : callable, default=None
-            Factory used to construct a VectorStorage when one is not provided.
-            Receives ``vector_store_name`` as an argument.
-        """
+        """Create the main VectorSearch agent."""
         self._prompt_dir = prompt_dir
         self._default_model = default_model
         self._vector_store_name = vector_store_name

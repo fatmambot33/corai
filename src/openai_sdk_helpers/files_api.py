@@ -40,9 +40,10 @@ class FilesAPIManager:
     Parameters
     ----------
     client : OpenAI
-        OpenAI client instance for API calls.
-    auto_track : bool, default True
-        Automatically track uploaded files for cleanup.
+        An initialized OpenAI client instance used for making API calls.
+    auto_track : bool, default=True
+        If True, automatically tracks all files uploaded through the `create`
+        method, making them eligible for automatic deletion via `cleanup()`.
 
     Attributes
     ----------
@@ -95,6 +96,17 @@ class FilesAPIManager:
             OpenAI client instance.
         auto_track : bool, default True
             Automatically track uploaded files for cleanup.
+
+        Raises
+        ------
+        ValueError
+            If the client is not a valid OpenAI client.
+
+        Examples
+        --------
+        >>> from openai import OpenAI
+        >>> client = OpenAI()
+        >>> manager = FilesAPIManager(client)
         """
         self._client = client
         self._auto_track = auto_track
@@ -222,6 +234,11 @@ class FilesAPIManager:
         FileObject
             Information about the file.
 
+        Raises
+        ------
+        NotFoundError
+            If the file ID does not exist.
+
         Examples
         --------
         >>> file_info = manager.retrieve("file-abc123")
@@ -248,6 +265,11 @@ class FilesAPIManager:
         -------
         SyncCursorPage[FileObject]
             Page of file objects matching the criteria.
+
+        Raises
+        ------
+        APIError
+            If the OpenAI API call fails.
 
         Examples
         --------
@@ -282,6 +304,11 @@ class FilesAPIManager:
         FileDeleted
             Confirmation of file deletion.
 
+        Raises
+        ------
+        NotFoundError
+            If the file ID does not exist.
+
         Examples
         --------
         >>> result = manager.delete("file-abc123")
@@ -309,6 +336,11 @@ class FilesAPIManager:
         -------
         bytes
             The raw bytes of the file content.
+
+        Raises
+        ------
+        NotFoundError
+            If the file ID does not exist.
 
         Examples
         --------

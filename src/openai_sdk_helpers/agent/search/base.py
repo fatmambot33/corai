@@ -29,12 +29,35 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
     Subclasses implement specific planner logic by overriding the
     `_configure_agent` method and specifying the output type.
 
+    Parameters
+    ----------
+    prompt_dir : Path, optional
+        Directory containing prompt templates.
+    default_model : str, optional
+        Default model identifier to use when not defined in config.
+
     Methods
     -------
     run_agent(query)
         Generate a search plan for the provided query.
     _configure_agent()
         Return AgentConfiguration for this planner instance.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> class MyPlanner(SearchPlanner):
+    ...     def _configure_agent(self):
+    ...         return AgentConfiguration(
+    ...             name="my_planner",
+    ...             description="Plans searches",
+    ...             output_type=dict,
+    ...         )
+    >>> planner = MyPlanner(default_model="gpt-4o-mini")
     """
 
     def __init__(
@@ -42,15 +65,7 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
-        """Initialize the planner agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path, optional
-            Directory containing prompt templates.
-        default_model : str, optional
-            Default model identifier to use when not defined in config.
-        """
+        """Initialize the planner agent."""
         config = self._configure_agent()
         super().__init__(
             config=config,
@@ -105,6 +120,15 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
     Subclasses implement search execution logic by overriding the
     `_configure_agent` and `run_search` methods.
 
+    Parameters
+    ----------
+    prompt_dir : Path, optional
+        Directory containing prompt templates.
+    default_model : str, optional
+        Default model identifier to use when not defined in config.
+    max_concurrent_searches : int, default=10
+        Maximum number of concurrent search operations.
+
     Methods
     -------
     run_agent(search_plan)
@@ -113,6 +137,24 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
         Execute a single search item.
     _configure_agent()
         Return AgentConfiguration for this tool agent.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> class MyTool(SearchToolAgent):
+    ...     def _configure_agent(self):
+    ...         return AgentConfiguration(
+    ...             name="my_tool",
+    ...             description="Executes searches",
+    ...             input_type=dict,
+    ...         )
+    ...     async def run_search(self, item):
+    ...         return "result"
+    >>> tool = MyTool(default_model="gpt-4o-mini")
     """
 
     def __init__(
@@ -122,17 +164,7 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
         default_model: Optional[str] = None,
         max_concurrent_searches: int = 10,
     ) -> None:
-        """Initialize the search tool agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path, optional
-            Directory containing prompt templates.
-        default_model : str, optional
-            Default model identifier to use when not defined in config.
-        max_concurrent_searches : int, default=10
-            Maximum number of concurrent search operations.
-        """
+        """Initialize the search tool agent."""
         self._max_concurrent_searches = max_concurrent_searches
         config = self._configure_agent()
         super().__init__(
@@ -211,12 +243,35 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
     Synthesizes search results into a final report. Subclasses implement
     specific report generation logic by overriding the `_configure_agent` method.
 
+    Parameters
+    ----------
+    prompt_dir : Path, optional
+        Directory containing prompt templates.
+    default_model : str, optional
+        Default model identifier to use when not defined in config.
+
     Methods
     -------
     run_agent(query, search_results)
         Generate a report from search results.
     _configure_agent()
         Return AgentConfiguration for this writer instance.
+
+    Raises
+    ------
+    ValueError
+        If the default model is not provided.
+
+    Examples
+    --------
+    >>> class MyWriter(SearchWriter):
+    ...     def _configure_agent(self):
+    ...         return AgentConfiguration(
+    ...             name="my_writer",
+    ...             description="Writes reports",
+    ...             output_type=dict,
+    ...         )
+    >>> writer = MyWriter(default_model="gpt-4o-mini")
     """
 
     def __init__(
@@ -224,15 +279,7 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
-        """Initialize the writer agent.
-
-        Parameters
-        ----------
-        prompt_dir : Path, optional
-            Directory containing prompt templates.
-        default_model : str, optional
-            Default model identifier to use when not defined in config.
-        """
+        """Initialize the writer agent."""
         config = self._configure_agent()
         super().__init__(
             config=config,

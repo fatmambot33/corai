@@ -26,6 +26,27 @@ SummarizeFn = Callable[[List[str]], str]
 class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
     """Coordinate agent plans while persisting project state and outputs.
 
+    Parameters
+    ----------
+    prompt_fn : PromptFn
+        Callable that generates a prompt brief from the input string.
+    build_plan_fn : BuildPlanFn
+        Callable that generates a plan from the prompt brief.
+    execute_plan_fn : ExecutePlanFn
+        Callable that executes a plan and returns results.
+    summarize_fn : SummarizeFn
+        Callable that summarizes a list of result strings.
+    module_data_path : Path
+        Base path for persisting project artifacts.
+    name : str
+        Name of the parent module for data organization.
+    config : AgentConfiguration or None, default=None
+        Optional agent configuration describing prompts and metadata.
+    prompt_dir : Path or None, default=None
+        Optional directory holding prompt templates.
+    default_model : str or None, default=None
+        Optional fallback model identifier.
+
     Methods
     -------
     build_prompt(prompt)
@@ -89,6 +110,22 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
             Optional directory holding prompt templates.
         default_model : str or None, default=None
             Optional fallback model identifier.
+
+        Raises
+        ------
+        ValueError
+            If the provided configuration is invalid.
+
+        Examples
+        --------
+        >>> coordinator = CoordinatorAgent(
+        ...     prompt_fn=lambda p: PromptStructure(prompt=p),
+        ...     build_plan_fn=lambda p: PlanStructure(),
+        ...     execute_plan_fn=lambda p: [],
+        ...     summarize_fn=lambda r: "summary",
+        ...     module_data_path=Path("."),
+        ...     name="test",
+        ... )
         """
         if config is None:
             config = AgentConfiguration(
@@ -120,6 +157,10 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         ----------
         prompt : str
             The core request or goal for the project.
+
+        Examples
+        --------
+        >>> coordinator.build_prompt("Analyze the impact of AI on healthcare.")
         """
         log("build_prompt", level=logging.INFO)
         self.start_date = datetime.now(timezone.utc)
@@ -134,6 +175,11 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         ------
         ValueError
             If called before :meth:`build_prompt`.
+
+        Examples
+        --------
+        >>> coordinator.build_prompt("Analyze AI in healthcare.")
+        >>> coordinator.build_plan()
         """
         log("build_plan", level=logging.INFO)
         if not self.brief:
@@ -151,6 +197,12 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         -------
         list[str]
             Flattened list of results from all executed tasks.
+
+        Examples
+        --------
+        >>> coordinator.build_prompt("Analyze AI.")
+        >>> coordinator.build_plan()
+        >>> results = coordinator.execute_plan()
         """
         log("execute_plan", level=logging.INFO)
         if not self.plan:
@@ -174,6 +226,11 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         -------
         str
             Concise summary derived from the provided results.
+
+        Examples
+        --------
+        >>> results = ["AI is impacting healthcare.", "New models are faster."]
+        >>> summary = coordinator.summarize_plan(results)
         """
         log("summarize_plan", level=logging.INFO)
 
@@ -199,6 +256,10 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         ----------
         prompt : str
             The request or question to analyze and summarize.
+
+        Examples
+        --------
+        >>> coordinator.run_plan("Analyze the future of AI.")
         """
         self.build_prompt(prompt)
         self.build_plan()
@@ -226,6 +287,15 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         -------
         Path
             Path to the saved JSON artifact.
+
+        Raises
+        ------
+        IOError
+            If the file cannot be written to disk.
+
+        Examples
+        --------
+        >>> path = coordinator.save()
         """
         self.to_json_file(self.file_path)
         return self.file_path
