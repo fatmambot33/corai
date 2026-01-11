@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Optional, Protocol
+import uuid
 
 from agents import (
     Agent,
@@ -17,6 +18,13 @@ from agents.model_settings import ModelSettings
 from agents.run_context import RunContextWrapper
 from agents.tool import Tool
 from jinja2 import Template
+
+from ..utils.json.data_class import DataclassJSONSerializable
+
+from ..utils import (
+    check_filepath,
+    log,
+)
 
 from .runner import run_async, run_streamed, run_sync
 
@@ -95,7 +103,7 @@ class AgentConfigurationLike(Protocol):
         ...
 
 
-class BaseAgent:
+class BaseAgent(DataclassJSONSerializable):
     """Factory for creating and configuring specialized agents.
 
     ``BaseAgent`` provides the foundation for building OpenAI agents with support
@@ -158,8 +166,10 @@ class BaseAgent:
 
     def __init__(
         self,
+        *,
         config: AgentConfigurationLike,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
+        data_path: Path | str | None = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
@@ -195,9 +205,7 @@ class BaseAgent:
 
         # Build template from file or fall back to instructions
         if prompt_path is None:
-            # No template path - use instructions (always available now)
-            if hasattr(config, "instructions_text"):
-                # AgentConfiguration has this property - use it for proper resolution
+            if config.instructions_text:
                 instructions_text = config.instructions_text
             else:
                 # Fall back to resolving instructions ourselves
@@ -217,10 +225,26 @@ class BaseAgent:
             raise FileNotFoundError(
                 f"Prompt template for agent '{name}' not found at {prompt_path}."
             )
+                # Store instructions if provided directly in config
+        self._instructions = config.instructions_text
 
         self.agent_name = name
+        self.uuid = uuid.uuid4()
         self.description = description
         self.model = model
+
+        # Resolve data_path with class name appended
+        class_name = self.__class__.__name__
+        if data_path is not None:
+            data_path_obj = Path(data_path)
+            if data_path_obj.name == class_name:
+                self._data_path = data_path_obj
+            else:
+                self._data_path = data_path_obj / class_name
+        else:
+            from ..environment import get_data_path
+
+            self._data_path = get_data_path(self.__class__.__name__)
 
         self._input_type = config.input_type
         self._output_type = config.output_type or config.input_type
@@ -232,45 +256,6 @@ class BaseAgent:
         self._session = config.session
         self._run_context_wrapper = run_context_wrapper
 
-        # Store instructions if provided directly in config
-        self._instructions = getattr(config, "instructions", None)
-
-    @classmethod
-    def from_configuration(
-        cls,
-        config: AgentConfigurationLike,
-        *,
-        run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
-        prompt_dir: Optional[Path] = None,
-        default_model: Optional[str] = None,
-    ) -> BaseAgent:
-        """Create a BaseAgent instance from configuration.
-
-        Parameters
-        ----------
-        config : AgentConfigurationLike
-            Configuration describing the agent.
-        run_context_wrapper : RunContextWrapper or None, default=None
-            Optional wrapper providing runtime context.
-        prompt_dir : Path or None, default=None
-            Optional directory holding prompt templates. Used when
-            ``config.template_path`` is not provided or is relative. If
-            ``config.template_path`` is an absolute path, this parameter is
-            ignored.
-        default_model : str or None, default=None
-            Optional fallback model identifier.
-
-        Returns
-        -------
-        BaseAgent
-            Instantiated agent.
-        """
-        return cls(
-            config=config,
-            run_context_wrapper=run_context_wrapper,
-            prompt_dir=prompt_dir,
-            default_model=default_model,
-        )
 
     def _build_prompt_from_jinja(self) -> str:
         """Render the instructions prompt for this agent.
@@ -524,8 +509,41 @@ class BaseAgent:
         ... finally:
         ...     agent.close()
         """
-        # Base implementation does nothing, but subclasses can override
-        pass
+        log(f"Closing session {self.uuid} for {self.__class__.__name__}")
+        self.save()
+
+    def __repr__(self) -> str:
+        """Return a string representation of the BaseAgent.
+
+        Returns
+        -------
+        str
+            String representation including agent name and model.
+        """
+        return f"<BaseAgent name={self.agent_name!r} model={self.model!r}>"
+
+    def save(self, filepath: str | Path | None = None) -> None:
+        """Serialize the message history to a JSON file.
+
+        Saves the current message history to a specified file path in JSON format.
+        If no file path is provided, it saves to a default location based on
+        the agent's UUID.
+
+        Parameters
+        ----------
+        filepath : str | Path | None, default=None
+            Optional file path to save the serialized history. If None,
+            uses a default filename based on the agent name.
+        """
+        if filepath is not None:
+            target = Path(filepath)
+        else:
+            filename = f"{str(self.uuid).lower()}.json"
+            target = self._data_path / self.agent_name / filename
+
+        checked = check_filepath(filepath=target)
+        self.to_json_file(filepath=checked)
+        log(f"Saved messages to {target}")
 
 
 __all__ = ["AgentConfigurationLike", "BaseAgent"]

@@ -23,7 +23,7 @@ ExecutePlanFn = Callable[[PlanStructure], List[str]]
 SummarizeFn = Callable[[List[str]], str]
 
 
-class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
+class CoordinatorAgent(BaseAgent):
     """Coordinate agent plans while persisting project state and outputs.
 
     Parameters
@@ -265,40 +265,6 @@ class CoordinatorAgent(BaseAgent, DataclassJSONSerializable):
         self.build_plan()
         results = self.execute_plan()
         self.summarize_plan(results)
-
-    @property
-    def file_path(self) -> Path:
-        """Return the path where the project snapshot will be stored.
-
-        Returns
-        -------
-        Path
-            Location of the JSON artifact for the current run.
-        """
-        if not self.start_date:
-            self.start_date = datetime.now(timezone.utc)
-        start_date_str = self.start_date.strftime("%Y%m%d_%H%M%S")
-        return self._module_data_path / self._name / f"{start_date_str}.json"
-
-    def save(self) -> Path:
-        """Persist the current project state to disk.
-
-        Returns
-        -------
-        Path
-            Path to the saved JSON artifact.
-
-        Raises
-        ------
-        IOError
-            If the file cannot be written to disk.
-
-        Examples
-        --------
-        >>> path = coordinator.save()
-        """
-        self.to_json_file(self.file_path)
-        return self.file_path
 
     @staticmethod
     def _run_task(

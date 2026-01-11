@@ -126,11 +126,6 @@ def test_run_plan(coordinator_agent):
     coordinator_agent.summarize_plan.assert_called_once()
 
 
-def test_file_path(coordinator_agent):
-    """Test the file_path property."""
-    assert coordinator_agent.file_path.name.endswith(".json")
-
-
 def test_run_task(coordinator_agent):
     """Test running a single task."""
     task = TaskStructure(prompt="test task", task_type=AgentEnum.WEB_SEARCH)

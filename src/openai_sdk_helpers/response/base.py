@@ -53,11 +53,9 @@ from ..utils import (
     ensure_list,
     log,
 )
-from ..utils.json import BaseModelJSONSerializable
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
-    from .config import ResponseConfiguration
 
 T = TypeVar("T", bound=BaseStructure)
 ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
@@ -221,12 +219,13 @@ class BaseResponse(Generic[T]):
         ...     openai_settings=settings,
         ... )
         """
-        if tool_handlers is None:
-            tool_handlers = {}
         if openai_settings is None:
             raise ValueError("openai_settings is required")
 
+        if tool_handlers is None:
+            tool_handlers = {}
         self._tool_handlers = tool_handlers
+        self.uuid = uuid.uuid4()
         self._name = name
 
         # Resolve data_path with class name appended
@@ -261,8 +260,6 @@ class BaseResponse(Generic[T]):
             raise ValueError(
                 "OpenAI model is required. Set 'default_model' on OpenAISettings."
             )
-
-        self.uuid = uuid.uuid4()
 
         system_content: ResponseInputMessageContentListParam = [
             ResponseInputTextParam(type="input_text", text=instructions)
@@ -308,56 +305,6 @@ class BaseResponse(Generic[T]):
         self.messages.add_system_message(content=system_content)
         if self._data_path is not None:
             self.save()
-
-    @classmethod
-    def from_configuration(
-        cls: type[RB],
-        config: "ResponseConfiguration[Any, T]",
-        *,
-        data_path: Path | str | None = None,
-        tool_handlers: dict[str, ToolHandler] | None = None,
-        openai_settings: OpenAISettings,
-    ) -> RB:
-        """Construct a response instance from a configuration object.
-
-        Parameters
-        ----------
-        config : ResponseConfiguration
-            Configuration describing the response inputs, outputs, and tools.
-        openai_settings : OpenAISettings
-            OpenAI authentication and model configuration used for the response.
-        tool_handlers : dict[str, ToolHandler] or None, default None
-            Mapping of tool names to callable handlers. Defaults to an empty
-            dictionary when not provided.
-
-        Returns
-        -------
-        BaseResponse
-            Instance of ``cls`` configured from ``config``.
-
-        Raises
-        ------
-        ValueError
-            If the configuration is invalid.
-
-        Examples
-        --------
-        >>> config = ResponseConfiguration(...)
-        >>> settings = OpenAISettings.from_env()
-        >>> response = BaseResponse.from_configuration(config, openai_settings=settings)
-        """
-        handlers = tool_handlers or {}
-
-        return cls(
-            name=config.name,
-            instructions=config.instructions_text,
-            tools=config.tools,
-            output_structure=config.output_structure,
-            system_vector_store=config.system_vector_store,
-            data_path=data_path,
-            tool_handlers=handlers,
-            openai_settings=openai_settings,
-        )
 
     @property
     def name(self) -> str:

@@ -280,7 +280,13 @@ class AgentConfiguration(DataclassJSONSerializable):
         # Import here to avoid circular dependency
         from .base import BaseAgent
 
-        return BaseAgent.from_configuration(
+        BaseAgent(
+            config=self,
+            run_context_wrapper=run_context_wrapper,
+            prompt_dir=prompt_dir,
+            default_model=default_model,
+        )
+        return BaseAgent(
             config=self,
             run_context_wrapper=run_context_wrapper,
             prompt_dir=prompt_dir,
