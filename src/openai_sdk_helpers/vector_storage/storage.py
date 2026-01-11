@@ -56,6 +56,16 @@ class VectorStorage:
     including file uploads, deletions, and semantic search operations. It handles
     file caching, concurrent uploads, and automatic store creation.
 
+    Parameters
+    ----------
+    store_name : str
+        Name of the vector store to create or connect to.
+    client : OpenAIClient or None, optional
+        Preconfigured OpenAI-compatible client, by default None.
+    model : str or None, optional
+        Embedding model identifier. Reads OPENAI_MODEL env var if None,
+        by default None.
+
     Examples
     --------
     Basic usage:

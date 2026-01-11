@@ -24,6 +24,18 @@ def check_filepath(
     -------
     Path
         Path object representing the validated file path.
+
+    Raises
+    ------
+    ValueError
+        If both or neither of filepath and fullfilepath are provided.
+    IOError
+        If the directory cannot be created.
+
+    Examples
+    --------
+    >>> check_filepath(fullfilepath="/tmp/my_app/data.json")
+    Path('/tmp/my_app/data.json')
     """
     if filepath is None and fullfilepath is None:
         raise ValueError("filepath or fullfilepath is required.")
@@ -38,7 +50,28 @@ def check_filepath(
 
 
 def ensure_directory(path: Path) -> Path:
-    """Ensure a directory exists and return it."""
+    """Ensure a directory exists and return it.
+
+    Parameters
+    ----------
+    path : Path
+        The directory path to check and create if necessary.
+
+    Returns
+    -------
+    Path
+        The validated Path object for the directory.
+
+    Raises
+    ------
+    IOError
+        If the directory cannot be created.
+
+    Examples
+    --------
+    >>> ensure_directory(Path("/tmp/my_app"))
+    Path('/tmp/my_app')
+    """
     path.mkdir(parents=True, exist_ok=True)
     return path
 

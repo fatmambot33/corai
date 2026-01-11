@@ -16,6 +16,14 @@ class TranslatorAgent(BaseAgent):
     This agent provides language translation services using OpenAI models,
     supporting both synchronous and asynchronous execution modes.
 
+    Parameters
+    ----------
+    prompt_dir : Path or None, default=None
+        Optional directory containing Jinja prompt templates. Defaults to the
+        packaged ``prompt`` directory when not provided.
+    default_model : str or None, default=None
+        Fallback model identifier when not specified elsewhere.
+
     Examples
     --------
     Basic translation:
@@ -62,6 +70,15 @@ class TranslatorAgent(BaseAgent):
             packaged ``prompt`` directory when not provided.
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
+
+        Raises
+        ------
+        ValueError
+            If the default model is not provided.
+
+        Examples
+        --------
+        >>> translator = TranslatorAgent(default_model="gpt-4o-mini")
         """
         config = AgentConfiguration(
             name="translator",
@@ -95,6 +112,19 @@ class TranslatorAgent(BaseAgent):
         -------
         str
             Translated text returned by the agent.
+
+        Raises
+        ------
+        APIError
+            If the OpenAI API call fails.
+
+        Examples
+        --------
+        >>> import asyncio
+        >>> async def main():
+        ...     result = await translator.run_agent("Hello", "Spanish")
+        ...     return result
+        >>> asyncio.run(main())
         """
         template_context: Dict[str, Any] = {"target_language": target_language}
         if context:
@@ -142,6 +172,10 @@ class TranslatorAgent(BaseAgent):
         ------
         ValueError
             If ``target_language`` is not provided.
+
+        Examples
+        --------
+        >>> result = translator.run_sync("Hello", target_language="Spanish")
         """
         merged_context: Dict[str, Any] = {}
 

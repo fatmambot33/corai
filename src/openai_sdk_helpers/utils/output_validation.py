@@ -82,7 +82,7 @@ class JSONSchemaValidator(ValidationRule):
     Parameters
     ----------
     schema : dict
-        JSON schema to validate against.
+        A dictionary representing the JSON schema to validate against.
 
     Examples
     --------
@@ -100,6 +100,11 @@ class JSONSchemaValidator(ValidationRule):
         ----------
         schema : dict
             JSON schema dictionary.
+
+        Raises
+        ------
+        ValueError
+            If the schema is not a valid dictionary.
         """
         self.schema = schema
 
@@ -186,6 +191,11 @@ class SemanticValidator(ValidationRule):
             Phrases that must not appear.
         must_reference_sources : bool
             Check for source references.
+
+        Raises
+        ------
+        ValueError
+            If any of the parameters are not of the expected type.
         """
         self.must_contain = must_contain or []
         self.must_not_contain = must_not_contain or []
@@ -281,6 +291,11 @@ class LengthValidator(ValidationRule):
             Minimum word count.
         max_words : int, optional
             Maximum word count.
+
+        Raises
+        ------
+        ValueError
+            If any of the parameters are not integers.
         """
         self.min_length = min_length
         self.max_length = max_length
@@ -354,6 +369,11 @@ class OutputValidator:
         ----------
         rules : list[ValidationRule], optional
             Initial validation rules.
+
+        Raises
+        ------
+        ValueError
+            If rules is not a list of ValidationRule instances.
         """
         self.rules = rules or []
 

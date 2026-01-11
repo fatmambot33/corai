@@ -43,6 +43,15 @@ def cmd_agent_test(args: argparse.Namespace) -> int:
     -------
     int
         Exit code (0 for success).
+
+    Raises
+    ------
+    NotImplementedError
+        As the function is not yet implemented.
+
+    Examples
+    --------
+    >>> cmd_agent_test(argparse.Namespace(agent_name="test", input="hello"))
     """
     print(f"Testing agent: {args.agent_name}")
     print(f"Input: {args.input}")
@@ -62,6 +71,15 @@ def cmd_template_validate(args: argparse.Namespace) -> int:
     -------
     int
         Exit code (0 for success, 1 for validation errors).
+
+    Raises
+    ------
+    FileNotFoundError
+        If the template path does not exist.
+
+    Examples
+    --------
+    >>> cmd_template_validate(argparse.Namespace(template_path="."))
     """
     from jinja2 import Environment, FileSystemLoader, TemplateSyntaxError
 
@@ -116,6 +134,15 @@ def cmd_registry_list(args: argparse.Namespace) -> int:
     -------
     int
         Exit code (0 for success).
+
+    Raises
+    ------
+    ImportError
+        If openai_sdk_helpers is not installed.
+
+    Examples
+    --------
+    >>> cmd_registry_list(argparse.Namespace())
     """
     try:
         from openai_sdk_helpers import get_default_registry
@@ -151,6 +178,17 @@ def cmd_registry_inspect(args: argparse.Namespace) -> int:
     -------
     int
         Exit code (0 for success, 1 for not found).
+
+    Raises
+    ------
+    ImportError
+        If openai_sdk_helpers is not installed.
+    KeyError
+        If the configuration is not found in the registry.
+
+    Examples
+    --------
+    >>> cmd_registry_inspect(argparse.Namespace(config_name="my_config"))
     """
     try:
         from openai_sdk_helpers import get_default_registry
@@ -198,6 +236,10 @@ def main(argv: list[str] | None = None) -> int:
     -------
     int
         Exit code.
+
+    Examples
+    --------
+    >>> main(["agent", "test", "my_agent"])
     """
     parser = argparse.ArgumentParser(
         prog="openai-helpers",
