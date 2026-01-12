@@ -14,13 +14,15 @@ from typing import Generic, List, Optional, TypeVar, Union
 
 from ..base import BaseAgent
 from ..config import AgentConfiguration
+from ...structure.base import BaseStructure
 
 # Type variables for search workflow components
-ItemType = TypeVar("ItemType")  # Search item structure (e.g., WebSearchItemStructure)
+ItemType = TypeVar(
+    "ItemType", bound=BaseStructure
+)  # Search item structure (e.g., WebSearchItemStructure)
 ResultType = TypeVar("ResultType")  # Individual search result
-PlanType = TypeVar("PlanType")  # Complete search plan structure
-ReportType = TypeVar("ReportType")  # Final report structure
-OutputType = TypeVar("OutputType")  # Generic output type
+PlanType = TypeVar("PlanType", bound=BaseStructure)  # Complete search plan structure
+ReportType = TypeVar("ReportType", bound=BaseStructure)  # Final report structure
 
 
 class SearchPlanner(BaseAgent, Generic[PlanType]):
@@ -55,7 +57,7 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
     ...         return AgentConfiguration(
     ...             name="my_planner",
     ...             description="Plans searches",
-    ...             output_type=dict,
+    ...             output_type=WebSearchPlanStructure,
     ...         )
     >>> planner = MyPlanner(default_model="gpt-4o-mini")
     """
@@ -150,7 +152,7 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
     ...         return AgentConfiguration(
     ...             name="my_tool",
     ...             description="Executes searches",
-    ...             input_type=dict,
+    ...             input_type=WebSearchPlanStructure,
     ...         )
     ...     async def run_search(self, item):
     ...         return "result"
@@ -269,7 +271,7 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
     ...         return AgentConfiguration(
     ...             name="my_writer",
     ...             description="Writes reports",
-    ...             output_type=dict,
+    ...             output_type=WebSearchReportStructure,
     ...         )
     >>> writer = MyWriter(default_model="gpt-4o-mini")
     """

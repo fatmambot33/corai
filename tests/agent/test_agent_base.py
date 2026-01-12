@@ -13,6 +13,7 @@ from agents import RunContextWrapper
 from pydantic import BaseModel
 
 from openai_sdk_helpers.agent.base import BaseAgent
+from openai_sdk_helpers.structure.base import BaseStructure
 
 warnings.filterwarnings("ignore", "coroutine.*was never awaited", RuntimeWarning)
 
@@ -31,14 +32,22 @@ class MockConfig(BaseModel):
     description: str | None = None
     model: str | None = None
     template_path: str | None = None
-    input_type: Any | None = None
-    output_type: Any | None = None
+    input_type: type[BaseStructure] | None = None
+    output_type: type[BaseStructure] | None = None
     tools: Any | None = None
     model_settings: Any | None = None
     handoffs: Any | None = None
     input_guardrails: Any | None = None
     output_guardrails: Any | None = None
     session: Any | None = None
+
+    def resolve_prompt_path(self, prompt_dir: Path | None = None) -> Path | None:
+        """Resolve the prompt path to satisfy AgentConfigurationLike."""
+        if self.template_path:
+            return Path(self.template_path)
+        if prompt_dir is not None:
+            return prompt_dir / f"{self.name}.jinja"
+        return None
 
 
 @pytest.fixture
@@ -58,7 +67,7 @@ def mock_run_context_wrapper():
 def test_base_agent_initialization(mock_config):
     """Test BaseAgent initialization."""
     agent = BaseAgent(config=mock_config)
-    assert agent.agent_name == "test_agent"
+    assert agent.name == "test_agent"
     assert agent.model == "test_model"
 
 

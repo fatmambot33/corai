@@ -8,6 +8,8 @@ from typing import Any, Dict, Optional
 from .base import BaseAgent
 from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
+from ..structure import TranslationStructure
+from ..structure.base import BaseStructure
 
 
 class TranslatorAgent(BaseAgent):
@@ -31,7 +33,7 @@ class TranslatorAgent(BaseAgent):
     >>> from openai_sdk_helpers.agent import TranslatorAgent
     >>> translator = TranslatorAgent(default_model="gpt-4o-mini")
     >>> result = translator.run_sync("Hello world", target_language="Spanish")
-    >>> print(result)
+    >>> print(result.text)
     'Hola mundo'
 
     Async translation with context:
@@ -84,7 +86,7 @@ class TranslatorAgent(BaseAgent):
             name="translator",
             instructions="Agent instructions",
             description="Translate text into the requested language.",
-            output_type=str,
+            output_type=TranslationStructure,
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
@@ -96,7 +98,7 @@ class TranslatorAgent(BaseAgent):
         text: str,
         target_language: str,
         context: Optional[Dict[str, Any]] = None,
-    ) -> str:
+    ) -> TranslationStructure:
         """Translate ``text`` to ``target_language``.
 
         Parameters
@@ -110,8 +112,8 @@ class TranslatorAgent(BaseAgent):
 
         Returns
         -------
-        str
-            Translated text returned by the agent.
+        TranslationStructure
+            Structured translation output from the agent.
 
         Raises
         ------
@@ -130,22 +132,21 @@ class TranslatorAgent(BaseAgent):
         if context:
             template_context.update(context)
 
-        result: str = await self.run_async(
+        result: TranslationStructure = await self.run_async(
             input=text,
             context=template_context,
-            output_type=str,
         )
         return result
 
     def run_sync(
         self,
         input: str,
-        context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[Any] = None,
         *,
+        context: Optional[Dict[str, Any]] = None,
+        output_type: Optional[type[BaseStructure]] = None,
+        session: Optional[Any] = None,
         target_language: Optional[str] = None,
-        **kwargs: Any,
-    ) -> str:
+    ) -> TranslationStructure:
         """Translate ``input`` to ``target_language`` synchronously.
 
         Parameters
@@ -154,19 +155,18 @@ class TranslatorAgent(BaseAgent):
             Source content to translate.
         context : dict or None, default=None
             Additional context values to merge into the prompt.
-        output_type : type or None, default=None
+        output_type : type[BaseStructure] or None, default=None
             Optional output type cast for the response.
         target_language : str or None, optional
             Target language to translate the content into. Required unless supplied
-            within ``context`` or ``kwargs``.
-        **kwargs
-            Optional keyword arguments. ``context`` is accepted as an alias for
-            backward compatibility.
+            within ``context``.
+        session : Session or None, default=None
+            Optional session for maintaining conversation history across runs.
 
         Returns
         -------
-        str
-            Translated text returned by the agent.
+        TranslationStructure
+            Structured translation output from the agent.
 
         Raises
         ------
@@ -181,8 +181,6 @@ class TranslatorAgent(BaseAgent):
 
         if context:
             merged_context.update(context)
-        if "context" in kwargs and kwargs["context"]:
-            merged_context.update(kwargs["context"])
         if target_language:
             merged_context["target_language"] = target_language
 
@@ -190,10 +188,11 @@ class TranslatorAgent(BaseAgent):
             msg = "target_language is required for translation"
             raise ValueError(msg)
 
-        result: str = super().run_sync(
+        result: TranslationStructure = super().run_sync(
             input=input,
             context=merged_context,
-            output_type=output_type or str,
+            output_type=output_type or self._output_type,
+            session=session,
         )
         return result
 

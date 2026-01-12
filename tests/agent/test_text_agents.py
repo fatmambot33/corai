@@ -6,7 +6,8 @@ import pytest
 
 from openai_sdk_helpers.agent.summarizer import SummarizerAgent
 from openai_sdk_helpers.agent.translator import TranslatorAgent
-from openai_sdk_helpers.structure import SummaryStructure
+from openai_sdk_helpers.structure import SummaryStructure, TranslationStructure
+from openai_sdk_helpers.structure.base import BaseStructure
 
 
 @pytest.mark.anyio
@@ -36,18 +37,23 @@ async def test_summarizer_agent_runs_with_metadata():
 async def test_summarizer_allows_output_override():
     """SummarizerAgent should respect a custom output type."""
 
-    agent = SummarizerAgent(default_model="gpt-4o-mini", output_type=str)
+    class CustomSummary(BaseStructure):
+        """Custom summary output for testing override behavior."""
+
+        text: str
+
+    agent = SummarizerAgent(default_model="gpt-4o-mini", output_type=CustomSummary)
     fake_agent = MagicMock()
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
         patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
-        mock_run.return_value = "summary"
+        mock_run.return_value = CustomSummary(text="summary")
         await agent.run_agent("Input text")
 
     mock_run.assert_awaited_once()
-    assert agent._output_type is str
+    assert agent._output_type is CustomSummary
 
 
 @pytest.mark.anyio
@@ -61,7 +67,7 @@ async def test_translator_merges_context():
         patch.object(agent, "get_agent", return_value=fake_agent),
         patch.object(agent, "run_async", new_callable=AsyncMock) as mock_run,
     ):
-        mock_run.return_value = "translated"
+        mock_run.return_value = TranslationStructure(text="translated")
         result = await agent.run_agent(
             "Bonjour", target_language="English", context={"tone": "casual"}
         )
@@ -69,9 +75,8 @@ async def test_translator_merges_context():
     mock_run.assert_awaited_once_with(
         input="Bonjour",
         context={"target_language": "English", "tone": "casual"},
-        output_type=str,
     )
-    assert result == "translated"
+    assert result.text == "translated"
 
 
 def test_summarizer_default_prompt():
@@ -102,7 +107,7 @@ def test_translator_run_sync_forwards_context():
     agent = TranslatorAgent(default_model="gpt-4o-mini")
     fake_agent = MagicMock()
     fake_result = MagicMock()
-    fake_result.final_output_as.return_value = "translated"
+    fake_result.final_output_as.return_value = TranslationStructure(text="translated")
 
     with (
         patch.object(agent, "get_agent", return_value=fake_agent),
@@ -120,5 +125,5 @@ def test_translator_run_sync_forwards_context():
         context={"formality": "casual", "target_language": "English"},
         session=None,
     )
-    fake_result.final_output_as.assert_called_once_with(str)
-    assert result == "translated"
+    fake_result.final_output_as.assert_called_once_with(TranslationStructure)
+    assert result.text == "translated"

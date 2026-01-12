@@ -7,7 +7,7 @@ from typing import List
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from pydantic import BaseModel
+from openai_sdk_helpers.structure.base import BaseStructure
 
 from openai_sdk_helpers.agent.search.base import (
     SearchPlanner,
@@ -17,26 +17,26 @@ from openai_sdk_helpers.agent.search.base import (
 from openai_sdk_helpers.agent.config import AgentConfiguration
 
 
-# Mock Pydantic models for testing
-class MockPlanStructure(BaseModel):
+# Mock BaseStructure models for testing
+class MockPlanStructure(BaseStructure):
     """Mock search plan structure."""
 
     searches: List[MockItemStructure] = []
 
 
-class MockItemStructure(BaseModel):
+class MockItemStructure(BaseStructure):
     """Mock search item structure."""
 
     query: str = "test query"
 
 
-class MockResultStructure(BaseModel):
+class MockResultStructure(BaseStructure):
     """Mock search result structure."""
 
     text: str = "test result"
 
 
-class MockReportStructure(BaseModel):
+class MockReportStructure(BaseStructure):
     """Mock search report structure."""
 
     report: str = "test report"
@@ -92,7 +92,7 @@ class TestSearchPlannerClass:
     async def test_planner_initialization(self) -> None:
         """Test planner agent initialization with default model."""
         planner = TestSearchPlanner(default_model="gpt-4o-mini")
-        assert planner.agent_name == "test_planner"
+        assert planner.name == "test_planner"
         assert planner._output_type == MockPlanStructure
 
     @pytest.mark.asyncio
@@ -135,7 +135,7 @@ class TestSearchToolAgentClass:
             default_model="gpt-4o-mini", max_concurrent_searches=5
         )
         assert tool._max_concurrent_searches == 5
-        assert tool.agent_name == "test_tool"
+        assert tool.name == "test_tool"
 
     @pytest.mark.asyncio
     async def test_tool_run_agent_executes_searches(self) -> None:
@@ -227,7 +227,7 @@ class TestSearchWriterClass:
     async def test_writer_initialization(self) -> None:
         """Test writer agent initialization."""
         writer = TestSearchWriter(default_model="gpt-4o-mini")
-        assert writer.agent_name == "test_writer"
+        assert writer.name == "test_writer"
         assert writer._output_type == MockReportStructure
 
     @pytest.mark.asyncio
@@ -284,7 +284,7 @@ class TestSearchAgentInheritance:
         """Test that tool agent type parameters work correctly."""
         tool = TestSearchToolAgent(default_model="gpt-4o-mini")
         # Tool is properly typed with all three type variables
-        assert tool.agent_name == "test_tool"
+        assert tool.name == "test_tool"
         assert tool._max_concurrent_searches == 10
 
     def test_writer_type_parameters(self) -> None:

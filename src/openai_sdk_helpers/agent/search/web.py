@@ -152,7 +152,6 @@ class WebSearchToolAgent(
             result = await super(SearchToolAgent, self).run_async(
                 input=item.query,
                 context=template_context,
-                output_type=str,
             )
             return self._coerce_item_result(result)
 

@@ -156,7 +156,6 @@ class OpenAISettings(BaseModel):
                 return first_non_none(
                     overrides.get(override_key),
                     env_file_values.get(env_var),
-                    os.getenv(env_var),
                 )
             return first_non_none(
                 overrides.get(override_key),

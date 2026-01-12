@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 from agents import Agent, RunResult, RunResultStreaming, Runner, Session
 
 from openai_sdk_helpers.utils.async_utils import run_coroutine_with_fallback
+from ..structure.base import BaseStructure
 
 
 async def run_async(
@@ -19,7 +20,7 @@ async def run_async(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[Any] = None,
+    output_type: Optional[type[BaseStructure]] = None,
     session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent asynchronously.
@@ -32,7 +33,7 @@ async def run_async(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type or None, default=None
+    output_type : type[BaseStructure] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.
@@ -63,7 +64,7 @@ def run_sync(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[Any] = None,
+    output_type: Optional[type[BaseStructure]] = None,
     session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent synchronously.
@@ -80,7 +81,7 @@ def run_sync(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type or None, default=None
+    output_type : type[BaseStructure] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.
@@ -113,9 +114,9 @@ def run_streamed(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[Any] = None,
+    output_type: Optional[type[BaseStructure]] = None,
     session: Optional[Session] = None,
-) -> RunResultStreaming:
+) -> RunResultStreaming | BaseStructure:
     """Stream agent execution results.
 
     Parameters
@@ -126,7 +127,7 @@ def run_streamed(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type or None, default=None
+    output_type : type[BaseStructure] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.

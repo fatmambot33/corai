@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, Session
 from agents.model_settings import ModelSettings
@@ -12,6 +12,7 @@ from agents.model_settings import ModelSettings
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import BaseRegistry
 from ..utils.instructions import resolve_instructions_from_path
+from ..structure.base import BaseStructure
 
 
 class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
@@ -120,12 +121,10 @@ class AgentConfiguration(DataclassJSONSerializable):
         Path to the Jinja template (absolute or relative to prompt_dir).
         This takes precedence over instructions if both are provided.
         Default is None.
-    input_type : type, optional
-        Type describing the agent input, commonly a Pydantic model.
-        Default is None.
-    output_type : type, optional
-        Type describing the agent output, commonly a Pydantic model or
-        builtin like str. Default is None.
+    input_type : type[BaseStructure], optional
+        Structure class describing the agent input. Default is None.
+    output_type : type[BaseStructure], optional
+        Structure class describing the agent output. Default is None.
     tools : list, optional
         Tool definitions available to the agent. Default is None.
     model_settings : ModelSettings, optional
@@ -149,7 +148,9 @@ class AgentConfiguration(DataclassJSONSerializable):
         Validate configuration invariants after initialization.
     instructions_text
         Return the resolved instruction content as a string.
-    create_agent(run_context_wrapper, prompt_dir, default_model)
+    resolve_prompt_path(prompt_dir)
+        Resolve the prompt template path for this configuration.
+    gen_agent(run_context_wrapper, prompt_dir, default_model)
         Create a BaseAgent instance from this configuration.
     replace(**changes)
         Create a new AgentConfiguration with specified fields replaced.
@@ -178,14 +179,17 @@ class AgentConfiguration(DataclassJSONSerializable):
     description: Optional[str] = None
     model: Optional[str] = None
     template_path: Optional[str | Path] = None
-    input_type: Optional[type] = None
-    output_type: Optional[type] = None
+    input_type: Optional[Type[BaseStructure]] = None
+    output_type: Optional[Type[BaseStructure]] = None
     tools: Optional[list] = None
     model_settings: Optional[ModelSettings] = None
     handoffs: Optional[list[Agent | Handoff]] = None
     input_guardrails: Optional[list[InputGuardrail]] = None
     output_guardrails: Optional[list[OutputGuardrail]] = None
     session: Optional[Session] = None
+    _instructions_cache: Optional[str] = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         """Validate configuration invariants after initialization.
@@ -198,6 +202,8 @@ class AgentConfiguration(DataclassJSONSerializable):
         TypeError
             If name is not a non-empty string.
             If instructions is not a string or Path.
+            If input_type or output_type is not a class.
+            If input_type or output_type does not subclass BaseStructure.
         ValueError
             If instructions is an empty string.
         FileNotFoundError
@@ -222,6 +228,19 @@ class AgentConfiguration(DataclassJSONSerializable):
         else:
             raise TypeError("AgentConfiguration.instructions must be a str or Path")
 
+        for attr in ("input_type", "output_type"):
+            cls = getattr(self, attr)
+            if cls is None:
+                continue
+            if not isinstance(cls, type):
+                raise TypeError(
+                    f"AgentConfiguration.{attr} must be a class (Type[BaseStructure]) or None"
+                )
+            if not issubclass(cls, BaseStructure):
+                raise TypeError(
+                    f"AgentConfiguration.{attr} must subclass BaseStructure"
+                )
+
         if self.template_path is not None and isinstance(self.template_path, Path):
             # Validate template_path if it's a Path object
             template = self.template_path.expanduser()
@@ -239,13 +258,36 @@ class AgentConfiguration(DataclassJSONSerializable):
         str
             Plain-text instructions, loading template files when necessary.
         """
-        return self._resolve_instructions()
+        cached = self._instructions_cache
+        if cached is None:
+            cached = self._resolve_instructions()
+            object.__setattr__(self, "_instructions_cache", cached)
+        return cached
 
     def _resolve_instructions(self) -> str:
         """Resolve instructions from string or file path."""
         return resolve_instructions_from_path(self.instructions)
 
-    def create_agent(
+    def resolve_prompt_path(self, prompt_dir: Path | None = None) -> Path | None:
+        """Resolve the prompt template path for this configuration.
+
+        Parameters
+        ----------
+        prompt_dir : Path or None, default=None
+            Directory holding prompt templates when a relative path is needed.
+
+        Returns
+        -------
+        Path or None
+            Resolved prompt path if a template is configured or discovered.
+        """
+        if self.template_path:
+            return Path(self.template_path)
+        if prompt_dir is not None:
+            return prompt_dir / f"{self.name}.jinja"
+        return None
+
+    def gen_agent(
         self,
         run_context_wrapper: Any = None,
         prompt_dir: Path | None = None,
@@ -253,7 +295,7 @@ class AgentConfiguration(DataclassJSONSerializable):
     ) -> Any:
         """Create a BaseAgent instance from this configuration.
 
-        This is a convenience method that delegates to BaseAgent.from_configuration().
+        This is a convenience method that instantiates ``BaseAgent`` directly.
 
         Parameters
         ----------
@@ -274,18 +316,12 @@ class AgentConfiguration(DataclassJSONSerializable):
         >>> config = AgentConfiguration(
         ...     name="helper", model="gpt-4o-mini", instructions="Help the user"
         ... )
-        >>> agent = config.create_agent()
+        >>> agent = config.gen_agent()
         >>> result = agent.run_sync("Hello!")
         """
         # Import here to avoid circular dependency
         from .base import BaseAgent
 
-        BaseAgent(
-            config=self,
-            run_context_wrapper=run_context_wrapper,
-            prompt_dir=prompt_dir,
-            default_model=default_model,
-        )
         return BaseAgent(
             config=self,
             run_context_wrapper=run_context_wrapper,
@@ -325,6 +361,18 @@ class AgentConfiguration(DataclassJSONSerializable):
 
         return replace(self, **changes)
 
+    def to_json(self) -> dict[str, Any]:
+        """Return a JSON-compatible dict representation.
+
+        Returns
+        -------
+        dict[str, Any]
+            Serialized configuration data without cached fields.
+        """
+        data = DataclassJSONSerializable.to_json(self)
+        data.pop("_instructions_cache", None)
+        return data
+
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> AgentConfiguration:
         """Create an AgentConfiguration from JSON data.
@@ -352,6 +400,7 @@ class AgentConfiguration(DataclassJSONSerializable):
         """
         # Make a copy to avoid modifying the input
         data = data.copy()
+        data.pop("_instructions_cache", None)
 
         # Handle instructions field: if it's a string path to an existing file,
         # convert it back to Path for proper file loading
