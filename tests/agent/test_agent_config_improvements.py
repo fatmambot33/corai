@@ -1,4 +1,4 @@
-"""Tests for new AgentConfiguration and AgentConfigurationRegistry improvements."""
+"""Tests for new AgentConfiguration and AgentRegistry improvements."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import pytest
 
 from openai_sdk_helpers.agent.config import (
     AgentConfiguration,
-    AgentConfigurationRegistry,
+    AgentRegistry,
 )
 
 
@@ -73,7 +73,7 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     config2.to_json_file(configs_dir / "agent2.json")
 
     # Load into registry
-    registry = AgentConfigurationRegistry()
+    registry = AgentRegistry()
     count = registry.load_from_directory(configs_dir)
 
     assert count == 2
@@ -92,7 +92,7 @@ def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
 
 def test_agent_registry_load_from_directory_not_found() -> None:
     """Test that loading from non-existent directory raises error."""
-    registry = AgentConfigurationRegistry()
+    registry = AgentRegistry()
 
     with pytest.raises(FileNotFoundError):
         registry.load_from_directory("/nonexistent/directory")
@@ -103,7 +103,7 @@ def test_agent_registry_load_from_directory_not_a_dir(tmp_path: Path) -> None:
     file_path = tmp_path / "not_a_dir.txt"
     file_path.write_text("test")
 
-    registry = AgentConfigurationRegistry()
+    registry = AgentRegistry()
 
     with pytest.raises(NotADirectoryError):
         registry.load_from_directory(file_path)
@@ -124,7 +124,7 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
     (configs_dir / "invalid.json").write_text("not valid json {")
 
     # Should load the valid one and warn about the invalid one
-    registry = AgentConfigurationRegistry()
+    registry = AgentRegistry()
     with pytest.warns(UserWarning, match="Failed to load configuration"):
         count = registry.load_from_directory(configs_dir)
 
@@ -135,7 +135,7 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
 def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
     """Test saving and loading configurations maintains data integrity."""
     # Create registry with configs
-    registry1 = AgentConfigurationRegistry()
+    registry1 = AgentRegistry()
     config1 = AgentConfiguration(
         name="agent1",
         model="gpt-4o-mini",
@@ -161,7 +161,7 @@ def test_agent_registry_save_and_load_round_trip(tmp_path: Path) -> None:
         f.rename(save_dir / f.name)
 
     # Load into new registry
-    registry2 = AgentConfigurationRegistry()
+    registry2 = AgentRegistry()
     count = registry2.load_from_directory(save_dir)
 
     assert count == 2

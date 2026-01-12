@@ -10,20 +10,20 @@ from agents import Agent, Handoff, InputGuardrail, OutputGuardrail, Session
 from agents.model_settings import ModelSettings
 
 from ..utils.json.data_class import DataclassJSONSerializable
-from ..utils.registry import BaseRegistry
+from ..utils.registry import RegistryBase
 from ..utils.instructions import resolve_instructions_from_path
 from ..structure.base import StructureBase
 
 
-class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
+class AgentRegistry(RegistryBase["AgentConfiguration"]):
     """Registry for managing AgentConfiguration instances.
 
-    Inherits from BaseRegistry to provide centralized storage and retrieval
+    Inherits from RegistryBase to provide centralized storage and retrieval
     of agent configurations, enabling reusable agent specs across the application.
 
     Examples
     --------
-    >>> registry = AgentConfigurationRegistry()
+    >>> registry = AgentRegistry()
     >>> config = AgentConfiguration(
     ...     name="test_agent",
     ...     model="gpt-4o-mini",
@@ -65,7 +65,7 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
 
         Examples
         --------
-        >>> registry = AgentConfigurationRegistry()
+        >>> registry = AgentRegistry()
         >>> count = registry.load_from_directory("./agents")
         >>> print(f"Loaded {count} configurations")
         """
@@ -74,12 +74,12 @@ class AgentConfigurationRegistry(BaseRegistry["AgentConfiguration"]):
         return super().load_from_directory(path, config_class=config_class)
 
 
-def get_default_registry() -> AgentConfigurationRegistry:
+def get_default_registry() -> AgentRegistry:
     """Return the global default registry instance.
 
     Returns
     -------
-    AgentConfigurationRegistry
+    AgentRegistry
         Singleton registry for application-wide configuration storage.
 
     Examples
@@ -424,6 +424,6 @@ class AgentConfiguration(DataclassJSONSerializable):
 
 
 # Global default registry instance
-_default_registry = AgentConfigurationRegistry()
+_default_registry = AgentRegistry()
 
-__all__ = ["AgentConfiguration", "AgentConfigurationRegistry", "get_default_registry"]
+__all__ = ["AgentConfiguration", "AgentRegistry", "get_default_registry"]

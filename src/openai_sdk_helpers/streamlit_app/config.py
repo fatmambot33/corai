@@ -15,7 +15,7 @@ from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.utils import ensure_list
+from openai_sdk_helpers.utils import RegistryBase, ensure_list
 from ..utils.json import BaseModelJSONSerializable
 
 
@@ -29,6 +29,8 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     Attributes
     ----------
+    name : str
+        Unique configuration identifier. Default is ``"streamlit_app"``.
     response : ResponseBase, type[ResponseBase], Callable, or None
         Response handler as an instance, class, or callable factory.
     display_title : str
@@ -63,6 +65,10 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
+    name: str = Field(
+        default="streamlit_app",
+        description="Unique configuration identifier used for registry lookup.",
+    )
     response: ResponseBase[StructureBase] | type[ResponseBase] | Callable | None = (
         Field(
             default=None,
@@ -224,6 +230,37 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
         >>> result = response.run_sync("Hello")
         """
         return _instantiate_response(self.response)
+
+
+class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
+    """Registry for managing StreamlitAppConfig instances.
+
+    Inherits from RegistryBase to provide centralized storage and retrieval
+    of Streamlit app configurations, enabling reuse across applications.
+
+    Methods
+    -------
+    register(config)
+        Add a configuration to the registry.
+    get(name)
+        Retrieve a configuration by name.
+    list_names()
+        Return all registered configuration names.
+    clear()
+        Remove all registered configurations.
+    save_to_directory(path)
+        Export all registered configurations to JSON files.
+    load_from_directory(path)
+        Load configurations from JSON files in a directory.
+
+    Examples
+    --------
+    >>> registry = StreamlitAppRegistry()
+    >>> config = StreamlitAppConfig(response=MyResponse)
+    >>> registry.register(config)
+    >>> registry.get(config.name)
+    StreamlitAppConfig(...)
+    """
 
     @staticmethod
     def load_app_config(
@@ -498,6 +535,7 @@ def _load_configuration(config_path: Path) -> StreamlitAppConfig:
 
 __all__ = [
     "StreamlitAppConfig",
+    "StreamlitAppRegistry",
     "load_app_config",
     "_load_configuration",
 ]

@@ -8,6 +8,8 @@ Classes
 -------
 StreamlitAppConfig
     Validated configuration for Streamlit chat applications.
+StreamlitAppRegistry
+    Registry for storing Streamlit app configurations.
 
 Functions
 ---------
@@ -19,12 +21,14 @@ _load_configuration
 
 from .config import (
     StreamlitAppConfig,
+    StreamlitAppRegistry,
     _load_configuration,
     load_app_config,
 )
 
 __all__ = [
     "StreamlitAppConfig",
+    "StreamlitAppRegistry",
     "_load_configuration",
     "load_app_config",
 ]
