@@ -50,8 +50,6 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
         Return configured system vector stores as a list.
     create_response()
         Instantiate and return the configured ResponseBase.
-    load_app_config(config_path)
-        Load, validate, and return configuration from a Python module.
 
     Examples
     --------
@@ -472,32 +470,6 @@ def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:
     return StreamlitAppConfig(**config_kwargs)
 
 
-def load_app_config(
-    config_path: Path,
-) -> StreamlitAppConfig:
-    """Load and validate Streamlit configuration from a Python module.
-
-    Convenience function that proxies to StreamlitAppRegistry.load_app_config
-    for backward compatibility.
-
-    Parameters
-    ----------
-    config_path : Path
-        Filesystem path to the configuration module.
-
-    Returns
-    -------
-    StreamlitAppConfig
-        Validated configuration loaded from the module.
-
-    Examples
-    --------
-    >>> from pathlib import Path
-    >>> config = load_app_config(Path("./my_config.py"))
-    """
-    return StreamlitAppRegistry.load_app_config(config_path=config_path)
-
-
 def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     """Load configuration with user-friendly error handling for Streamlit.
 
@@ -538,6 +510,5 @@ def _load_configuration(config_path: Path) -> StreamlitAppConfig:
 __all__ = [
     "StreamlitAppConfig",
     "StreamlitAppRegistry",
-    "load_app_config",
     "_load_configuration",
 ]

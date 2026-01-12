@@ -13,8 +13,6 @@ StreamlitAppRegistry
 
 Functions
 ---------
-load_app_config
-    Load and validate configuration from a Python module.
 _load_configuration
     Load configuration with user-friendly error handling for Streamlit UI.
 """
@@ -23,12 +21,10 @@ from .config import (
     StreamlitAppConfig,
     StreamlitAppRegistry,
     _load_configuration,
-    load_app_config,
 )
 
 __all__ = [
     "StreamlitAppConfig",
     "StreamlitAppRegistry",
     "_load_configuration",
-    "load_app_config",
 ]
