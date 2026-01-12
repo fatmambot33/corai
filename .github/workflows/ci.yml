@@ -59,11 +59,4 @@ jobs:
           pip install -e .[dev]
 
       - name: Run tests with coverage
-        run: pytest -q --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=70
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-          fail_ci_if_error: false
-          verbose: true
+        run: pytest -q --cov=src --cov-report=term-missing --cov-fail-under=70
