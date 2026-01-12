@@ -10,17 +10,17 @@ from ..config import OpenAISettings
 from ..structure.base import StructureBase
 from ..response.base import ResponseBase, ToolHandler
 from ..utils.json.data_class import DataclassJSONSerializable
-from ..utils.registry import BaseRegistry
+from ..utils.registry import RegistryBase
 from ..utils.instructions import resolve_instructions_from_path
 
 TIn = TypeVar("TIn", bound="StructureBase")
 TOut = TypeVar("TOut", bound="StructureBase")
 
 
-class ResponseRegistry(BaseRegistry["ResponseConfiguration"]):
+class ResponseRegistry(RegistryBase["ResponseConfiguration"]):
     """Registry for managing ResponseConfiguration instances.
 
-    Inherits from BaseRegistry to provide centralized storage and retrieval
+    Inherits from RegistryBase to provide centralized storage and retrieval
     of response configurations, enabling reusable response specs across the application.
 
     Examples

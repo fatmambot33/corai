@@ -4,15 +4,42 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Generic, Protocol, TypeVar
+from typing_extensions import Self
 
-from ..utils.json.data_class import DataclassJSONSerializable
 from .path_utils import ensure_directory
 
-T = TypeVar("T", bound=DataclassJSONSerializable)
+
+class RegistrySerializable(Protocol):
+    """Protocol describing serializable registry entries.
+
+    Methods
+    -------
+    to_json_file(filepath)
+        Write the instance to a JSON file path.
+    from_json_file(filepath)
+        Load an instance from a JSON file path.
+    """
+
+    @property
+    def name(self) -> str:
+        """Return the configuration name."""
+        ...
+
+    def to_json_file(self, filepath: Path | str) -> str:
+        """Write serialized JSON data to a file path."""
+        ...
+
+    @classmethod
+    def from_json_file(cls, filepath: Path | str) -> Self:
+        """Load an instance from a JSON file."""
+        ...
 
 
-class BaseRegistry(Generic[T]):
+T = TypeVar("T", bound=RegistrySerializable)
+
+
+class RegistryBase(Generic[T]):
     """Base registry for managing configuration instances.
 
     Provides centralized storage and retrieval of configurations,

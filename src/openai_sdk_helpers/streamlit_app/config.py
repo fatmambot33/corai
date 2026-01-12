@@ -15,7 +15,7 @@ from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.utils import ensure_list
+from openai_sdk_helpers.utils import RegistryBase, ensure_list
 from ..utils.json import BaseModelJSONSerializable
 
 
@@ -29,6 +29,8 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     Attributes
     ----------
+    name : str
+        Unique configuration identifier. Default is ``"streamlit_app"``.
     response : ResponseBase, type[ResponseBase], Callable, or None
         Response handler as an instance, class, or callable factory.
     display_title : str
@@ -48,8 +50,6 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
         Return configured system vector stores as a list.
     create_response()
         Instantiate and return the configured ResponseBase.
-    load_app_config(config_path)
-        Load, validate, and return configuration from a Python module.
 
     Examples
     --------
@@ -63,6 +63,10 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
+    name: str = Field(
+        default="streamlit_app",
+        description="Unique configuration identifier used for registry lookup.",
+    )
     response: ResponseBase[StructureBase] | type[ResponseBase] | Callable | None = (
         Field(
             default=None,
@@ -225,6 +229,39 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
         """
         return _instantiate_response(self.response)
 
+
+class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
+    """Registry for managing StreamlitAppConfig instances.
+
+    Inherits from RegistryBase to provide centralized storage and retrieval
+    of Streamlit app configurations, enabling reuse across applications.
+
+    Methods
+    -------
+    register(config)
+        Add a configuration to the registry.
+    get(name)
+        Retrieve a configuration by name.
+    list_names()
+        Return all registered configuration names.
+    clear()
+        Remove all registered configurations.
+    save_to_directory(path)
+        Export all registered configurations to JSON files.
+    load_from_directory(path)
+        Load configurations from JSON files in a directory.
+    load_app_config(config_path)
+        Load, validate, and return configuration from a Python module.
+
+    Examples
+    --------
+    >>> registry = StreamlitAppRegistry()
+    >>> config = StreamlitAppConfig(response=MyResponse)
+    >>> registry.register(config)
+    >>> registry.get(config.name)
+    StreamlitAppConfig(...)
+    """
+
     @staticmethod
     def load_app_config(
         config_path: Path,
@@ -258,7 +295,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
         Examples
         --------
         >>> from pathlib import Path
-        >>> config = StreamlitAppConfig.load_app_config(
+        >>> config = StreamlitAppRegistry.load_app_config(
         ...     Path("./my_config.py")
         ... )
         """
@@ -433,36 +470,10 @@ def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:
     return StreamlitAppConfig(**config_kwargs)
 
 
-def load_app_config(
-    config_path: Path,
-) -> StreamlitAppConfig:
-    """Load and validate Streamlit configuration from a Python module.
-
-    Convenience function that proxies to StreamlitAppConfig.load_app_config
-    for backward compatibility.
-
-    Parameters
-    ----------
-    config_path : Path
-        Filesystem path to the configuration module.
-
-    Returns
-    -------
-    StreamlitAppConfig
-        Validated configuration loaded from the module.
-
-    Examples
-    --------
-    >>> from pathlib import Path
-    >>> config = load_app_config(Path("./my_config.py"))
-    """
-    return StreamlitAppConfig.load_app_config(config_path=config_path)
-
-
 def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     """Load configuration with user-friendly error handling for Streamlit.
 
-    Wraps StreamlitAppConfig.load_app_config with exception handling that
+    Wraps StreamlitAppRegistry.load_app_config with exception handling that
     displays errors in the Streamlit UI and halts execution gracefully.
 
     Parameters
@@ -487,7 +498,7 @@ def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     than raising exceptions that crash the app.
     """
     try:
-        return StreamlitAppConfig.load_app_config(config_path=config_path)
+        return StreamlitAppRegistry.load_app_config(config_path=config_path)
     except Exception as exc:  # pragma: no cover - surfaced in UI
         import streamlit as st  # type: ignore[import-not-found]
 
@@ -498,6 +509,6 @@ def _load_configuration(config_path: Path) -> StreamlitAppConfig:
 
 __all__ = [
     "StreamlitAppConfig",
-    "load_app_config",
+    "StreamlitAppRegistry",
     "_load_configuration",
 ]
