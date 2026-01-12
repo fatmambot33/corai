@@ -7,10 +7,10 @@ workflows with error tracking and result aggregation.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class VectorSearchItemStructure(BaseStructure):
+class VectorSearchItemStructure(StructureBase):
     """A single vector search to perform.
 
     Represents one vector search query with rationale for its inclusion
@@ -35,7 +35,7 @@ class VectorSearchItemStructure(BaseStructure):
     query: str = spec_field("query")
 
 
-class VectorSearchPlanStructure(BaseStructure):
+class VectorSearchPlanStructure(StructureBase):
     """Collection of vector searches required to satisfy the query.
 
     Represents a plan containing multiple vector searches that together
@@ -56,7 +56,7 @@ class VectorSearchPlanStructure(BaseStructure):
     searches: list[VectorSearchItemStructure] = spec_field("searches")
 
 
-class VectorSearchItemResultStructure(BaseStructure):
+class VectorSearchItemResultStructure(StructureBase):
     """Result of a single vector search.
 
     Contains the text results retrieved from executing one vector search query.
@@ -74,7 +74,7 @@ class VectorSearchItemResultStructure(BaseStructure):
     texts: list[str] = spec_field("texts")
 
 
-class VectorSearchItemResultsStructure(BaseStructure):
+class VectorSearchItemResultsStructure(StructureBase):
     """Collection of search results from multiple queries.
 
     Aggregates results from multiple vector searches while tracking any
@@ -119,7 +119,7 @@ class VectorSearchItemResultsStructure(BaseStructure):
         self.item_results.append(item)
 
 
-class VectorSearchReportStructure(BaseStructure):
+class VectorSearchReportStructure(StructureBase):
     """Structured output from the vector search writer agent.
 
     Contains the final synthesized report from vector search results,
@@ -152,7 +152,7 @@ class VectorSearchReportStructure(BaseStructure):
     sources: list[str] = spec_field("sources")
 
 
-class VectorSearchStructure(BaseStructure):
+class VectorSearchStructure(StructureBase):
     """Complete output of a vector search workflow.
 
     Represents the full lifecycle of a vector search operation, from the

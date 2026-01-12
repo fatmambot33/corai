@@ -1,10 +1,10 @@
 import pytest
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 def test_data_path_error(openai_settings):
     """Test that data_path property raises RuntimeError if not configured."""
-    r = BaseResponse(
+    r = ResponseBase(
         name="test",
         instructions="hi",
         tools=[],

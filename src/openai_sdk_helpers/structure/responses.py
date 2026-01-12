@@ -1,7 +1,7 @@
 """OpenAI response and tool helpers for structured outputs.
 
 This module provides helper functions for creating OpenAI API response formats
-and tool definitions from BaseStructure classes. These helpers simplify the
+and tool definitions from StructureBase classes. These helpers simplify the
 process of configuring structured outputs for both Assistant and chat
 completion APIs.
 """
@@ -13,12 +13,12 @@ from openai.types.responses.response_format_text_json_schema_config_param import
 )
 from openai.types.responses.response_text_config_param import ResponseTextConfigParam
 
-from .base import BaseStructure
+from .base import StructureBase
 from ..utils import log
 
 
 def assistant_tool_definition(
-    structure: type[BaseStructure], name: str, description: str
+    structure: type[StructureBase], name: str, description: str
 ) -> dict:
     """Build a function tool definition for OpenAI Assistants.
 
@@ -27,7 +27,7 @@ def assistant_tool_definition(
 
     Parameters
     ----------
-    structure : type[BaseStructure]
+    structure : type[StructureBase]
         Structure class that defines the tool schema.
     name : str
         Name of the function tool.
@@ -41,9 +41,9 @@ def assistant_tool_definition(
 
     Examples
     --------
-    >>> from openai_sdk_helpers.structure import BaseStructure
+    >>> from openai_sdk_helpers.structure import StructureBase
     >>> tool = assistant_tool_definition(
-    ...     BaseStructure,
+    ...     StructureBase,
     ...     "process_data",
     ...     "Process input data"
     ... )
@@ -59,7 +59,7 @@ def assistant_tool_definition(
     }
 
 
-def assistant_format(structure: type[BaseStructure]) -> dict:
+def assistant_format(structure: type[StructureBase]) -> dict:
     """Build a response format definition for OpenAI Assistants.
 
     Creates a response format specification that instructs the Assistant API
@@ -67,7 +67,7 @@ def assistant_format(structure: type[BaseStructure]) -> dict:
 
     Parameters
     ----------
-    structure : type[BaseStructure]
+    structure : type[StructureBase]
         Structure class that defines the response schema.
 
     Returns
@@ -77,7 +77,7 @@ def assistant_format(structure: type[BaseStructure]) -> dict:
 
     Examples
     --------
-    >>> format_def = assistant_format(BaseStructure)
+    >>> format_def = assistant_format(StructureBase)
     """
     log(f"{structure.__name__}::assistant_format")
     return {
@@ -90,7 +90,7 @@ def assistant_format(structure: type[BaseStructure]) -> dict:
 
 
 def response_tool_definition(
-    structure: type[BaseStructure],
+    structure: type[StructureBase],
     tool_name: str,
     tool_description: str,
 ) -> dict:
@@ -101,7 +101,7 @@ def response_tool_definition(
 
     Parameters
     ----------
-    structure : type[BaseStructure]
+    structure : type[StructureBase]
         Structure class that defines the tool schema.
     tool_name : str
         Name of the function tool.
@@ -116,7 +116,7 @@ def response_tool_definition(
     Examples
     --------
     >>> tool = response_tool_definition(
-    ...     BaseStructure,
+    ...     StructureBase,
     ...     "analyze",
     ...     "Analyze data"
     ... )
@@ -132,7 +132,7 @@ def response_tool_definition(
     }
 
 
-def response_format(structure: type[BaseStructure]) -> ResponseTextConfigParam:
+def response_format(structure: type[StructureBase]) -> ResponseTextConfigParam:
     """Build a response format for OpenAI chat completions.
 
     Creates a response format specification that instructs the chat
@@ -140,7 +140,7 @@ def response_format(structure: type[BaseStructure]) -> ResponseTextConfigParam:
 
     Parameters
     ----------
-    structure : type[BaseStructure]
+    structure : type[StructureBase]
         Structure class that defines the response schema.
 
     Returns
@@ -150,7 +150,7 @@ def response_format(structure: type[BaseStructure]) -> ResponseTextConfigParam:
 
     Examples
     --------
-    >>> format_spec = response_format(BaseStructure)
+    >>> format_spec = response_format(StructureBase)
     """
     log(f"{structure.__name__}::response_format")
     response_format_text_JSONSchema_config_param = (

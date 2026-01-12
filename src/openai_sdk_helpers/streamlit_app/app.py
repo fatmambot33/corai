@@ -18,12 +18,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from openai_sdk_helpers.response import BaseResponse, attach_vector_store
+from openai_sdk_helpers.response import ResponseBase, attach_vector_store
 from openai_sdk_helpers.streamlit_app import (
     StreamlitAppConfig,
     _load_configuration,
 )
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 from openai_sdk_helpers.utils import (
     coerce_jsonable,
     customJSONEncoder,
@@ -96,7 +96,7 @@ def _cleanup_temp_files(file_paths: list[str] | None = None) -> None:
         st.session_state["temp_file_paths"] = []
 
 
-def _extract_assistant_text(response: BaseResponse[Any]) -> str:
+def _extract_assistant_text(response: ResponseBase[Any]) -> str:
     """Extract the latest assistant message as readable text.
 
     Searches the response's message history for the most recent assistant
@@ -104,7 +104,7 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
 
     Parameters
     ----------
-    response : BaseResponse[Any]
+    response : ResponseBase[Any]
         Active response session with message history.
 
     Returns
@@ -153,7 +153,7 @@ def _extract_assistant_text(response: BaseResponse[Any]) -> str:
     return ""
 
 
-def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
+def _render_summary(result: Any, response: ResponseBase[Any]) -> str:
     """Generate display text for the chat transcript.
 
     Converts the response result into a human-readable format suitable
@@ -163,8 +163,8 @@ def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
     Parameters
     ----------
     result : Any
-        Parsed result from BaseResponse.run_sync.
-    response : BaseResponse[Any]
+        Parsed result from ResponseBase.run_sync.
+    response : ResponseBase[Any]
         Response instance containing message history.
 
     Returns
@@ -177,7 +177,7 @@ def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
     Falls back to extracting assistant text from message history if
     the result cannot be formatted directly.
     """
-    if isinstance(result, BaseStructure):
+    if isinstance(result, StructureBase):
         return result.print()
     if isinstance(result, str):
         return result
@@ -196,7 +196,7 @@ def _render_summary(result: Any, response: BaseResponse[Any]) -> str:
     return "No response returned."
 
 
-def _build_raw_output(result: Any, response: BaseResponse[Any]) -> dict[str, Any]:
+def _build_raw_output(result: Any, response: ResponseBase[Any]) -> dict[str, Any]:
     """Assemble raw JSON payload for the expandable transcript section.
 
     Creates a structured dictionary containing both the parsed result
@@ -206,7 +206,7 @@ def _build_raw_output(result: Any, response: BaseResponse[Any]) -> dict[str, Any
     ----------
     result : Any
         Parsed result from the response execution.
-    response : BaseResponse[Any]
+    response : ResponseBase[Any]
         Response session with complete message history.
 
     Returns
@@ -226,8 +226,8 @@ def _build_raw_output(result: Any, response: BaseResponse[Any]) -> dict[str, Any
     }
 
 
-def _get_response_instance(config: StreamlitAppConfig) -> BaseResponse[Any]:
-    """Instantiate and cache the configured BaseResponse.
+def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
+    """Instantiate and cache the configured ResponseBase.
 
     Creates a new response instance from the configuration if not already
     cached in session state. Applies vector store attachments and cleanup
@@ -240,13 +240,13 @@ def _get_response_instance(config: StreamlitAppConfig) -> BaseResponse[Any]:
 
     Returns
     -------
-    BaseResponse[Any]
+    ResponseBase[Any]
         Active response instance for the current Streamlit session.
 
     Raises
     ------
     TypeError
-        If the configured response cannot produce a BaseResponse.
+        If the configured response cannot produce a ResponseBase.
 
     Notes
     -----
@@ -255,7 +255,7 @@ def _get_response_instance(config: StreamlitAppConfig) -> BaseResponse[Any]:
     """
     if "response_instance" in st.session_state:
         cached = st.session_state["response_instance"]
-        if isinstance(cached, BaseResponse):
+        if isinstance(cached, ResponseBase):
             return cached
 
     response = config.create_response()
@@ -291,7 +291,7 @@ def _reset_chat(close_response: bool = True) -> None:
     chat_history, response_instance, and temp_file_paths keys.
     """
     response = st.session_state.get("response_instance")
-    if close_response and isinstance(response, BaseResponse):
+    if close_response and isinstance(response, ResponseBase):
         filepath = f"./data/{response.name}.{response.uuid}.json"
         response.save(filepath)
         response.close()

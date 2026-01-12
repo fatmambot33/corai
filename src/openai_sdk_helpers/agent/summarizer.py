@@ -6,13 +6,13 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Type
 
 from ..structure import SummaryStructure
-from ..structure.base import BaseStructure
-from .base import BaseAgent
+from ..structure.base import StructureBase
+from .base import AgentBase
 from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class SummarizerAgent(BaseAgent):
+class SummarizerAgent(AgentBase):
     """Generate concise summaries from provided text.
 
     This agent uses OpenAI models to create structured summaries from longer-form
@@ -26,7 +26,7 @@ class SummarizerAgent(BaseAgent):
         packaged ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Fallback model identifier when not specified elsewhere.
-    output_type : type[BaseStructure], default=SummaryStructure
+    output_structure : type[StructureBase], default=SummaryStructure
         Type describing the expected summary output.
 
     Examples
@@ -61,7 +61,7 @@ class SummarizerAgent(BaseAgent):
         *,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
-        output_type: Type[BaseStructure] = SummaryStructure,
+        output_structure: Type[StructureBase] = SummaryStructure,
     ) -> None:
         """Initialize the summarizer agent configuration.
 
@@ -72,7 +72,7 @@ class SummarizerAgent(BaseAgent):
             packaged ``prompt`` directory when not provided.
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
-        output_type : type[BaseStructure], default=SummaryStructure
+        output_structure : type[StructureBase], default=SummaryStructure
             Type describing the expected summary output.
 
         Raises
@@ -88,7 +88,7 @@ class SummarizerAgent(BaseAgent):
             name="summarizer",
             instructions="Agent instructions",
             description="Summarize passages into concise findings.",
-            output_type=output_type,
+            output_structure=output_structure,
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
@@ -124,7 +124,7 @@ class SummarizerAgent(BaseAgent):
         result = await self.run_async(
             input=text,
             context=context,
-            output_type=self._output_type,
+            output_structure=self._output_structure,
         )
         return result
 

@@ -6,10 +6,10 @@ validation checks on user inputs and agent outputs.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class ValidationResultStructure(BaseStructure):
+class ValidationResultStructure(StructureBase):
     """Capture guardrail validation findings for user and agent messages.
 
     Represents the results of safety and policy validation checks performed

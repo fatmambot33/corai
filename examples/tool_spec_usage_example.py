@@ -286,13 +286,13 @@ def example_different_io_structures():
 
     print(f"\nBuilt {len(tools)} tools with mixed I/O structures:")
     for i, (spec, tool) in enumerate(zip(tool_specs, tools), 1):
-        input_type = spec.structure.__name__
-        output_type = (
-            spec.output_structure.__name__ if spec.output_structure else input_type
+        input_structure = spec.structure.__name__
+        output_structure = (
+            spec.output_structure.__name__ if spec.output_structure else input_structure
         )
         print(f"\n{i}. {tool['name']}")
-        print(f"   Input:  {input_type}")
-        print(f"   Output: {output_type}")
+        print(f"   Input:  {input_structure}")
+        print(f"   Output: {output_structure}")
         print(f"   {tool['description']}")
 
     print("\nNote: output_structure is for documentation/reference.")

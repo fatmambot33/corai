@@ -19,12 +19,12 @@ from typing import Any, Callable, TypeAlias, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 from openai_sdk_helpers.utils import coerce_jsonable, customJSONEncoder
 import json
 
 T = TypeVar("T", bound=BaseModel)
-StructureType: TypeAlias = type[BaseStructure]
+StructureType: TypeAlias = type[StructureBase]
 
 
 def serialize_tool_result(result: Any) -> str:
@@ -226,14 +226,14 @@ class ToolSpec:
     Attributes
     ----------
     structure : StructureType
-        The BaseStructure class that defines the tool's input parameter schema.
+        The StructureBase class that defines the tool's input parameter schema.
         Used to generate the OpenAI tool definition.
     tool_name : str
         Name identifier for the tool.
     tool_description : str
         Human-readable description of what the tool does.
     output_structure : StructureType or None, default=None
-        Optional BaseStructure class that defines the tool's output schema.
+        Optional StructureBase class that defines the tool's output schema.
         This is for documentation/reference only and is not sent to OpenAI.
         Useful when a tool accepts one type of input but returns a different
         structured output.

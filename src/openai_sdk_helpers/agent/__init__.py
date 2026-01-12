@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .base import BaseAgent
+from .base import AgentBase
 from .config import AgentConfiguration, AgentConfigurationRegistry, get_default_registry
 from ..structure.plan.enum import AgentEnum
 from .coordination import CoordinatorAgent
@@ -16,7 +16,7 @@ from .search.vector import VectorSearch
 from .search.web import WebAgentSearch
 
 __all__ = [
-    "BaseAgent",
+    "AgentBase",
     "AgentConfiguration",
     "AgentConfigurationRegistry",
     "get_default_registry",

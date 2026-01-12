@@ -1,4 +1,4 @@
-"""Unit tests for the BaseResponse class."""
+"""Unit tests for the ResponseBase class."""
 
 from __future__ import annotations
 
@@ -9,14 +9,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from openai_sdk_helpers.response import attach_vector_store
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.response.messages import ResponseMessage
 
 
 @pytest.fixture
 def response_base(openai_settings):
-    """Return a BaseResponse instance."""
-    return BaseResponse(
+    """Return a ResponseBase instance."""
+    return ResponseBase(
         name="test",
         instructions="test instructions",
         tools=[],
@@ -27,7 +27,7 @@ def response_base(openai_settings):
 
 
 def test_response_base_initialization(response_base, openai_settings):
-    """Test BaseResponse initialization."""
+    """Test ResponseBase initialization."""
     assert response_base._instructions == "test instructions"
     assert response_base._model == openai_settings.default_model
 
@@ -35,9 +35,9 @@ def test_response_base_initialization(response_base, openai_settings):
 def test_data_path(response_base, tmp_path):
     """Test the data_path property."""
     # data_path is resolved at init time, stored in _data_path
-    # It should contain the class name (BaseResponse)
+    # It should contain the class name (ResponseBase)
     assert response_base._data_path is not None
-    assert "BaseResponse" in str(response_base._data_path)
+    assert "ResponseBase" in str(response_base._data_path)
     # The name parameter should be accessible via the name property
     assert response_base.name == "test"
 
@@ -59,7 +59,7 @@ def test_close_skips_external_stores(response_base):
 
 def test_save(response_base, tmp_path):
     """Test the save method."""
-    response_base._data_path = tmp_path / "baseresponse"
+    response_base._data_path = tmp_path / "ResponseBase"
     expected_path = (
         response_base._data_path
         / response_base.name
@@ -113,7 +113,7 @@ def test_attach_vector_store_raises_for_missing_store(response_base):
 def test_attach_vector_store_requires_api_key():
     """Raise when no client or API key is available for lookup."""
 
-    response = cast(BaseResponse[Any], SimpleNamespace(_client=None, _tools=[]))
+    response = cast(ResponseBase[Any], SimpleNamespace(_client=None, _tools=[]))
 
     with pytest.raises(ValueError):
         attach_vector_store(response, "store-one")

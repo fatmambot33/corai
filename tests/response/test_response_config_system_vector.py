@@ -38,7 +38,7 @@ def _mock_vector_store_client(monkeypatch, store_names: list[str]) -> None:
 def test_system_vector_store_passed_to_gen_response(
     openai_settings, monkeypatch
 ) -> None:
-    """Test that system_vector_store is passed through to BaseResponse."""
+    """Test that system_vector_store is passed through to ResponseBase."""
     _mock_vector_store_client(monkeypatch, ["store1", "store2"])
 
     config = ResponseConfiguration(
@@ -52,7 +52,7 @@ def test_system_vector_store_passed_to_gen_response(
 
     response = config.gen_response(openai_settings=openai_settings)
 
-    # The BaseResponse should have received the system_vector_store parameter
+    # The ResponseBase should have received the system_vector_store parameter
     # We can verify this indirectly by checking that no error was raised
     assert response.name == "test_config"
     response.close()

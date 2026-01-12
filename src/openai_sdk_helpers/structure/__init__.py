@@ -7,7 +7,7 @@ generating OpenAI-compatible schema definitions.
 
 Classes
 -------
-BaseStructure
+StructureBase
     Base class for all structured output models with schema generation.
 SchemaOptions
     Configuration options for schema generation behavior.
@@ -82,7 +82,7 @@ from .vector_search import *
 from .web_search import *
 
 __all__ = [
-    "BaseStructure",
+    "StructureBase",
     "SchemaOptions",
     "spec_field",
     "AgentBlueprint",

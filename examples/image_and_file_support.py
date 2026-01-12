@@ -5,7 +5,7 @@ type detection for images and documents.
 """
 
 from openai_sdk_helpers import OpenAISettings
-from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers.response import ResponseBase
 from openai_sdk_helpers.utils import (
     encode_image,
 )
@@ -19,7 +19,7 @@ def example_with_image():
     # Initialize settings and response
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="image_demo",
         instructions="You are a helpful assistant that can analyze images.",
         tools=None,
@@ -48,7 +48,7 @@ def example_with_document():
     # Initialize settings and response
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="file_demo",
         instructions="You are a helpful assistant that can analyze documents.",
         tools=None,
@@ -70,7 +70,7 @@ def example_with_multiple_files():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="multi_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -94,7 +94,7 @@ def example_using_vector_store():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="vector_store_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -116,7 +116,7 @@ def example_from_problem_statement_images():
     # With openai-sdk-helpers, this is simplified:
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -136,7 +136,7 @@ def example_from_problem_statement_files():
     # With openai-sdk-helpers, file encoding is simplified:
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="demo",
         instructions="You are a helpful assistant.",
         tools=None,

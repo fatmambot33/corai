@@ -7,10 +7,10 @@ workflows with comprehensive reporting.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class WebSearchReportStructure(BaseStructure):
+class WebSearchReportStructure(StructureBase):
     """Structured output from the web search writer agent.
 
     Contains the final synthesized report from web search results,
@@ -43,7 +43,7 @@ class WebSearchReportStructure(BaseStructure):
     sources: list[str] = spec_field("sources")
 
 
-class WebSearchItemStructure(BaseStructure):
+class WebSearchItemStructure(StructureBase):
     """A single web search to perform.
 
     Represents one web search query with rationale for its inclusion
@@ -68,7 +68,7 @@ class WebSearchItemStructure(BaseStructure):
     query: str = spec_field("query")
 
 
-class WebSearchItemResultStructure(BaseStructure):
+class WebSearchItemResultStructure(StructureBase):
     """Result of a single web search.
 
     Contains the text content retrieved from executing one web search query.
@@ -86,7 +86,7 @@ class WebSearchItemResultStructure(BaseStructure):
     text: str = spec_field("text")
 
 
-class WebSearchPlanStructure(BaseStructure):
+class WebSearchPlanStructure(StructureBase):
     """Collection of web searches required to satisfy the query.
 
     Represents a plan containing multiple web searches that together
@@ -107,7 +107,7 @@ class WebSearchPlanStructure(BaseStructure):
     searches: list[WebSearchItemStructure] = spec_field("searches")
 
 
-class WebSearchStructure(BaseStructure):
+class WebSearchStructure(StructureBase):
     """Complete output of a web search workflow.
 
     Represents the full lifecycle of a web search operation, from the

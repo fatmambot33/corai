@@ -19,7 +19,7 @@ Public API
 to_jsonable(value)
     Convert common types to JSON-safe forms; recursive for containers/dicts.
 coerce_jsonable(value)
-    Ensures json.dumps succeeds; falls back to str when necessary. Special-cases BaseResponse.
+    Ensures json.dumps succeeds; falls back to str when necessary. Special-cases ResponseBase.
 customJSONEncoder
     json.JSONEncoder subclass delegating to to_jsonable.
 DataclassJSONSerializable

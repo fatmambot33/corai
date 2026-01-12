@@ -6,10 +6,10 @@ including topic-level summaries with citations and consolidated text summaries.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class SummaryTopic(BaseStructure):
+class SummaryTopic(StructureBase):
     """Capture a topic-level summary with supporting citations.
 
     Represents a single topic or micro-trend identified in source excerpts,
@@ -55,7 +55,7 @@ class SummaryTopic(BaseStructure):
     )
 
 
-class SummaryStructure(BaseStructure):
+class SummaryStructure(StructureBase):
     """Consolidated summary returned by the summarizer agent.
 
     Represents a synthesized summary text derived from multiple source excerpts.

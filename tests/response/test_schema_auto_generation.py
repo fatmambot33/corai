@@ -5,12 +5,12 @@ from pydantic import Field
 from unittest.mock import Mock, patch
 
 from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.response.config import ResponseConfiguration
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 
 
-class DummyOutputStructure(BaseStructure):
+class DummyOutputStructure(StructureBase):
     """Test structure for schema auto-generation."""
 
     text: str = Field(description="Test text field")
@@ -19,7 +19,7 @@ class DummyOutputStructure(BaseStructure):
 
 def test_schema_auto_generated_from_output_structure(openai_settings):
     """Test that schema is auto-generated from output_structure."""
-    instance = BaseResponse(
+    instance = ResponseBase(
         name="test",
         instructions="Test instructions",
         tools=None,
@@ -39,7 +39,7 @@ def test_schema_auto_generated_from_output_structure(openai_settings):
 
 def test_schema_auto_generated_even_with_tools(openai_settings):
     """Test that output_structure is stored even when tools are present."""
-    instance = BaseResponse(
+    instance = ResponseBase(
         name="test",
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],
@@ -59,7 +59,7 @@ def test_schema_auto_generated_even_with_tools(openai_settings):
 
 def test_schema_none_when_no_output_structure(openai_settings):
     """Test that output_structure is None when not provided."""
-    instance = BaseResponse(
+    instance = ResponseBase(
         name="test",
         instructions="Test instructions",
         tools=None,
@@ -95,7 +95,7 @@ def test_response_configuration_auto_generates_schema():
 def test_schema_used_only_when_no_tools(openai_settings):
     """Test that schema is only sent to API when no tools are present."""
     # Case 1: No tools, with output_structure -> schema should be used
-    instance = BaseResponse(
+    instance = ResponseBase(
         name="test",
         instructions="Test instructions",
         tools=None,
@@ -116,7 +116,7 @@ def test_schema_used_only_when_no_tools(openai_settings):
         assert "tools" not in call_kwargs
 
     # Case 2: With tools, with output_structure -> schema should NOT be used
-    instance_with_tools = BaseResponse(
+    instance_with_tools = ResponseBase(
         name="test_with_tools",
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],

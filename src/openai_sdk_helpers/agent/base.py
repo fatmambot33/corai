@@ -20,7 +20,7 @@ from agents.tool import Tool
 from jinja2 import Template
 
 from ..utils.json.data_class import DataclassJSONSerializable
-from ..structure.base import BaseStructure
+from ..structure.base import StructureBase
 
 from ..utils import (
     check_filepath,
@@ -31,7 +31,7 @@ from .runner import run_async, run_streamed, run_sync
 
 
 class AgentConfigurationLike(Protocol):
-    """Protocol describing the configuration attributes for BaseAgent."""
+    """Protocol describing the configuration attributes for AgentBase."""
 
     @property
     def name(self) -> str:
@@ -68,12 +68,12 @@ class AgentConfigurationLike(Protocol):
         ...
 
     @property
-    def input_type(self) -> Optional[type[BaseStructure]]:
+    def input_structure(self) -> Optional[type[StructureBase]]:
         """Input type."""
         ...
 
     @property
-    def output_type(self) -> Optional[type[BaseStructure]]:
+    def output_structure(self) -> Optional[type[StructureBase]]:
         """Output type."""
         ...
 
@@ -108,10 +108,10 @@ class AgentConfigurationLike(Protocol):
         ...
 
 
-class BaseAgent(DataclassJSONSerializable):
+class AgentBase(DataclassJSONSerializable):
     """Factory for creating and configuring specialized agents.
 
-    ``BaseAgent`` provides the foundation for building OpenAI agents with support
+    ``AgentBase`` provides the foundation for building OpenAI agents with support
     for Jinja2 prompt templates, custom tools, handoffs for agent delegation,
     input and output guardrails for validation, session management for
     conversation history, and both synchronous and asynchronous execution modes.
@@ -121,13 +121,13 @@ class BaseAgent(DataclassJSONSerializable):
     --------
     Create a basic agent from configuration:
 
-    >>> from openai_sdk_helpers.agent import BaseAgent, AgentConfiguration
+    >>> from openai_sdk_helpers.agent import AgentBase, AgentConfiguration
     >>> config = AgentConfiguration(
     ...     name="my_agent",
     ...     description="A custom agent",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = BaseAgent(config=config, default_model="gpt-4o-mini")
+    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
     >>> result = agent.run_sync("What is 2+2?")
 
     Use absolute path to template:
@@ -137,7 +137,7 @@ class BaseAgent(DataclassJSONSerializable):
     ...     template_path="/absolute/path/to/template.jinja",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = BaseAgent(config=config, default_model="gpt-4o-mini")
+    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
 
     Use async execution:
 
@@ -159,7 +159,7 @@ class BaseAgent(DataclassJSONSerializable):
         Return the resolved instructions for this agent.
     tools
         Return the tools configured for this agent.
-    output_type
+    output_structure
         Return the output type configured for this agent.
     model_settings
         Return the model settings configured for this agent.
@@ -173,11 +173,11 @@ class BaseAgent(DataclassJSONSerializable):
         Return the session configured for this agent.
     get_agent()
         Construct the configured :class:`agents.Agent` instance.
-    run_async(input, context, output_type, session)
+    run_async(input, context, output_structure, session)
         Execute the agent asynchronously and optionally cast the result.
-    run_sync(input, context, output_type, session)
+    run_sync(input, context, output_structure, session)
         Execute the agent synchronously.
-    run_streamed(input, context, output_type, session)
+    run_streamed(input, context, output_structure, session)
         Return a streaming result for the agent execution.
     as_tool()
         Return the agent as a callable tool.
@@ -194,7 +194,7 @@ class BaseAgent(DataclassJSONSerializable):
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
-        """Initialize the BaseAgent using a configuration object.
+        """Initialize the AgentBase using a configuration object.
 
         Parameters
         ----------
@@ -249,8 +249,8 @@ class BaseAgent(DataclassJSONSerializable):
 
             self._data_path = get_data_path(self.__class__.__name__)
 
-        self._input_type = config.input_type
-        self._output_type = config.output_type or config.input_type
+        self._input_structure = config.input_structure
+        self._output_structure = config.output_structure or config.input_structure
         self._tools = config.tools
         self._model_settings = config.model_settings
         self._handoffs = config.handoffs
@@ -349,15 +349,15 @@ class BaseAgent(DataclassJSONSerializable):
         return self._tools
 
     @property
-    def output_type(self) -> Optional[type[BaseStructure]]:
+    def output_structure(self) -> Optional[type[StructureBase]]:
         """Return the output type configured for this agent.
 
         Returns
         -------
-        type[BaseStructure] or None
+        type[StructureBase] or None
             Output type used to cast responses.
         """
-        return self._output_type
+        return self._output_structure
 
     @property
     def model_settings(self) -> Optional[ModelSettings]:
@@ -427,8 +427,8 @@ class BaseAgent(DataclassJSONSerializable):
             "instructions": self._build_prompt_from_jinja() or ".",
             "model": self.model,
         }
-        if self._output_type:
-            agent_config["output_type"] = self._output_type
+        if self._output_structure:
+            agent_config["output_structure"] = self._output_structure
         if self._tools:
             agent_config["tools"] = self._tools
         if self._model_settings:
@@ -447,7 +447,7 @@ class BaseAgent(DataclassJSONSerializable):
         input: str,
         *,
         context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[type[BaseStructure]] = None,
+        output_structure: Optional[type[StructureBase]] = None,
         session: Optional[Any] = None,
     ) -> Any:
         """Execute the agent asynchronously.
@@ -458,7 +458,7 @@ class BaseAgent(DataclassJSONSerializable):
             Prompt or query for the agent.
         context : dict or None, default=None
             Optional dictionary passed to the agent.
-        output_type : type[BaseStructure] or None, default=None
+        output_structure : type[StructureBase] or None, default=None
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
@@ -467,17 +467,17 @@ class BaseAgent(DataclassJSONSerializable):
         Returns
         -------
         Any
-            Agent result, optionally converted to ``output_type``.
+            Agent result, optionally converted to ``output_structure``.
         """
-        if self._output_type is not None and output_type is None:
-            output_type = self._output_type
+        if self._output_structure is not None and output_structure is None:
+            output_structure = self._output_structure
         # Use session from parameter, fall back to config session
         session_to_use = session if session is not None else self._session
         return await run_async(
             agent=self.get_agent(),
             input=input,
             context=context,
-            output_type=output_type,
+            output_structure=output_structure,
             session=session_to_use,
         )
 
@@ -486,7 +486,7 @@ class BaseAgent(DataclassJSONSerializable):
         input: str,
         *,
         context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[type[BaseStructure]] = None,
+        output_structure: Optional[type[StructureBase]] = None,
         session: Optional[Any] = None,
     ) -> Any:
         """Run the agent synchronously.
@@ -497,7 +497,7 @@ class BaseAgent(DataclassJSONSerializable):
             Prompt or query for the agent.
         context : dict or None, default=None
             Optional dictionary passed to the agent.
-        output_type : type[BaseStructure] or None, default=None
+        output_structure : type[StructureBase] or None, default=None
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
@@ -506,17 +506,17 @@ class BaseAgent(DataclassJSONSerializable):
         Returns
         -------
         Any
-            Agent result, optionally converted to ``output_type``.
+            Agent result, optionally converted to ``output_structure``.
         """
-        if self._output_type is not None and output_type is None:
-            output_type = self._output_type
+        if self._output_structure is not None and output_structure is None:
+            output_structure = self._output_structure
         # Use session from parameter, fall back to config session
         session_to_use = session if session is not None else self._session
         return run_sync(
             agent=self.get_agent(),
             input=input,
             context=context,
-            output_type=output_type,
+            output_structure=output_structure,
             session=session_to_use,
         )
 
@@ -525,9 +525,9 @@ class BaseAgent(DataclassJSONSerializable):
         input: str,
         *,
         context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[type[BaseStructure]] = None,
+        output_structure: Optional[type[StructureBase]] = None,
         session: Optional[Any] = None,
-    ) -> RunResultStreaming | BaseStructure:
+    ) -> RunResultStreaming | StructureBase:
         """Stream the agent execution results.
 
         Parameters
@@ -536,7 +536,7 @@ class BaseAgent(DataclassJSONSerializable):
             Prompt or query for the agent.
         context : dict or None, default=None
             Optional dictionary passed to the agent.
-        output_type : type[BaseStructure] or None, default=None
+        output_structure : type[StructureBase] or None, default=None
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
@@ -549,16 +549,16 @@ class BaseAgent(DataclassJSONSerializable):
         """
         # Use session from parameter, fall back to config session
         session_to_use = session if session is not None else self._session
-        output_type_to_use = output_type or self._output_type
+        output_structure_to_use = output_structure or self._output_structure
         result = run_streamed(
             agent=self.get_agent(),
             input=input,
             context=context,
-            output_type=output_type_to_use,
+            output_structure=output_structure_to_use,
             session=session_to_use,
         )
-        if output_type_to_use and hasattr(result, "final_output_as"):
-            return cast(Any, result).final_output_as(output_type_to_use)
+        if output_structure_to_use and hasattr(result, "final_output_as"):
+            return cast(Any, result).final_output_as(output_structure_to_use)
         return result
 
     def as_tool(self) -> Tool:
@@ -575,12 +575,12 @@ class BaseAgent(DataclassJSONSerializable):
         )
         return tool_obj
 
-    def __enter__(self) -> BaseAgent:
+    def __enter__(self) -> AgentBase:
         """Enter the context manager for resource management.
 
         Returns
         -------
-        BaseAgent
+        AgentBase
             Self reference for use in with statements.
         """
         return self
@@ -608,7 +608,7 @@ class BaseAgent(DataclassJSONSerializable):
 
         Examples
         --------
-        >>> agent = BaseAgent(config, default_model="gpt-4o-mini")
+        >>> agent = AgentBase(config, default_model="gpt-4o-mini")
         >>> try:
         ...     result = agent.run_sync("query")
         ... finally:
@@ -618,14 +618,14 @@ class BaseAgent(DataclassJSONSerializable):
         self.save()
 
     def __repr__(self) -> str:
-        """Return a string representation of the BaseAgent.
+        """Return a string representation of the AgentBase.
 
         Returns
         -------
         str
             String representation including agent name and model.
         """
-        return f"<BaseAgent name={self._name!r} model={self.model!r}>"
+        return f"<AgentBase name={self._name!r} model={self.model!r}>"
 
     def save(self, filepath: str | Path | None = None) -> None:
         """Serialize the message history to a JSON file.
@@ -651,4 +651,4 @@ class BaseAgent(DataclassJSONSerializable):
         log(f"Saved messages to {target}")
 
 
-__all__ = ["AgentConfigurationLike", "BaseAgent"]
+__all__ = ["AgentConfigurationLike", "AgentBase"]

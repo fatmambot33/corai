@@ -1,6 +1,6 @@
 """Core response management for OpenAI API interactions.
 
-This module implements the BaseResponse class, which manages the complete
+This module implements the ResponseBase class, which manages the complete
 lifecycle of OpenAI API interactions including input construction, tool
 execution, message history, vector store attachments, and structured output
 parsing.
@@ -44,7 +44,7 @@ from openai.types.responses.response_output_message import ResponseOutputMessage
 
 from .messages import ResponseMessage, ResponseMessages
 from ..config import OpenAISettings
-from ..structure import BaseStructure
+from ..structure import StructureBase
 from ..types import OpenAIClient
 from ..utils import (
     check_filepath,
@@ -57,12 +57,12 @@ from ..utils import (
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
 
-T = TypeVar("T", bound=BaseStructure)
+T = TypeVar("T", bound=StructureBase)
 ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
-RB = TypeVar("RB", bound="BaseResponse[BaseStructure]")
+RB = TypeVar("RB", bound="ResponseBase[StructureBase]")
 
 
-class BaseResponse(Generic[T]):
+class ResponseBase(Generic[T]):
     """Manage OpenAI API interactions for structured responses.
 
     Orchestrates the complete lifecycle of OpenAI API requests including
@@ -83,7 +83,7 @@ class BaseResponse(Generic[T]):
         System instructions provided to the OpenAI API for context.
     tools : list or None
         Tool definitions for the OpenAI API request. Pass None for no tools.
-    output_structure : type[BaseStructure] or None
+    output_structure : type[StructureBase] or None
         Structure class used to parse tool call outputs. When provided,
         the schema is automatically generated using the structure's
         response_format() method. Pass None for unstructured responses.
@@ -140,9 +140,9 @@ class BaseResponse(Generic[T]):
 
     Examples
     --------
-    >>> from openai_sdk_helpers import BaseResponse, OpenAISettings
+    >>> from openai_sdk_helpers import ResponseBase, OpenAISettings
     >>> settings = OpenAISettings(api_key="...", default_model="gpt-4")
-    >>> response = BaseResponse(
+    >>> response = ResponseBase(
     ...     instructions="You are a helpful assistant",
     ...     tools=None,
     ...     output_structure=None,
@@ -180,7 +180,7 @@ class BaseResponse(Generic[T]):
             System instructions provided to the OpenAI API for context.
         tools : list or None
             Tool definitions for the OpenAI API request. Pass None for no tools.
-        output_structure : type[BaseStructure] or None
+        output_structure : type[StructureBase] or None
             Structure class used to parse tool call outputs. When provided,
             the schema is automatically generated using the structure's
             response_format() method. Pass None for unstructured responses.
@@ -208,9 +208,9 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> from openai_sdk_helpers import BaseResponse, OpenAISettings
+        >>> from openai_sdk_helpers import ResponseBase, OpenAISettings
         >>> settings = OpenAISettings(api_key="sk-...", default_model="gpt-4")
-        >>> response = BaseResponse(
+        >>> response = ResponseBase(
         ...     name="my_session",
         ...     instructions="You are helpful",
         ...     tools=None,
@@ -360,7 +360,7 @@ class BaseResponse(Generic[T]):
 
         Returns
         -------
-        type[BaseStructure] or None
+        type[StructureBase] or None
             Structure class used to parse tool call outputs, or None.
 
         Examples
@@ -887,12 +887,12 @@ class BaseResponse(Generic[T]):
             f"messages={len(self.messages.messages)}, data_path={self._data_path}>"
         )
 
-    def __enter__(self) -> BaseResponse[T]:
+    def __enter__(self) -> ResponseBase[T]:
         """Enter the context manager for resource management.
 
         Returns
         -------
-        BaseResponse[T]
+        ResponseBase[T]
             Self reference for use in with statements.
         """
         return self
@@ -926,7 +926,7 @@ class BaseResponse(Generic[T]):
 
         Examples
         --------
-        >>> response = BaseResponse(...)
+        >>> response = ResponseBase(...)
         >>> try:
         ...     result = response.run_sync("query")
         ... finally:

@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.agent.base import BaseAgent
+from openai_sdk_helpers.agent.base import AgentBase
 from openai_sdk_helpers.structure import SummaryStructure
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
-class _StubBaseAgent(BaseAgent):
-    """Minimal BaseAgent subclass for testing async aliases.
+class _StubAgentBase(AgentBase):
+    """Minimal AgentBase subclass for testing async aliases.
 
     Note: Intentionally bypasses parent __init__ to set up minimal test fixture
     without requiring full agent initialization (templates, config validation, etc).
@@ -21,7 +21,7 @@ class _StubBaseAgent(BaseAgent):
     def __init__(self) -> None:
         # Bypass the parent initializer by setting the required attributes.
         # This is intentional for testing - we don't want full agent setup.
-        self._output_type = SummaryStructure
+        self._output_structure = SummaryStructure
         self._run_context_wrapper = None
         self._name = "stub"
         self.description = ""
@@ -38,8 +38,8 @@ class _StubBaseAgent(BaseAgent):
         return MagicMock()
 
 
-class _StubBaseResponse(BaseResponse[Any]):
-    """Minimal BaseResponse subclass for alias testing."""
+class _StubResponseBase(ResponseBase[Any]):
+    """Minimal ResponseBase subclass for alias testing."""
 
     def __init__(self) -> None:
         # Avoid base initialization; only attributes used in tests are set.
@@ -56,18 +56,18 @@ def test_agent_base_run_aliases(
     mock_run_agent: AsyncMock,
     mock_run_agent_streamed: MagicMock,
 ) -> None:
-    """Ensure BaseAgent convenience helpers call the private runners directly."""
+    """Ensure AgentBase convenience helpers call the private runners directly."""
 
     mock_run_agent.return_value = "async-result"
     mock_run_agent_sync.return_value = "sync-result"
     mock_run_agent_streamed.return_value = MagicMock(
         final_output_as=lambda *_: "stream-result"
     )
-    agent = _StubBaseAgent()
+    agent = _StubAgentBase()
 
     result_run = agent.run_sync(input="hello")
     result_run_async = asyncio.run(agent.run_async(input="hello"))
-    result_stream = agent.run_streamed(input="hello", output_type=SummaryStructure)
+    result_stream = agent.run_streamed(input="hello", output_structure=SummaryStructure)
 
     assert result_run == "sync-result"
     assert result_run_async == "async-result"
@@ -77,15 +77,15 @@ def test_agent_base_run_aliases(
     mock_run_agent_streamed.assert_called_once()
 
 
-@patch.object(_StubBaseResponse, "run_sync", return_value="sync-result")
-@patch.object(_StubBaseResponse, "run_async", new_callable=AsyncMock)
+@patch.object(_StubResponseBase, "run_sync", return_value="sync-result")
+@patch.object(_StubResponseBase, "run_async", new_callable=AsyncMock)
 def test_response_base_run_aliases(
     mock_run_response_async: AsyncMock, mock_run_response: MagicMock
 ) -> None:
-    """Validate BaseResponse exposes run, run_async, and run_streamed aliases."""
+    """Validate ResponseBase exposes run, run_async, and run_streamed aliases."""
 
     mock_run_response_async.return_value = "async-result"
-    response = _StubBaseResponse()
+    response = _StubResponseBase()
 
     assert response.run_sync(content="hello") == "sync-result"
     assert asyncio.run(response.run_async(content="hello")) == "async-result"

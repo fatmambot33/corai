@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from agents import Agent, RunResult, RunResultStreaming, Runner, Session
 
 from openai_sdk_helpers.utils.async_utils import run_coroutine_with_fallback
-from ..structure.base import BaseStructure
+from ..structure.base import StructureBase
 
 
 async def run_async(
@@ -20,7 +20,7 @@ async def run_async(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[type[BaseStructure]] = None,
+    output_structure: Optional[type[StructureBase]] = None,
     session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent asynchronously.
@@ -33,7 +33,7 @@ async def run_async(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type[BaseStructure] or None, default=None
+    output_structure : type[StructureBase] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.
@@ -41,7 +41,7 @@ async def run_async(
     Returns
     -------
     Any
-        Agent response, optionally converted to ``output_type``.
+        Agent response, optionally converted to ``output_structure``.
 
     Examples
     --------
@@ -54,8 +54,8 @@ async def run_async(
     >>> asyncio.run(example())  # doctest: +SKIP
     """
     result = await Runner.run(agent, input, context=context, session=session)
-    if output_type is not None:
-        return result.final_output_as(output_type)
+    if output_structure is not None:
+        return result.final_output_as(output_structure)
     return result
 
 
@@ -64,7 +64,7 @@ def run_sync(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[type[BaseStructure]] = None,
+    output_structure: Optional[type[StructureBase]] = None,
     session: Optional[Session] = None,
 ) -> Any:
     """Run an Agent synchronously.
@@ -81,7 +81,7 @@ def run_sync(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type[BaseStructure] or None, default=None
+    output_structure : type[StructureBase] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.
@@ -89,7 +89,7 @@ def run_sync(
     Returns
     -------
     Any
-        Agent response, optionally converted to ``output_type``.
+        Agent response, optionally converted to ``output_structure``.
 
     Raises
     ------
@@ -104,8 +104,8 @@ def run_sync(
     """
     coro = Runner.run(agent, input, context=context, session=session)
     result: RunResult = run_coroutine_with_fallback(coro)
-    if output_type is not None:
-        return result.final_output_as(output_type)
+    if output_structure is not None:
+        return result.final_output_as(output_structure)
     return result
 
 
@@ -114,9 +114,9 @@ def run_streamed(
     input: str,
     *,
     context: Optional[Dict[str, Any]] = None,
-    output_type: Optional[type[BaseStructure]] = None,
+    output_structure: Optional[type[StructureBase]] = None,
     session: Optional[Session] = None,
-) -> RunResultStreaming | BaseStructure:
+) -> RunResultStreaming | StructureBase:
     """Stream agent execution results.
 
     Parameters
@@ -127,7 +127,7 @@ def run_streamed(
         Prompt or query string for the agent.
     context : dict or None, default=None
         Optional context dictionary passed to the agent.
-    output_type : type[BaseStructure] or None, default=None
+    output_structure : type[StructureBase] or None, default=None
         Optional type used to cast the final output.
     session : Session or None, default=None
         Optional session for maintaining conversation history.
@@ -146,8 +146,8 @@ def run_streamed(
     ...     print(chunk, end="")
     """
     result = Runner.run_streamed(agent, input, context=context, session=session)
-    if output_type is not None:
-        return result.final_output_as(output_type)
+    if output_structure is not None:
+        return result.final_output_as(output_structure)
     return result
 
 

@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from ..structure import TaskStructure, PlanStructure, PromptStructure
 from ..utils import DataclassJSONSerializable, ensure_directory, log
-from .base import BaseAgent
+from .base import AgentBase
 from .config import AgentConfiguration
 from ..structure.plan.enum import AgentEnum
 
@@ -23,7 +23,7 @@ ExecutePlanFn = Callable[[PlanStructure], List[str]]
 SummarizeFn = Callable[[List[str]], str]
 
 
-class CoordinatorAgent(BaseAgent):
+class CoordinatorAgent(AgentBase):
     """Coordinate agent plans while persisting project state and outputs.
 
     Parameters

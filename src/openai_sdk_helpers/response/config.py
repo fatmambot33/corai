@@ -7,14 +7,14 @@ from pathlib import Path
 from typing import Generic, Optional, Sequence, Type, TypeVar
 
 from ..config import OpenAISettings
-from ..structure.base import BaseStructure
-from ..response.base import BaseResponse, ToolHandler
+from ..structure.base import StructureBase
+from ..response.base import ResponseBase, ToolHandler
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import BaseRegistry
 from ..utils.instructions import resolve_instructions_from_path
 
-TIn = TypeVar("TIn", bound="BaseStructure")
-TOut = TypeVar("TOut", bound="BaseStructure")
+TIn = TypeVar("TIn", bound="StructureBase")
+TOut = TypeVar("TOut", bound="StructureBase")
 
 
 class ResponseRegistry(BaseRegistry["ResponseConfiguration"]):
@@ -77,13 +77,13 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         contents are loaded at runtime.
     tools : Sequence[object], optional
         Tool definitions associated with the configuration. Default is None.
-    input_structure : Type[BaseStructure], optional
+    input_structure : Type[StructureBase], optional
         Structure class used to parse or validate input. Must subclass
-        BaseStructure. Default is None.
-    output_structure : Type[BaseStructure], optional
+        StructureBase. Default is None.
+    output_structure : Type[StructureBase], optional
         Structure class used to format or validate output. Schema is
         automatically generated from this structure. Must subclass
-        BaseStructure. Default is None.
+        StructureBase. Default is None.
     system_vector_store : list[str], optional
         Optional list of vector store names to attach as system context.
         Default is None.
@@ -98,7 +98,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         If instructions is not a string or Path.
         If tools is provided and is not a sequence.
         If input_structure or output_structure is not a class.
-        If input_structure or output_structure does not subclass BaseStructure.
+        If input_structure or output_structure does not subclass StructureBase.
     ValueError
         If instructions is a string that is empty or only whitespace.
     FileNotFoundError
@@ -107,7 +107,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
     Methods
     -------
     __post_init__()
-        Validate configuration invariants and enforce BaseStructure subclassing.
+        Validate configuration invariants and enforce StructureBase subclassing.
     instructions_text
         Return the resolved instruction content as a string.
     to_json()
@@ -144,7 +144,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         Validate configuration invariants after initialization.
 
         Enforce non-empty naming, correct typing of structures, and ensure that
-        any declared structure subclasses BaseStructure.
+        any declared structure subclasses StructureBase.
 
         Raises
         ------
@@ -152,7 +152,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
             If name is not a non-empty string.
             If tools is provided and is not a sequence.
             If input_structure or output_structure is not a class.
-            If input_structure or output_structure does not subclass BaseStructure.
+            If input_structure or output_structure does not subclass StructureBase.
         """
         if not self.name or not isinstance(self.name, str):
             raise TypeError("Configuration.name must be a non-empty str")
@@ -176,10 +176,10 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
                 continue
             if not isinstance(cls, type):
                 raise TypeError(
-                    f"Configuration.{attr} must be a class (Type[BaseStructure]) or None"
+                    f"Configuration.{attr} must be a class (Type[StructureBase]) or None"
                 )
-            if not issubclass(cls, BaseStructure):
-                raise TypeError(f"Configuration.{attr} must subclass BaseStructure")
+            if not issubclass(cls, StructureBase):
+                raise TypeError(f"Configuration.{attr} must subclass StructureBase")
 
         if self.tools is not None and not isinstance(self.tools, Sequence):
             raise TypeError("Configuration.tools must be a Sequence or None")
@@ -210,24 +210,24 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         openai_settings: OpenAISettings,
         data_path: Optional[Path] = None,
         tool_handlers: dict[str, ToolHandler] | None = None,
-    ) -> BaseResponse[TOut]:
-        """Generate a BaseResponse instance based on the configuration.
+    ) -> ResponseBase[TOut]:
+        """Generate a ResponseBase instance based on the configuration.
 
         Parameters
         ----------
         openai_settings : OpenAISettings
             Authentication and model settings applied to the generated
-            :class:`BaseResponse`.
+            :class:`ResponseBase`.
         tool_handlers : dict[str, Callable], optional
             Mapping of tool names to handler callables. Defaults to an empty
             dictionary when not provided.
 
         Returns
         -------
-        BaseResponse[TOut]
-            An instance of BaseResponse configured with ``openai_settings``.
+        ResponseBase[TOut]
+            An instance of ResponseBase configured with ``openai_settings``.
         """
-        return BaseResponse[TOut](
+        return ResponseBase[TOut](
             name=self.name,
             instructions=self.instructions_text,
             tools=self.tools,

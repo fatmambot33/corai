@@ -16,7 +16,7 @@ from openai_sdk_helpers.tools import (
 )
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
 from openai_sdk_helpers.structure import (
-    BaseStructure,
+    StructureBase,
     PromptStructure,
     SummaryStructure,
     ValidationResultStructure,
@@ -233,7 +233,7 @@ def test_tool_handler_factory_returns_string():
 # ==========================================
 
 
-class CustomStructure(BaseStructure):
+class CustomStructure(StructureBase):
     """A custom structure for testing."""
 
     query: str = spec_field("query", description="The search query.")
@@ -353,14 +353,14 @@ def test_structure_type_alias():
 
     # This is more of a type checking test, but we can verify it's usable
     def check_structure(struct: StructureType) -> bool:
-        return issubclass(struct, BaseStructure)
+        return issubclass(struct, StructureBase)
 
     assert check_structure(PromptStructure)
     assert check_structure(CustomStructure)
 
 
 def test_tool_spec_with_different_structures():
-    """Test ToolSpec works with various BaseStructure subclasses."""
+    """Test ToolSpec works with various StructureBase subclasses."""
     specs = [
         ToolSpec(
             structure=PromptStructure,

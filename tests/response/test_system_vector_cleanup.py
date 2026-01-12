@@ -1,11 +1,11 @@
-"""Minimal test to increase coverage for BaseResponse.close() system vector store cleanup."""
+"""Minimal test to increase coverage for ResponseBase.close() system vector store cleanup."""
 
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 def test_close_cleans_system_vector_storage(monkeypatch):
@@ -33,7 +33,7 @@ def test_close_cleans_system_vector_storage(monkeypatch):
     )
 
     settings = OpenAISettings(api_key="sk-dummy", default_model="gpt-3.5-turbo")
-    base = BaseResponse(
+    base = ResponseBase(
         name="mod",
         instructions="hi",
         tools=[],

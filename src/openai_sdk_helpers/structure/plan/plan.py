@@ -14,12 +14,12 @@ from typing import Any, Awaitable, Coroutine, cast
 from collections.abc import Mapping
 
 from .enum import AgentEnum
-from ..base import BaseStructure, spec_field
+from ..base import StructureBase, spec_field
 from .task import TaskStructure
 from .types import AgentCallable, AgentRegistry
 
 
-class PlanStructure(BaseStructure):
+class PlanStructure(StructureBase):
     """Structured representation of an ordered list of agent tasks.
 
     Represents a complete execution plan consisting of multiple agent tasks

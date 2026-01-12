@@ -6,12 +6,12 @@ converting them into executable plans with validation and deployment steps.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 from .plan import PlanStructure, TaskStructure
 from .plan.enum import AgentEnum
 
 
-class AgentBlueprint(BaseStructure):
+class AgentBlueprint(StructureBase):
     """Capture requirements for creating a new agent.
 
     Defines the complete specification for an agent including mission,

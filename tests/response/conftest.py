@@ -11,7 +11,7 @@ from openai_sdk_helpers.config import OpenAISettings
 
 @pytest.fixture
 def mock_openai_client(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
-    """Provide a mock OpenAI client used by BaseResponse instances."""
+    """Provide a mock OpenAI client used by ResponseBase instances."""
     client = MagicMock()
     client.api_key = "test_api_key"
     client.vector_stores.list.return_value.data = []

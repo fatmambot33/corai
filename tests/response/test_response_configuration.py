@@ -9,7 +9,7 @@ import pytest
 from pydantic import Field
 
 from openai_sdk_helpers.response.config import ResponseConfiguration
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 
 
 def _build_config(instructions: str | Path) -> ResponseConfiguration:
@@ -58,7 +58,7 @@ def test_invalid_instruction_type_raises_type_error() -> None:
         )
 
 
-class _SampleOutput(BaseStructure):
+class _SampleOutput(StructureBase):
     """Sample output structure for instruction generation tests."""
 
     summary: str = Field(description="Brief summary of the content")

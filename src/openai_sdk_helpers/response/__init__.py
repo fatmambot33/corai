@@ -7,7 +7,7 @@ building sophisticated AI agents with persistent conversation state.
 
 Classes
 -------
-BaseResponse
+ResponseBase
     Core response manager for OpenAI interactions with structured outputs.
 ResponseConfiguration
     Immutable configuration for defining request/response structures.
@@ -34,7 +34,7 @@ process_files
 
 from __future__ import annotations
 
-from .base import BaseResponse
+from .base import ResponseBase
 from .config import ResponseConfiguration, ResponseRegistry, get_default_registry
 from .files import process_files
 from .messages import ResponseMessage, ResponseMessages
@@ -43,7 +43,7 @@ from .tool_call import ResponseToolCall, parse_tool_arguments
 from .vector_store import attach_vector_store
 
 __all__ = [
-    "BaseResponse",
+    "ResponseBase",
     "ResponseConfiguration",
     "ResponseRegistry",
     "get_default_registry",

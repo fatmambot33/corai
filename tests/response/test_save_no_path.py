@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from openai_sdk_helpers import environment
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 def test_save_defaults_to_data_path(monkeypatch, tmp_path, openai_settings):
@@ -12,7 +12,7 @@ def test_save_defaults_to_data_path(monkeypatch, tmp_path, openai_settings):
         return data_root / name
 
     monkeypatch.setattr(environment, "get_data_path", fake_get_data_path)
-    r = BaseResponse(
+    r = ResponseBase(
         name="test",
         instructions="hi",
         tools=[],
@@ -22,5 +22,5 @@ def test_save_defaults_to_data_path(monkeypatch, tmp_path, openai_settings):
     )
     r.save()
 
-    expected_path = data_root / "BaseResponse" / "test" / f"{str(r.uuid).lower()}.json"
+    expected_path = data_root / "ResponseBase" / "test" / f"{str(r.uuid).lower()}.json"
     assert expected_path.exists()

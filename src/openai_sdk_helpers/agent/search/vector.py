@@ -66,7 +66,7 @@ class VectorSearchPlanner(SearchPlanner[VectorSearchPlanStructure]):
             name="vector_planner",
             instructions="Agent instructions",
             description="Plan vector searches based on a user query.",
-            output_type=VectorSearchPlanStructure,
+            output_structure=VectorSearchPlanStructure,
         )
 
 
@@ -146,8 +146,8 @@ class VectorSearchTool(
             name="vector_search",
             instructions="Agent instructions",
             description="Perform vector searches based on a search plan.",
-            input_type=VectorSearchPlanStructure,
-            output_type=VectorSearchItemResultsStructure,
+            input_structure=VectorSearchPlanStructure,
+            output_structure=VectorSearchItemResultsStructure,
         )
 
     def _get_vector_storage(self) -> VectorStorage:
@@ -237,7 +237,7 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
             name="vector_writer",
             instructions="Agent instructions",
             description="Write a report based on search results.",
-            output_type=VectorSearchReportStructure,
+            output_structure=VectorSearchReportStructure,
         )
 
 

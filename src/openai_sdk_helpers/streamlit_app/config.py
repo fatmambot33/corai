@@ -13,8 +13,8 @@ from types import ModuleType
 from typing import Callable, Sequence, cast
 from pydantic import ConfigDict, Field, field_validator, model_validator
 
-from openai_sdk_helpers.response.base import BaseResponse
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.structure.base import StructureBase
 from openai_sdk_helpers.utils import ensure_list
 from ..utils.json import BaseModelJSONSerializable
 
@@ -29,7 +29,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     Attributes
     ----------
-    response : BaseResponse, type[BaseResponse], Callable, or None
+    response : ResponseBase, type[ResponseBase], Callable, or None
         Response handler as an instance, class, or callable factory.
     display_title : str
         Title displayed at the top of the Streamlit page.
@@ -47,7 +47,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
     normalized_vector_stores()
         Return configured system vector stores as a list.
     create_response()
-        Instantiate and return the configured BaseResponse.
+        Instantiate and return the configured ResponseBase.
     load_app_config(config_path)
         Load, validate, and return configuration from a Python module.
 
@@ -63,11 +63,11 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
     model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
 
-    response: BaseResponse[BaseStructure] | type[BaseResponse] | Callable | None = (
+    response: ResponseBase[StructureBase] | type[ResponseBase] | Callable | None = (
         Field(
             default=None,
             description=(
-                "Configured ``BaseResponse`` subclass, instance, or callable that returns"
+                "Configured ``ResponseBase`` subclass, instance, or callable that returns"
                 " a response instance."
             ),
         )
@@ -131,37 +131,37 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
     @field_validator("response")
     @classmethod
     def validate_response(
-        cls, value: BaseResponse[BaseStructure] | type[BaseResponse] | Callable | None
-    ) -> BaseResponse[BaseStructure] | type[BaseResponse] | Callable | None:
+        cls, value: ResponseBase[StructureBase] | type[ResponseBase] | Callable | None
+    ) -> ResponseBase[StructureBase] | type[ResponseBase] | Callable | None:
         """Validate that the response field is a valid handler source.
 
-        Ensures the provided response can be used to create a BaseResponse
+        Ensures the provided response can be used to create a ResponseBase
         instance for handling chat interactions.
 
         Parameters
         ----------
-        value : BaseResponse, type[BaseResponse], Callable, or None
+        value : ResponseBase, type[ResponseBase], Callable, or None
             Response handler as instance, class, or factory function.
 
         Returns
         -------
-        BaseResponse, type[BaseResponse], Callable, or None
+        ResponseBase, type[ResponseBase], Callable, or None
             Validated response handler.
 
         Raises
         ------
         TypeError
-            If value is not a BaseResponse, subclass, or callable.
+            If value is not a ResponseBase, subclass, or callable.
         """
         if value is None:
             return None
-        if isinstance(value, BaseResponse):
+        if isinstance(value, ResponseBase):
             return value
-        if isinstance(value, type) and issubclass(value, BaseResponse):
+        if isinstance(value, type) and issubclass(value, ResponseBase):
             return value
         if callable(value):
             return value
-        raise TypeError("response must be a BaseResponse, subclass, or callable")
+        raise TypeError("response must be a ResponseBase, subclass, or callable")
 
     def normalized_vector_stores(self) -> list[str]:
         """Return configured system vector stores as a list.
@@ -202,21 +202,21 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
             raise ValueError("response must be provided.")
         return self
 
-    def create_response(self) -> BaseResponse[BaseStructure]:
+    def create_response(self) -> ResponseBase[StructureBase]:
         """Instantiate and return the configured response handler.
 
         Converts the response field (whether class, instance, or callable)
-        into an active BaseResponse instance ready for chat interactions.
+        into an active ResponseBase instance ready for chat interactions.
 
         Returns
         -------
-        BaseResponse[BaseStructure]
+        ResponseBase[StructureBase]
             Active response instance for handling chat messages.
 
         Raises
         ------
         TypeError
-            If the configured response cannot produce a BaseResponse.
+            If the configured response cannot produce a ResponseBase.
 
         Examples
         --------
@@ -312,7 +312,7 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
 
     Looks for APP_CONFIG in the module and converts it to a validated
     StreamlitAppConfig instance. Supports multiple input formats including
-    dictionaries, BaseResponse instances, and existing config objects.
+    dictionaries, ResponseBase instances, and existing config objects.
 
     Parameters
     ----------
@@ -329,7 +329,7 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
     ValueError
         If APP_CONFIG is missing from the module.
     TypeError
-        If APP_CONFIG is not a valid type (dict, BaseResponse, callable,
+        If APP_CONFIG is not a valid type (dict, ResponseBase, callable,
         or StreamlitAppConfig).
 
     Examples
@@ -346,20 +346,20 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
         return raw_config
     if isinstance(raw_config, dict):
         return _config_from_mapping(raw_config)
-    if isinstance(raw_config, BaseResponse):
+    if isinstance(raw_config, ResponseBase):
         return StreamlitAppConfig(response=raw_config)
-    if isinstance(raw_config, type) and issubclass(raw_config, BaseResponse):
+    if isinstance(raw_config, type) and issubclass(raw_config, ResponseBase):
         return StreamlitAppConfig(response=raw_config)
     if callable(raw_config):
         return StreamlitAppConfig(response=raw_config)
 
     raise TypeError(
-        "APP_CONFIG must be a dict, callable, BaseResponse, or StreamlitAppConfig."
+        "APP_CONFIG must be a dict, callable, ResponseBase, or StreamlitAppConfig."
     )
 
 
-def _instantiate_response(candidate: object) -> BaseResponse[BaseStructure]:
-    """Convert a response candidate into a BaseResponse instance.
+def _instantiate_response(candidate: object) -> ResponseBase[StructureBase]:
+    """Convert a response candidate into a ResponseBase instance.
 
     Handles multiple candidate types: existing instances (returned as-is),
     classes (instantiated with no arguments), and callables (invoked to
@@ -372,31 +372,31 @@ def _instantiate_response(candidate: object) -> BaseResponse[BaseStructure]:
 
     Returns
     -------
-    BaseResponse[BaseStructure]
+    ResponseBase[StructureBase]
         Active response instance ready for use.
 
     Raises
     ------
     TypeError
-        If candidate cannot produce a BaseResponse instance.
+        If candidate cannot produce a ResponseBase instance.
 
     Examples
     --------
     >>> response = _instantiate_response(MyResponse)
-    >>> isinstance(response, BaseResponse)
+    >>> isinstance(response, ResponseBase)
     True
     """
-    if isinstance(candidate, BaseResponse):
+    if isinstance(candidate, ResponseBase):
         return candidate
-    if isinstance(candidate, type) and issubclass(candidate, BaseResponse):
-        response_cls = cast(type[BaseResponse[BaseStructure]], candidate)
+    if isinstance(candidate, type) and issubclass(candidate, ResponseBase):
+        response_cls = cast(type[ResponseBase[StructureBase]], candidate)
         return response_cls()  # type: ignore[call-arg]
     if callable(candidate):
-        response_callable = cast(Callable[[], BaseResponse[BaseStructure]], candidate)
+        response_callable = cast(Callable[[], ResponseBase[StructureBase]], candidate)
         response = response_callable()
-        if isinstance(response, BaseResponse):
+        if isinstance(response, ResponseBase):
             return response
-    raise TypeError("response must be a BaseResponse, subclass, or callable")
+    raise TypeError("response must be a ResponseBase, subclass, or callable")
 
 
 def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:

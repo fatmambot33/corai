@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class TranslationStructure(BaseStructure):
+class TranslationStructure(StructureBase):
     """Structured representation of translated text.
 
     Attributes

@@ -23,11 +23,11 @@ from openai.types.responses.response_input_image_content_param import (
 from ..utils import create_file_data_url, create_image_data_url, is_image_file, log
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .base import BaseResponse
+    from .base import ResponseBase
 
 
 def process_files(
-    response: BaseResponse[Any],
+    response: ResponseBase[Any],
     files: list[str],
     use_vector_store: bool = False,
     batch_size: int = 10,
@@ -45,7 +45,7 @@ def process_files(
 
     Parameters
     ----------
-    response : BaseResponse[Any]
+    response : ResponseBase[Any]
         Response instance that will use the processed files.
     files : list[str]
         List of file paths to process.
@@ -114,7 +114,7 @@ def process_files(
 
 
 def _upload_to_vector_store(
-    response: BaseResponse[Any], document_files: list[str]
+    response: ResponseBase[Any], document_files: list[str]
 ) -> list[ResponseInputFileParam]:
     """Upload documents to vector store and return file references.
 
@@ -123,7 +123,7 @@ def _upload_to_vector_store(
 
     Parameters
     ----------
-    response : BaseResponse[Any]
+    response : ResponseBase[Any]
         Response instance with vector storage.
     document_files : list[str]
         List of document file paths to upload.

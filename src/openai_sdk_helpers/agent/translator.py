@@ -5,14 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import BaseAgent
+from .base import AgentBase
 from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 from ..structure import TranslationStructure
-from ..structure.base import BaseStructure
+from ..structure.base import StructureBase
 
 
-class TranslatorAgent(BaseAgent):
+class TranslatorAgent(AgentBase):
     """Translate text into a target language.
 
     This agent provides language translation services using OpenAI models,
@@ -86,7 +86,7 @@ class TranslatorAgent(BaseAgent):
             name="translator",
             instructions="Agent instructions",
             description="Translate text into the requested language.",
-            output_type=TranslationStructure,
+            output_structure=TranslationStructure,
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
@@ -143,7 +143,7 @@ class TranslatorAgent(BaseAgent):
         input: str,
         *,
         context: Optional[Dict[str, Any]] = None,
-        output_type: Optional[type[BaseStructure]] = None,
+        output_structure: Optional[type[StructureBase]] = None,
         session: Optional[Any] = None,
         target_language: Optional[str] = None,
     ) -> TranslationStructure:
@@ -155,7 +155,7 @@ class TranslatorAgent(BaseAgent):
             Source content to translate.
         context : dict or None, default=None
             Additional context values to merge into the prompt.
-        output_type : type[BaseStructure] or None, default=None
+        output_structure : type[StructureBase] or None, default=None
             Optional output type cast for the response.
         target_language : str or None, optional
             Target language to translate the content into. Required unless supplied
@@ -191,7 +191,7 @@ class TranslatorAgent(BaseAgent):
         result: TranslationStructure = super().run_sync(
             input=input,
             context=merged_context,
-            output_type=output_type or self._output_type,
+            output_structure=output_structure or self._output_structure,
             session=session,
         )
         return result

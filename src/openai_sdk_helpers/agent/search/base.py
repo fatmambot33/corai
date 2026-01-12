@@ -12,20 +12,20 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generic, List, Optional, TypeVar, Union
 
-from ..base import BaseAgent
+from ..base import AgentBase
 from ..config import AgentConfiguration
-from ...structure.base import BaseStructure
+from ...structure.base import StructureBase
 
 # Type variables for search workflow components
 ItemType = TypeVar(
-    "ItemType", bound=BaseStructure
+    "ItemType", bound=StructureBase
 )  # Search item structure (e.g., WebSearchItemStructure)
 ResultType = TypeVar("ResultType")  # Individual search result
-PlanType = TypeVar("PlanType", bound=BaseStructure)  # Complete search plan structure
-ReportType = TypeVar("ReportType", bound=BaseStructure)  # Final report structure
+PlanType = TypeVar("PlanType", bound=StructureBase)  # Complete search plan structure
+ReportType = TypeVar("ReportType", bound=StructureBase)  # Final report structure
 
 
-class SearchPlanner(BaseAgent, Generic[PlanType]):
+class SearchPlanner(AgentBase, Generic[PlanType]):
     """Generic planner agent for search workflows.
 
     Subclasses implement specific planner logic by overriding the
@@ -57,7 +57,7 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
     ...         return AgentConfiguration(
     ...             name="my_planner",
     ...             description="Plans searches",
-    ...             output_type=WebSearchPlanStructure,
+    ...             output_structure=WebSearchPlanStructure,
     ...         )
     >>> planner = MyPlanner(default_model="gpt-4o-mini")
     """
@@ -82,14 +82,14 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
         Returns
         -------
         AgentConfiguration
-            Configuration with name, description, and output_type set.
+            Configuration with name, description, and output_structure set.
 
         Examples
         --------
         >>> config = AgentConfiguration(
         ...     name="web_planner",
         ...     description="Plan web searches",
-        ...     output_type=WebSearchPlanStructure,
+        ...     output_structure=WebSearchPlanStructure,
         ... )
         >>> return config
         """
@@ -110,12 +110,12 @@ class SearchPlanner(BaseAgent, Generic[PlanType]):
         """
         result: PlanType = await self.run_async(
             input=query,
-            output_type=self._output_type,
+            output_structure=self._output_structure,
         )
         return result
 
 
-class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
+class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
     """Generic tool agent for executing search workflows.
 
     Executes individual searches in a plan with concurrency control.
@@ -152,7 +152,7 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
     ...         return AgentConfiguration(
     ...             name="my_tool",
     ...             description="Executes searches",
-    ...             input_type=WebSearchPlanStructure,
+    ...             input_structure=WebSearchPlanStructure,
     ...         )
     ...     async def run_search(self, item):
     ...         return "result"
@@ -182,14 +182,14 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
         Returns
         -------
         AgentConfiguration
-            Configuration with name, description, input_type, and tools set.
+            Configuration with name, description, input_structure, and tools set.
 
         Examples
         --------
         >>> config = AgentConfiguration(
         ...     name="web_search",
         ...     description="Perform web searches",
-        ...     input_type=WebSearchPlanStructure,
+        ...     input_structure=WebSearchPlanStructure,
         ...     tools=[WebSearchTool()],
         ... )
         >>> return config
@@ -239,7 +239,7 @@ class SearchToolAgent(BaseAgent, Generic[ItemType, ResultType, PlanType]):
         return [result for result in results if result is not None]
 
 
-class SearchWriter(BaseAgent, Generic[ReportType]):
+class SearchWriter(AgentBase, Generic[ReportType]):
     """Generic writer agent for search workflow reports.
 
     Synthesizes search results into a final report. Subclasses implement
@@ -271,7 +271,7 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
     ...         return AgentConfiguration(
     ...             name="my_writer",
     ...             description="Writes reports",
-    ...             output_type=WebSearchReportStructure,
+    ...             output_structure=WebSearchReportStructure,
     ...         )
     >>> writer = MyWriter(default_model="gpt-4o-mini")
     """
@@ -296,14 +296,14 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
         Returns
         -------
         AgentConfiguration
-            Configuration with name, description, and output_type set.
+            Configuration with name, description, and output_structure set.
 
         Examples
         --------
         >>> config = AgentConfiguration(
         ...     name="web_writer",
         ...     description="Write web search report",
-        ...     output_type=WebSearchReportStructure,
+        ...     output_structure=WebSearchReportStructure,
         ... )
         >>> return config
         """
@@ -335,7 +335,7 @@ class SearchWriter(BaseAgent, Generic[ReportType]):
         result: ReportType = await self.run_async(
             input=query,
             context=template_context,
-            output_type=self._output_type,
+            output_structure=self._output_structure,
         )
         return result
 

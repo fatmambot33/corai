@@ -1,11 +1,11 @@
-"""Tests for the BaseResponse class."""
+"""Tests for the ResponseBase class."""
 
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 def test_response_base_initialization(openai_settings, mock_openai_client):
-    """Test the initialization of the BaseResponse class."""
-    instance = BaseResponse(
+    """Test the initialization of the ResponseBase class."""
+    instance = ResponseBase(
         name="test",
         instructions="Test instructions",
         tools=[],

@@ -7,14 +7,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.streamlit_app.app import _extract_assistant_text
 
 
 def test_extract_assistant_text_with_output_text() -> None:
     """Test that _extract_assistant_text extracts output_text when present."""
     # Create a mock response
-    mock_response = Mock(spec=BaseResponse)
+    mock_response = Mock(spec=ResponseBase)
 
     # Create a mock message with output_text attribute
     mock_message = Mock()
@@ -32,7 +32,7 @@ def test_extract_assistant_text_with_output_text() -> None:
 def test_extract_assistant_text_without_output_text() -> None:
     """Test that _extract_assistant_text falls back when output_text is absent."""
     # Create a mock response
-    mock_response = Mock(spec=BaseResponse)
+    mock_response = Mock(spec=ResponseBase)
 
     # Create a mock message with standard content structure
     mock_message = Mock()
@@ -57,7 +57,7 @@ def test_extract_assistant_text_without_output_text() -> None:
 def test_extract_assistant_text_with_no_message() -> None:
     """Test that _extract_assistant_text returns empty string when no message."""
     # Create a mock response with no messages
-    mock_response = Mock(spec=BaseResponse)
+    mock_response = Mock(spec=ResponseBase)
     mock_response.get_last_assistant_message.return_value = None
     mock_response.get_last_tool_message.return_value = None
 
@@ -69,7 +69,7 @@ def test_extract_assistant_text_with_no_message() -> None:
 def test_extract_assistant_text_with_multiple_text_parts() -> None:
     """Test that multiple text parts are joined correctly."""
     # Create a mock response
-    mock_response = Mock(spec=BaseResponse)
+    mock_response = Mock(spec=ResponseBase)
 
     # Create a mock message with multiple text parts
     mock_message = Mock()
@@ -103,7 +103,7 @@ def test_extract_assistant_text_with_dict_text_structure() -> None:
     This structure appears in some OpenAI API responses.
     """
     # Create a mock response
-    mock_response = Mock(spec=BaseResponse)
+    mock_response = Mock(spec=ResponseBase)
 
     # Create a mock message that matches the dict structure
     mock_message = Mock()

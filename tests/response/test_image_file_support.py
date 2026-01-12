@@ -1,4 +1,4 @@
-"""Tests for BaseResponse with image and file data support."""
+"""Tests for ResponseBase with image and file data support."""
 
 from __future__ import annotations
 
@@ -6,13 +6,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.response.base import BaseResponse
+from openai_sdk_helpers.response.base import ResponseBase
 
 
 @pytest.fixture
 def response_base(openai_settings, tmp_path):
-    """Return a BaseResponse instance for testing."""
-    return BaseResponse(
+    """Return a ResponseBase instance for testing."""
+    return ResponseBase(
         name="test",
         instructions="test instructions",
         tools=[],

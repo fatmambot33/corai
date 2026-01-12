@@ -1,4 +1,4 @@
-"""Tests for the BaseStructure class."""
+"""Tests for the StructureBase class."""
 
 from enum import Enum
 from typing import List, Optional
@@ -7,7 +7,7 @@ import pytest
 from pydantic import Field
 from pydantic.fields import FieldInfo
 
-from openai_sdk_helpers.structure.base import BaseStructure, SchemaOptions, spec_field
+from openai_sdk_helpers.structure.base import StructureBase, SchemaOptions, spec_field
 from openai_sdk_helpers.structure.responses import (
     assistant_format,
     assistant_tool_definition,
@@ -22,7 +22,7 @@ class Color(Enum):
     BLUE = "blue"
 
 
-class DummyStructure(BaseStructure):
+class DummyStructure(StructureBase):
     """A dummy structure for testing."""
 
     name: str = Field(..., description="The name of the item.")
@@ -81,7 +81,7 @@ def test_get_schema_force_required():
     assert "color" in schema["required"]
 
 
-class NullOptInStructure(BaseStructure):
+class NullOptInStructure(StructureBase):
     """Structure that opts fields into explicit null entries."""
 
     headline: str | None = None
@@ -103,7 +103,7 @@ def test_get_schema_with_nullable_default():
 
 
 def test_convenience_wrappers_for_response_helpers():
-    """Ensure BaseStructure wraps the response helper utilities."""
+    """Ensure StructureBase wraps the response helper utilities."""
 
     assistant_tool = DummyStructure.assistant_tool_definition(
         "demo", description="desc"
@@ -176,7 +176,7 @@ def test_from_raw_input(caplog):
     assert "Invalid value for 'color'" in caplog.text
 
     # Test with a list of enums (not in DummyStructure, so we need a new class)
-    class MultiColorStructure(BaseStructure):
+    class MultiColorStructure(StructureBase):
         colors: List[Color]
 
     data = {"colors": ["red", "blue"]}

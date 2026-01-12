@@ -6,7 +6,7 @@ they are images or documents.
 """
 
 from openai_sdk_helpers import OpenAISettings
-from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers.response import ResponseBase
 
 
 def example_automatic_detection():
@@ -16,7 +16,7 @@ def example_automatic_detection():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="auto_demo",
         instructions="You are a helpful assistant that can analyze files.",
         tools=None,
@@ -38,7 +38,7 @@ def example_with_single_image():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="image_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -60,7 +60,7 @@ def example_with_single_document():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="doc_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -83,7 +83,7 @@ def example_with_vector_store():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="rag_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -108,7 +108,7 @@ def example_mixed_files():
     """
     settings = OpenAISettings.from_env()
 
-    with BaseResponse(
+    with ResponseBase(
         name="mixed_demo",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -137,7 +137,7 @@ def example_from_problem_statement():
     settings = OpenAISettings.from_env()
 
     # Example 1: Image analysis
-    with BaseResponse(
+    with ResponseBase(
         name="vision",
         instructions="You are a helpful assistant.",
         tools=None,
@@ -151,7 +151,7 @@ def example_from_problem_statement():
         print(result)
 
     # Example 2: Document analysis
-    with BaseResponse(
+    with ResponseBase(
         name="doc_analysis",
         instructions="You are a helpful assistant.",
         tools=None,

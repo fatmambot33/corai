@@ -12,10 +12,10 @@ from typing import Literal
 from pydantic import field_validator
 
 from .enum import AgentEnum
-from ..base import BaseStructure, spec_field
+from ..base import StructureBase, spec_field
 
 
-class TaskStructure(BaseStructure):
+class TaskStructure(StructureBase):
     """Structured representation of a single agent task.
 
     Represents one task in an agent execution plan, including its type,
@@ -140,13 +140,13 @@ class TaskStructure(BaseStructure):
         """
         return "\n".join(
             [
-                BaseStructure.format_output("Task type", value=self.task_type),
-                BaseStructure.format_output("Prompt", value=self.prompt),
-                BaseStructure.format_output("Context", value=self.context),
-                BaseStructure.format_output("Status", value=self.status),
-                BaseStructure.format_output("Start date", value=self.start_date),
-                BaseStructure.format_output("End date", value=self.end_date),
-                BaseStructure.format_output("Results", value=self.results),
+                StructureBase.format_output("Task type", value=self.task_type),
+                StructureBase.format_output("Prompt", value=self.prompt),
+                StructureBase.format_output("Context", value=self.context),
+                StructureBase.format_output("Status", value=self.status),
+                StructureBase.format_output("Start date", value=self.start_date),
+                StructureBase.format_output("End date", value=self.end_date),
+                StructureBase.format_output("Results", value=self.results),
             ]
         )
 

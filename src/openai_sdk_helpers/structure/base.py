@@ -1,6 +1,6 @@
 """Base classes for structured output models.
 
-This module provides the foundational BaseStructure class and utilities for
+This module provides the foundational StructureBase class and utilities for
 defining Pydantic-based structured output models with OpenAI-compatible schema
 generation, validation, and serialization.
 """
@@ -33,11 +33,11 @@ from openai.types.responses.response_text_config_param import ResponseTextConfig
 
 from ..utils import check_filepath, log, BaseModelJSONSerializable
 
-T = TypeVar("T", bound="BaseStructure")
+T = TypeVar("T", bound="StructureBase")
 DEFAULT_DATA_PATH: Path | None = None
 
 
-class BaseStructure(BaseModelJSONSerializable):
+class StructureBase(BaseModelJSONSerializable):
     """Base class for structured output models with schema generation.
 
     Provides Pydantic-based schema definition and serialization utilities
@@ -92,8 +92,8 @@ class BaseStructure(BaseModelJSONSerializable):
     --------
     Define a custom structure:
 
-    >>> from openai_sdk_helpers.structure import BaseStructure, spec_field
-    >>> class MyOutput(BaseStructure):
+    >>> from openai_sdk_helpers.structure import StructureBase, spec_field
+    >>> class MyOutput(StructureBase):
     ...     title: str = spec_field("title", description="The title")
     ...     score: float = spec_field("score", description="Quality score")
 
@@ -453,7 +453,7 @@ class BaseStructure(BaseModelJSONSerializable):
         schema = cls.get_schema()
         if cls.DATA_PATH is None:
             raise RuntimeError(
-                "DATA_PATH is not set. Set BaseStructure.DATA_PATH before saving."
+                "DATA_PATH is not set. Set StructureBase.DATA_PATH before saving."
             )
         file_path = cls.DATA_PATH / f"{cls.__name__}_schema.json"
         check_filepath(file_path)
@@ -681,7 +681,7 @@ class BaseStructure(BaseModelJSONSerializable):
         """
         return "\n".join(
             [
-                BaseStructure.format_output(field, value=value)
+                StructureBase.format_output(field, value=value)
                 for field, value in self.model_dump().items()
             ]
         )

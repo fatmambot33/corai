@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ..structure.validation import ValidationResultStructure
-from .base import BaseAgent
+from .base import AgentBase
 from .config import AgentConfiguration
 from .prompt_utils import DEFAULT_PROMPT_DIR
 
 
-class ValidatorAgent(BaseAgent):
+class ValidatorAgent(AgentBase):
     """Check user prompts and agent responses against safety guardrails.
 
     This agent validates inputs and outputs to ensure they comply with safety
@@ -85,7 +85,7 @@ class ValidatorAgent(BaseAgent):
             name="validator",
             instructions="Agent instructions",
             description="Validate user input and agent output against guardrails.",
-            output_type=ValidationResultStructure,
+            output_structure=ValidationResultStructure,
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
@@ -144,7 +144,7 @@ class ValidatorAgent(BaseAgent):
         result: ValidationResultStructure = await self.run_async(
             input=user_input,
             context=context,
-            output_type=ValidationResultStructure,
+            output_structure=ValidationResultStructure,
         )
         return result
 

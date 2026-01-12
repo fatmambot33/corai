@@ -40,7 +40,7 @@ async def test_validator_agent_merges_context():
             "policy_notes": "No PII",
             "session_id": "abc123",
         },
-        output_type=ValidationResultStructure,
+        output_structure=ValidationResultStructure,
     )
     assert result is validation
 

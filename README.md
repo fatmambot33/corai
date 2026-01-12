@@ -242,14 +242,14 @@ when instantiating `OpenAISettings`.
 For more fine-grained control over API interactions, use the `response` module built on the standard `openai` SDK. This gives you direct access to message history, tool handlers, and custom response parsing:
 
 ```python
-from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers.response import ResponseBase
 from openai_sdk_helpers import OpenAISettings
 
 # Configure OpenAI settings
 settings = OpenAISettings.from_env()
 
 # Create a response handler with custom instructions
-response = BaseResponse(
+response = ResponseBase(
     instructions="You are a helpful code review assistant.",
     tools=None,  # Or provide custom tool definitions
     output_structure=None,  # Or a Pydantic model for structured output
@@ -276,12 +276,12 @@ response.close()
 The `response` module automatically detects file types and handles them appropriately:
 
 ```python
-from openai_sdk_helpers.response import BaseResponse
+from openai_sdk_helpers.response import ResponseBase
 from openai_sdk_helpers import OpenAISettings
 
 settings = OpenAISettings.from_env()
 
-with BaseResponse(
+with ResponseBase(
     name="analyzer",
     instructions="You are a helpful assistant that can analyze files.",
     tools=None,
@@ -515,7 +515,7 @@ These modules use the `openai-agents` SDK for high-level agent workflows with au
 
 These modules use the standard `openai` SDK for direct API interactions with fine-grained control over request/response cycles.
 
-- **`openai_sdk_helpers.response.base.BaseResponse`**  
+- **`openai_sdk_helpers.response.base.ResponseBase`**  
   Manages complete OpenAI API interaction lifecycle including input construction,
   tool execution, message history, and structured output parsing. Uses the 
   `client.responses.create()` API (from the OpenAI Responses API, distinct from 
@@ -531,7 +531,7 @@ These modules use the standard `openai` SDK for direct API interactions with fin
   Centralizes OpenAI API configuration with environment variable support.
   Creates configured OpenAI clients with consistent settings.
 
-- **`openai_sdk_helpers.structure.BaseStructure`**  
+- **`openai_sdk_helpers.structure.StructureBase`**  
   Pydantic-based foundation for all structured outputs. Provides JSON schema
   generation, validation, and serialization helpers.
 

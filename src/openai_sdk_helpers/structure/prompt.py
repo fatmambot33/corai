@@ -6,10 +6,10 @@ used in OpenAI API requests.
 
 from __future__ import annotations
 
-from .base import BaseStructure, spec_field
+from .base import StructureBase, spec_field
 
 
-class PromptStructure(BaseStructure):
+class PromptStructure(StructureBase):
     """Structured representation of prompt text for OpenAI API requests.
 
     Simple structure containing a single prompt string with examples.

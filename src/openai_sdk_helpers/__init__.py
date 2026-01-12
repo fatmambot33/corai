@@ -33,7 +33,7 @@ from .utils.validation import (
     validate_url_format,
 )
 from .structure import (
-    BaseStructure,
+    StructureBase,
     SchemaOptions,
     PlanStructure,
     TaskStructure,
@@ -54,7 +54,7 @@ from .config import OpenAISettings
 from .files_api import FilesAPIManager, FilePurpose
 from .vector_storage import VectorStorage, VectorStorageFileInfo, VectorStorageFileStats
 from .agent import (
-    BaseAgent,
+    AgentBase,
     AgentConfiguration,
     AgentEnum,
     CoordinatorAgent,
@@ -65,7 +65,7 @@ from .agent import (
     WebAgentSearch,
 )
 from .response import (
-    BaseResponse,
+    ResponseBase,
     ResponseMessage,
     ResponseMessages,
     ResponseToolCall,
@@ -134,7 +134,7 @@ __all__ = [
     "validate_choice",
     "validate_safe_path",
     # Main structure classes
-    "BaseStructure",
+    "StructureBase",
     "SchemaOptions",
     "spec_field",
     "PromptRenderer",
@@ -150,7 +150,7 @@ __all__ = [
     "TaskStructure",
     "PlanStructure",
     "AgentEnum",
-    "BaseAgent",
+    "AgentBase",
     "AgentConfiguration",
     "CoordinatorAgent",
     "SummarizerAgent",
@@ -162,7 +162,7 @@ __all__ = [
     "WebSearchStructure",
     "VectorSearchStructure",
     "ValidationResultStructure",
-    "BaseResponse",
+    "ResponseBase",
     "ResponseMessage",
     "ResponseMessages",
     "ResponseToolCall",

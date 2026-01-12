@@ -11,11 +11,11 @@ from typing import Any, Sequence
 from openai import OpenAI
 
 from ..utils import ensure_list
-from .base import BaseResponse
+from .base import ResponseBase
 
 
 def attach_vector_store(
-    response: BaseResponse[Any],
+    response: ResponseBase[Any],
     vector_stores: str | Sequence[str],
     api_key: str | None = None,
 ) -> list[str]:
@@ -27,7 +27,7 @@ def attach_vector_store(
 
     Parameters
     ----------
-    response : BaseResponse[Any]
+    response : ResponseBase[Any]
         Response instance whose tool configuration will be updated.
     vector_stores : str or Sequence[str]
         Single vector store name or sequence of names to attach.

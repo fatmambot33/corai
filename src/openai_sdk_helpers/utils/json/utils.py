@@ -21,7 +21,7 @@ def to_jsonable(value: Any) -> Any:
     """Convert common types to JSON-safe forms.
 
     Recursively converts containers, dicts, dataclasses, Pydantic models, enums,
-    paths, datetimes, and BaseStructure instances/classes to JSON-serializable forms.
+    paths, datetimes, and StructureBase instances/classes to JSON-serializable forms.
     Private properties (starting with underscore) are excluded from serialization.
 
     Parameters
@@ -44,8 +44,8 @@ def to_jsonable(value: Any) -> Any:
     - Pydantic-like objects: use model_dump() if available
     - Dicts/containers: recursively convert values; dict keys coerced to str
     - Private properties: keys starting with underscore are excluded
-    - BaseStructure instances: use .model_dump()
-    - BaseStructure classes: encode with {module, qualname, "__structure_class__": True}
+    - StructureBase instances: use .model_dump()
+    - StructureBase classes: encode with {module, qualname, "__structure_class__": True}
     - Sets: converted to lists
 
     Examples
@@ -65,7 +65,7 @@ def to_jsonable(value: Any) -> Any:
 
 def _to_jsonable(value: Any) -> Any:
     """Convert common helper types to JSON-serializable forms (internal)."""
-    from openai_sdk_helpers.structure.base import BaseStructure
+    from openai_sdk_helpers.structure.base import StructureBase
 
     if value is None:
         return None
@@ -81,10 +81,10 @@ def _to_jsonable(value: Any) -> Any:
             for k, v in asdict(value).items()
             if not str(k).startswith("_")
         }
-    # Check for BaseStructure class (not instance) before model_dump check
+    # Check for StructureBase class (not instance) before model_dump check
     if isinstance(value, type):
         try:
-            if issubclass(value, BaseStructure):
+            if issubclass(value, StructureBase):
                 encoded = encode_module_qualname(value)
                 if encoded:
                     encoded["__structure_class__"] = True
@@ -94,7 +94,7 @@ def _to_jsonable(value: Any) -> Any:
             # Some type-like objects may pass isinstance(value, type) but
             # still not be valid arguments to issubclass; ignore these.
             pass
-    if isinstance(value, BaseStructure):
+    if isinstance(value, StructureBase):
         return value.model_dump()
     # Check for model_dump on instances (after class checks)
     if hasattr(value, "model_dump") and not isinstance(value, type):
@@ -114,7 +114,7 @@ def _to_jsonable(value: Any) -> Any:
 def coerce_jsonable(value: Any) -> Any:
     """Ensure json.dumps succeeds.
 
-    Falls back to str when necessary. Special-cases BaseResponse.
+    Falls back to str when necessary. Special-cases ResponseBase.
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def coerce_jsonable(value: Any) -> Any:
     then validates it can be serialized with json.dumps(). If serialization
     fails, it falls back to str(value).
 
-    Special handling for BaseResponse: serialized as messages.to_json().
+    Special handling for ResponseBase: serialized as messages.to_json().
 
     Examples
     --------
@@ -144,11 +144,11 @@ def coerce_jsonable(value: Any) -> Any:
     >>> coerce_jsonable(CustomObj())
     'custom'
     """
-    from openai_sdk_helpers.response.base import BaseResponse
+    from openai_sdk_helpers.response.base import ResponseBase
 
     if value is None:
         return None
-    if isinstance(value, BaseResponse):
+    if isinstance(value, ResponseBase):
         return coerce_jsonable(value.messages.to_json())
     if is_dataclass(value) and not isinstance(value, type):
         return {
@@ -168,7 +168,7 @@ class customJSONEncoder(json.JSONEncoder):
     """JSON encoder delegating to to_jsonable.
 
     This encoder handles common types like Enum, Path, datetime, dataclasses,
-    sets, BaseStructure instances/classes, and Pydantic-like objects.
+    sets, StructureBase instances/classes, and Pydantic-like objects.
 
     Examples
     --------

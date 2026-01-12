@@ -265,8 +265,8 @@ All changes are **backward compatible**. Existing code will continue to work wit
 **Before:**
 ```python
 # Multiple scattered configurations
-response1 = BaseResponse(instructions="...", ...)
-response2 = BaseResponse(instructions="...", ...)
+response1 = ResponseBase(instructions="...", ...)
+response2 = ResponseBase(instructions="...", ...)
 ```
 
 **After:**

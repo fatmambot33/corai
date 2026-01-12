@@ -90,9 +90,9 @@ def test_log_is_idempotent(caplog):
 
 
 def test_coerce_jsonable_serializes_structures_and_dataclasses():
-    from openai_sdk_helpers.structure.base import BaseStructure
+    from openai_sdk_helpers.structure.base import StructureBase
 
-    class ExampleStructure(BaseStructure):
+    class ExampleStructure(StructureBase):
         message: str
 
     @dataclass
@@ -149,12 +149,12 @@ def test_reference_encoding_helpers():
     assert decode_module_qualname({"module": "fake_module"}) is None
 
 
-def test_basestructure_class_encoding():
-    """Test that BaseStructure classes are encoded with __structure_class__ marker."""
-    from openai_sdk_helpers.structure.base import BaseStructure
+def test_StructureBase_class_encoding():
+    """Test that StructureBase classes are encoded with __structure_class__ marker."""
+    from openai_sdk_helpers.structure.base import StructureBase
     from openai_sdk_helpers.utils import to_jsonable
 
-    class TestStructure(BaseStructure):
+    class TestStructure(StructureBase):
         value: str
 
     # Test encoding of the class (not instance)

@@ -10,10 +10,10 @@ from __future__ import annotations
 import asyncio
 from typing import Any, TypeVar
 
-from .base import BaseResponse
+from .base import ResponseBase
 
 
-R = TypeVar("R", bound=BaseResponse[Any])
+R = TypeVar("R", bound=ResponseBase[Any])
 
 
 def run_sync(
@@ -29,7 +29,7 @@ def run_sync(
 
     Parameters
     ----------
-    response_cls : type[BaseResponse]
+    response_cls : type[ResponseBase]
         Response class to instantiate for the workflow.
     content : str
         Prompt text to send to the OpenAI API.
@@ -39,7 +39,7 @@ def run_sync(
     Returns
     -------
     Any
-        Parsed response from BaseResponse.run_sync, typically a structured
+        Parsed response from ResponseBase.run_sync, typically a structured
         output or None.
 
     Examples
@@ -71,7 +71,7 @@ async def run_async(
 
     Parameters
     ----------
-    response_cls : type[BaseResponse]
+    response_cls : type[ResponseBase]
         Response class to instantiate for the workflow.
     content : str
         Prompt text to send to the OpenAI API.
@@ -81,7 +81,7 @@ async def run_async(
     Returns
     -------
     Any
-        Parsed response from BaseResponse.run_async, typically a structured
+        Parsed response from ResponseBase.run_async, typically a structured
         output or None.
 
     Examples
@@ -114,7 +114,7 @@ def run_streamed(
 
     Parameters
     ----------
-    response_cls : type[BaseResponse]
+    response_cls : type[ResponseBase]
         Response class to instantiate for the workflow.
     content : str
         Prompt text to send to the OpenAI API.

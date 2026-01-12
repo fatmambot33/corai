@@ -7,7 +7,7 @@ import pytest
 from openai_sdk_helpers.agent.summarizer import SummarizerAgent
 from openai_sdk_helpers.agent.translator import TranslatorAgent
 from openai_sdk_helpers.structure import SummaryStructure, TranslationStructure
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 
 
 @pytest.mark.anyio
@@ -28,7 +28,7 @@ async def test_summarizer_agent_runs_with_metadata():
     mock_run.assert_awaited_once_with(
         input="Input text",
         context={"metadata": {"source": "unit-test"}},
-        output_type=agent._output_type,
+        output_structure=agent._output_structure,
     )
     assert result is summary
 
@@ -37,12 +37,12 @@ async def test_summarizer_agent_runs_with_metadata():
 async def test_summarizer_allows_output_override():
     """SummarizerAgent should respect a custom output type."""
 
-    class CustomSummary(BaseStructure):
+    class CustomSummary(StructureBase):
         """Custom summary output for testing override behavior."""
 
         text: str
 
-    agent = SummarizerAgent(default_model="gpt-4o-mini", output_type=CustomSummary)
+    agent = SummarizerAgent(default_model="gpt-4o-mini", output_structure=CustomSummary)
     fake_agent = MagicMock()
 
     with (
@@ -53,7 +53,7 @@ async def test_summarizer_allows_output_override():
         await agent.run_agent("Input text")
 
     mock_run.assert_awaited_once()
-    assert agent._output_type is CustomSummary
+    assert agent._output_structure is CustomSummary
 
 
 @pytest.mark.anyio

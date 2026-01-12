@@ -7,7 +7,7 @@ from typing import List
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from openai_sdk_helpers.structure.base import BaseStructure
+from openai_sdk_helpers.structure.base import StructureBase
 
 from openai_sdk_helpers.agent.search.base import (
     SearchPlanner,
@@ -17,26 +17,26 @@ from openai_sdk_helpers.agent.search.base import (
 from openai_sdk_helpers.agent.config import AgentConfiguration
 
 
-# Mock BaseStructure models for testing
-class MockPlanStructure(BaseStructure):
+# Mock StructureBase models for testing
+class MockPlanStructure(StructureBase):
     """Mock search plan structure."""
 
     searches: List[MockItemStructure] = []
 
 
-class MockItemStructure(BaseStructure):
+class MockItemStructure(StructureBase):
     """Mock search item structure."""
 
     query: str = "test query"
 
 
-class MockResultStructure(BaseStructure):
+class MockResultStructure(StructureBase):
     """Mock search result structure."""
 
     text: str = "test result"
 
 
-class MockReportStructure(BaseStructure):
+class MockReportStructure(StructureBase):
     """Mock search report structure."""
 
     report: str = "test report"
@@ -51,7 +51,7 @@ class TestSearchPlanner(SearchPlanner[MockPlanStructure]):
             name="test_planner",
             instructions="Test instructions",
             description="Test planner",
-            output_type=MockPlanStructure,
+            output_structure=MockPlanStructure,
         )
 
 
@@ -65,7 +65,7 @@ class TestSearchToolAgent(
             name="test_tool",
             instructions="Test instructions",
             description="Test tool",
-            input_type=MockPlanStructure,
+            input_structure=MockPlanStructure,
         )
 
     async def run_search(self, item: MockItemStructure) -> MockResultStructure:
@@ -81,7 +81,7 @@ class TestSearchWriter(SearchWriter[MockReportStructure]):
             name="test_writer",
             instructions="Test instructions",
             description="Test writer",
-            output_type=MockReportStructure,
+            output_structure=MockReportStructure,
         )
 
 
@@ -93,7 +93,7 @@ class TestSearchPlannerClass:
         """Test planner agent initialization with default model."""
         planner = TestSearchPlanner(default_model="gpt-4o-mini")
         assert planner.name == "test_planner"
-        assert planner._output_type == MockPlanStructure
+        assert planner._output_structure == MockPlanStructure
 
     @pytest.mark.asyncio
     async def test_planner_run_agent(self) -> None:
@@ -118,7 +118,7 @@ class TestSearchPlannerClass:
                 name="test_planner",
                 instructions="Test instructions",
                 description="Test planner",
-                output_type=MockPlanStructure,
+                output_structure=MockPlanStructure,
             ),
         ) as mock_config:
             planner = TestSearchPlanner(default_model="gpt-4o-mini")
@@ -228,7 +228,7 @@ class TestSearchWriterClass:
         """Test writer agent initialization."""
         writer = TestSearchWriter(default_model="gpt-4o-mini")
         assert writer.name == "test_writer"
-        assert writer._output_type == MockReportStructure
+        assert writer._output_structure == MockReportStructure
 
     @pytest.mark.asyncio
     async def test_writer_run_agent(self) -> None:
@@ -251,7 +251,7 @@ class TestSearchWriterClass:
             assert call_kwargs["input"] == "test query"
             assert "original_query" in call_kwargs["context"]
             assert "search_results" in call_kwargs["context"]
-            assert call_kwargs["output_type"] == MockReportStructure
+            assert call_kwargs["output_structure"] == MockReportStructure
             assert result == mock_report
 
     @pytest.mark.asyncio
@@ -278,7 +278,7 @@ class TestSearchAgentInheritance:
         """Test that planner type parameters work correctly."""
         planner = TestSearchPlanner(default_model="gpt-4o-mini")
         # Type is correctly bound to MockPlanStructure
-        assert planner._output_type == MockPlanStructure
+        assert planner._output_structure == MockPlanStructure
 
     def test_tool_type_parameters(self) -> None:
         """Test that tool agent type parameters work correctly."""
@@ -290,7 +290,7 @@ class TestSearchAgentInheritance:
     def test_writer_type_parameters(self) -> None:
         """Test that writer type parameters work correctly."""
         writer = TestSearchWriter(default_model="gpt-4o-mini")
-        assert writer._output_type == MockReportStructure
+        assert writer._output_structure == MockReportStructure
 
 
 class TestSearchAgentConcurrency:
