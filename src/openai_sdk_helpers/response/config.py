@@ -108,8 +108,6 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
     -------
     __post_init__()
         Validate configuration invariants and enforce StructureBase subclassing.
-    instructions_text
-        Return the resolved instruction content as a string.
     to_json()
         Return a JSON-compatible dict representation (inherited from JSONSerializable).
     to_json_file(filepath)
@@ -138,6 +136,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
     output_structure: Optional[Type[TOut]]
     system_vector_store: Optional[list[str]] = None
     add_output_instructions: bool = True
+    add_web_search_tool: bool = False
 
     def __post_init__(self) -> None:
         """
@@ -185,7 +184,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
             raise TypeError("Configuration.tools must be a Sequence or None")
 
     @property
-    def instructions_text(self) -> str:
+    def get_resolved_instructions(self) -> str:
         """Return the resolved instruction text.
 
         Returns
@@ -203,6 +202,20 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
                 return f"{resolved_instructions}\n{output_instructions}"
 
         return resolved_instructions
+
+    @property
+    def get_resolved_tools(self) -> list:
+        """Return the complete list of tools, including optional web search tool.
+
+        Returns
+        -------
+        list
+            List of tool definitions, including web search tool if enabled.
+        """
+        tools = self.tools or []
+        if self.add_web_search_tool:
+            tools = tools + [{"type": "web_search"}]
+        return tools
 
     def gen_response(
         self,
@@ -229,8 +242,8 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         """
         return ResponseBase[TOut](
             name=self.name,
-            instructions=self.instructions_text,
-            tools=self.tools,
+            instructions=self.get_resolved_instructions,
+            tools=self.get_resolved_tools,
             output_structure=self.output_structure,
             system_vector_store=self.system_vector_store,
             data_path=data_path,

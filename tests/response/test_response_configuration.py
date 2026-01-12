@@ -24,7 +24,7 @@ def _build_config(instructions: str | Path) -> ResponseConfiguration:
 
 def test_instructions_text_returns_plain_string() -> None:
     config = _build_config("Use direct instructions.")
-    assert config.instructions_text == "Use direct instructions."
+    assert config.get_resolved_instructions == "Use direct instructions."
 
 
 def test_instructions_text_reads_template_file(tmp_path: Path) -> None:
@@ -32,7 +32,7 @@ def test_instructions_text_reads_template_file(tmp_path: Path) -> None:
     template_path.write_text("Template instructions", encoding="utf-8")
 
     config = _build_config(template_path)
-    assert config.instructions_text == "Template instructions"
+    assert config.get_resolved_instructions == "Template instructions"
 
 
 def test_empty_string_instructions_raise_value_error() -> None:
@@ -75,7 +75,7 @@ def test_output_instructions_are_appended(openai_settings) -> None:
 
     response = config.gen_response(openai_settings=openai_settings)
 
-    expected_instructions = config.instructions_text
+    expected_instructions = config.get_resolved_instructions
     assert response._instructions == expected_instructions
 
 
@@ -91,7 +91,7 @@ def test_output_instructions_can_be_skipped(openai_settings) -> None:
 
     response = config.gen_response(openai_settings=openai_settings)
 
-    expected_instructions = config.instructions_text
+    expected_instructions = config.get_resolved_instructions
 
     assert response._instructions == expected_instructions
 
@@ -121,5 +121,5 @@ def test_no_output_structure_ignores_add_output_instructions(
     response_without_flag = config_false.gen_response(openai_settings=openai_settings)
 
     # Both should produce the same result: just the base instructions
-    assert response_with_flag._instructions == config_true.instructions_text
-    assert response_without_flag._instructions == config_false.instructions_text
+    assert response_with_flag._instructions == config_true.get_resolved_instructions
+    assert response_without_flag._instructions == config_false.get_resolved_instructions
