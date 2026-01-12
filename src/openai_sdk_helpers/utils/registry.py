@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import Generic, Protocol, Self, TypeVar
+from typing import Generic, Protocol, TypeVar
+from typing_extensions import Self
 
 from .path_utils import ensure_directory
 
