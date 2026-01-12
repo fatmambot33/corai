@@ -252,6 +252,8 @@ class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
         Export all registered configurations to JSON files.
     load_from_directory(path)
         Load configurations from JSON files in a directory.
+    load_app_config(config_path)
+        Load, validate, and return configuration from a Python module.
 
     Examples
     --------
@@ -295,7 +297,7 @@ class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
         Examples
         --------
         >>> from pathlib import Path
-        >>> config = StreamlitAppConfig.load_app_config(
+        >>> config = StreamlitAppRegistry.load_app_config(
         ...     Path("./my_config.py")
         ... )
         """
@@ -475,7 +477,7 @@ def load_app_config(
 ) -> StreamlitAppConfig:
     """Load and validate Streamlit configuration from a Python module.
 
-    Convenience function that proxies to StreamlitAppConfig.load_app_config
+    Convenience function that proxies to StreamlitAppRegistry.load_app_config
     for backward compatibility.
 
     Parameters
@@ -493,13 +495,13 @@ def load_app_config(
     >>> from pathlib import Path
     >>> config = load_app_config(Path("./my_config.py"))
     """
-    return StreamlitAppConfig.load_app_config(config_path=config_path)
+    return StreamlitAppRegistry.load_app_config(config_path=config_path)
 
 
 def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     """Load configuration with user-friendly error handling for Streamlit.
 
-    Wraps StreamlitAppConfig.load_app_config with exception handling that
+    Wraps StreamlitAppRegistry.load_app_config with exception handling that
     displays errors in the Streamlit UI and halts execution gracefully.
 
     Parameters
@@ -524,7 +526,7 @@ def _load_configuration(config_path: Path) -> StreamlitAppConfig:
     than raising exceptions that crash the app.
     """
     try:
-        return StreamlitAppConfig.load_app_config(config_path=config_path)
+        return StreamlitAppRegistry.load_app_config(config_path=config_path)
     except Exception as exc:  # pragma: no cover - surfaced in UI
         import streamlit as st  # type: ignore[import-not-found]
 

@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from openai_sdk_helpers.config import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
-from openai_sdk_helpers.streamlit_app import StreamlitAppConfig, load_app_config
+from openai_sdk_helpers.streamlit_app import StreamlitAppConfig, StreamlitAppRegistry
 from openai_sdk_helpers.structure.base import StructureBase
 
 
@@ -68,7 +68,7 @@ APP_CONFIG = {"response": TempResponse}
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     assert config.display_title == "Example copilot"
     assert config.normalized_vector_stores() == []
@@ -78,14 +78,14 @@ APP_CONFIG = {"response": TempResponse}
 def test_missing_config_file() -> None:
     missing = Path("/tmp/does/not/exist.py")
     with pytest.raises(FileNotFoundError):
-        StreamlitAppConfig.load_app_config(config_path=missing)
+        StreamlitAppRegistry.load_app_config(config_path=missing)
 
 
 def test_missing_app_config(tmp_path: Path) -> None:
     config_path = _write_config(tmp_path, "build_response = lambda: None\n")
 
     with pytest.raises(ValueError):
-        StreamlitAppConfig.load_app_config(config_path=config_path)
+        StreamlitAppRegistry.load_app_config(config_path=config_path)
 
 
 def test_missing_response(tmp_path: Path) -> None:
@@ -97,7 +97,7 @@ APP_CONFIG = {}
     )
 
     with pytest.raises(ValidationError):
-        StreamlitAppConfig.load_app_config(config_path=config_path)
+        StreamlitAppRegistry.load_app_config(config_path=config_path)
 
 
 def test_invalid_response_type(tmp_path: Path) -> None:
@@ -109,7 +109,7 @@ APP_CONFIG = {"response": "not_callable"}
     )
 
     with pytest.raises(ValidationError):
-        StreamlitAppConfig.load_app_config(config_path=config_path)
+        StreamlitAppRegistry.load_app_config(config_path=config_path)
 
 
 def test_invalid_vector_store_type(tmp_path: Path) -> None:
@@ -121,7 +121,7 @@ APP_CONFIG = {"response": lambda: None, "system_vector_store": [1, 2]}
     )
 
     with pytest.raises(ValidationError):
-        StreamlitAppConfig.load_app_config(config_path=config_path)
+        StreamlitAppRegistry.load_app_config(config_path=config_path)
 
 
 def test_vector_store_normalization_returns_copy(tmp_path: Path) -> None:
@@ -151,7 +151,7 @@ APP_CONFIG = {"response": TempResponse, "system_vector_store": "files"}
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     stores = config.normalized_vector_stores()
     stores.append("mutated")
@@ -160,7 +160,7 @@ APP_CONFIG = {"response": TempResponse, "system_vector_store": "files"}
     assert config.normalized_vector_stores() == ["files"]
 
 
-def test_load_app_config_proxy(tmp_path: Path) -> None:
+def test_load_app_config_registry(tmp_path: Path) -> None:
     config_path = _write_config(
         tmp_path,
         """
@@ -186,7 +186,7 @@ APP_CONFIG = {"response": TempResponse}
 """,
     )
 
-    config = load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     assert isinstance(config, StreamlitAppConfig)
 
@@ -238,7 +238,7 @@ APP_CONFIG = {"response": TempResponse, "display_title": "Alias title"}
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     assert config.display_title == "Alias title"
     assert isinstance(config.create_response(), ResponseBase)
@@ -270,7 +270,7 @@ APP_CONFIG = TempResponse
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     response_instance = config.create_response()
 
@@ -304,7 +304,7 @@ APP_CONFIG = TempResponse()
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     response_instance = config.create_response()
 
@@ -320,7 +320,7 @@ APP_CONFIG = {"response": lambda: "bad"}
 """,
     )
 
-    config = StreamlitAppConfig.load_app_config(config_path=config_path)
+    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     with pytest.raises(TypeError):
         config.create_response()

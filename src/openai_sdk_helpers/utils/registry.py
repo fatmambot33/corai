@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import ClassVar, Generic, Protocol, TypeVar
+from typing import Generic, Protocol, Self, TypeVar
 
 from .path_utils import ensure_directory
 
@@ -20,14 +20,19 @@ class RegistrySerializable(Protocol):
         Load an instance from a JSON file path.
     """
 
-    name: str
+    @property
+    def name(self) -> str:
+        """Return the configuration name."""
+        ...
 
     def to_json_file(self, filepath: Path | str) -> str:
         """Write serialized JSON data to a file path."""
+        ...
 
     @classmethod
-    def from_json_file(cls, filepath: Path | str) -> RegistrySerializable:
+    def from_json_file(cls, filepath: Path | str) -> Self:
         """Load an instance from a JSON file."""
+        ...
 
 
 T = TypeVar("T", bound=RegistrySerializable)
