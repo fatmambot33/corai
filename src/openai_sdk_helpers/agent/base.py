@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional, Protocol, cast
+from typing import Any, Callable, Dict, Optional, Protocol, cast
 import uuid
 
 from agents import (
@@ -30,7 +30,7 @@ from ..utils import (
 from .runner import run_async, run_streamed, run_sync
 
 
-class AgentConfigurationLike(Protocol):
+class AgentConfigurationProtocol(Protocol):
     """Protocol describing the configuration attributes for AgentBase."""
 
     @property
@@ -188,7 +188,7 @@ class AgentBase(DataclassJSONSerializable):
     def __init__(
         self,
         *,
-        config: AgentConfigurationLike,
+        config: AgentConfigurationProtocol,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         data_path: Path | str | None = None,
         prompt_dir: Optional[Path] = None,
@@ -198,7 +198,7 @@ class AgentBase(DataclassJSONSerializable):
 
         Parameters
         ----------
-        config : AgentConfigurationLike
+        config : AgentConfigurationProtocol
             Configuration describing this agent.
         run_context_wrapper : RunContextWrapper or None, default=None
             Optional wrapper providing runtime context for prompt rendering.
@@ -575,6 +575,26 @@ class AgentBase(DataclassJSONSerializable):
         )
         return tool_obj
 
+    def as_response_tool(self) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+        """Return the agent as a callable response tool.
+
+        Returns
+        -------
+        Tool
+            Tool instance wrapping this agent for response generation.
+        """
+        tool_handler = {self.name: self.run_sync}
+        tool_definition = {
+            "type": "function",
+            "name": self.name,
+            "description": self.description,
+            "strict": True,
+            "additionalProperties": False,
+        }
+        if self.output_structure:
+            tool_definition["parameters"] = self.output_structure.get_schema()
+        return tool_handler, tool_definition
+
     def __enter__(self) -> AgentBase:
         """Enter the context manager for resource management.
 
@@ -651,4 +671,4 @@ class AgentBase(DataclassJSONSerializable):
         log(f"Saved messages to {target}")
 
 
-__all__ = ["AgentConfigurationLike", "AgentBase"]
+__all__ = ["AgentConfigurationProtocol", "AgentBase"]
