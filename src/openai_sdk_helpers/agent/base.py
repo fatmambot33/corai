@@ -428,7 +428,7 @@ class AgentBase(DataclassJSONSerializable):
             "model": self.model,
         }
         if self._output_structure:
-            agent_config["output_structure"] = self._output_structure
+            agent_config["output_type"] = self._output_structure
         if self._tools:
             agent_config["tools"] = self._tools
         if self._model_settings:
