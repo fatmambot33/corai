@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Protocol, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Protocol, cast
 import uuid
 
 from agents import (
@@ -31,6 +31,10 @@ from ..utils import (
 from ..tools import tool_handler_factory
 
 from .runner import run_async, run_streamed, run_sync
+
+if TYPE_CHECKING:
+    from ..config import OpenAISettings
+    from ..response.base import ResponseBase, ToolHandler
 
 
 class AgentConfigurationProtocol(Protocol):
@@ -696,11 +700,11 @@ class AgentBase(DataclassJSONSerializable):
     def build_response(
         self,
         *,
-        openai_settings: "OpenAISettings",
+        openai_settings: OpenAISettings,
         data_path: Path | str | None = None,
-        tool_handlers: dict[str, "ToolHandler"] | None = None,
+        tool_handlers: dict[str, ToolHandler] | None = None,
         system_vector_store: list[str] | None = None,
-    ) -> "ResponseBase[StructureBase]":
+    ) -> ResponseBase[StructureBase]:
         """Build a ResponseBase instance from this agent configuration.
 
         Parameters
