@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import (
+from openai_sdk_helpers.agent.configuration import (
     AgentConfiguration,
     AgentRegistry,
     get_default_registry,
@@ -16,12 +16,12 @@ from openai_sdk_helpers.agent.config import (
 def test_agent_registry_basic_operations() -> None:
     """Test basic registry operations."""
     registry = AgentRegistry()
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test_agent", model="gpt-4o-mini", instructions="Test instructions"
     )
 
     # Register
-    registry.register(config)
+    registry.register(configuration)
     assert "test_agent" in registry.list_names()
 
     # Get
@@ -51,7 +51,7 @@ def test_agent_registry_duplicate_name_raises() -> None:
 
 
 def test_agent_registry_get_nonexistent_raises() -> None:
-    """Test that getting a nonexistent config raises KeyError."""
+    """Test that getting a nonexistent configuration raises KeyError."""
     registry = AgentRegistry()
 
     with pytest.raises(KeyError, match="No configuration named"):
@@ -86,16 +86,16 @@ def test_agent_registry_multiple_configs() -> None:
         for i in range(5)
     ]
 
-    for config in configs:
-        registry.register(config)
+    for configuration in configs:
+        registry.register(configuration)
 
     names = registry.list_names()
     assert len(names) == 5
     assert names == ["agent0", "agent1", "agent2", "agent3", "agent4"]
 
-    for i, config in enumerate(configs):
+    for i, configuration in enumerate(configs):
         retrieved = registry.get(f"agent{i}")
-        assert retrieved.name == config.name
+        assert retrieved.name == configuration.name
 
 
 def test_get_default_registry() -> None:
@@ -111,10 +111,10 @@ def test_agent_registry_isolated_instances() -> None:
     registry1 = AgentRegistry()
     registry2 = AgentRegistry()
 
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test", model="gpt-4o-mini", instructions="Test instructions"
     )
-    registry1.register(config)
+    registry1.register(configuration)
 
     assert "test" in registry1.list_names()
     assert "test" not in registry2.list_names()

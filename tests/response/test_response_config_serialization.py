@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.response.config import ResponseConfiguration
+from openai_sdk_helpers.response.configuration import ResponseConfiguration
 
 
 def test_response_config_to_json() -> None:
     """Test that ResponseConfiguration can be serialized to JSON."""
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -22,7 +22,7 @@ def test_response_config_to_json() -> None:
         add_output_instructions=False,
     )
 
-    json_data = config.to_json()
+    json_data = configuration.to_json()
 
     assert isinstance(json_data, dict)
     assert json_data["name"] == "test_config"
@@ -36,7 +36,7 @@ def test_response_config_to_json() -> None:
 
 def test_response_config_to_json_file(tmp_path: Path) -> None:
     """Test that ResponseConfiguration can be written to a JSON file."""
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -46,8 +46,8 @@ def test_response_config_to_json_file(tmp_path: Path) -> None:
         add_output_instructions=True,
     )
 
-    json_file = tmp_path / "config.json"
-    result_path = config.to_json_file(json_file)
+    json_file = tmp_path / "configuration.json"
+    result_path = configuration.to_json_file(json_file)
 
     assert result_path == str(json_file)
     assert json_file.exists()
@@ -63,7 +63,7 @@ def test_response_config_to_json_file(tmp_path: Path) -> None:
 
 def test_response_config_json_serialization_with_none_fields() -> None:
     """Test JSON serialization with None fields."""
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="minimal_config",
         instructions="Minimal instructions",
         tools=None,
@@ -71,7 +71,7 @@ def test_response_config_json_serialization_with_none_fields() -> None:
         output_structure=None,
     )
 
-    json_data = config.to_json()
+    json_data = configuration.to_json()
 
     assert json_data["name"] == "minimal_config"
     assert json_data["system_vector_store"] is None
@@ -91,15 +91,15 @@ def test_response_config_from_json() -> None:
         "add_output_instructions": False,
     }
 
-    config = ResponseConfiguration.from_json(json_data)
+    configuration = ResponseConfiguration.from_json(json_data)
 
-    assert config.name == "test_config"
-    assert config.instructions == "Test instructions"
-    assert config.tools is None
-    assert config.input_structure is None
-    assert config.output_structure is None
-    assert config.system_vector_store == ["store1", "store2"]
-    assert config.add_output_instructions is False
+    assert configuration.name == "test_config"
+    assert configuration.instructions == "Test instructions"
+    assert configuration.tools is None
+    assert configuration.input_structure is None
+    assert configuration.output_structure is None
+    assert configuration.system_vector_store == ["store1", "store2"]
+    assert configuration.add_output_instructions is False
 
 
 def test_response_config_from_json_file(tmp_path: Path) -> None:
@@ -114,16 +114,16 @@ def test_response_config_from_json_file(tmp_path: Path) -> None:
         "add_output_instructions": True,
     }
 
-    json_file = tmp_path / "config.json"
+    json_file = tmp_path / "configuration.json"
     with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
-    config = ResponseConfiguration.from_json_file(json_file)
+    configuration = ResponseConfiguration.from_json_file(json_file)
 
-    assert config.name == "test_config"
-    assert config.instructions == "Test instructions"
-    assert config.system_vector_store == ["store1"]
-    assert config.add_output_instructions is True
+    assert configuration.name == "test_config"
+    assert configuration.instructions == "Test instructions"
+    assert configuration.system_vector_store == ["store1"]
+    assert configuration.add_output_instructions is True
 
 
 def test_response_config_round_trip_serialization() -> None:

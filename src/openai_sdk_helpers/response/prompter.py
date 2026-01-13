@@ -1,6 +1,6 @@
 """Prompter response configuration."""
 
-from .config import ResponseConfiguration
+from .configuration import ResponseConfiguration
 from ..structure.prompt import PromptStructure
 
 PROMPTER = ResponseConfiguration(

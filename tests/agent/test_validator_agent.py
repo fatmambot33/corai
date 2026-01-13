@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from openai_sdk_helpers.agent.validation import ValidatorAgent
+from openai_sdk_helpers.agent.validator import ValidatorAgent
 from openai_sdk_helpers.structure import ValidationResultStructure
 
 

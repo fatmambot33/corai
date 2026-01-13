@@ -54,7 +54,7 @@ High-level abstractions built on `openai-agents` SDK.
 
 **Components**:
 - `base.py` - Base agent class with sync/async support
-- `coordination.py` - Multi-agent coordination
+- `coordinator.py` - Multi-agent coordination
 - `search/` - Vector and web search workflows
 - Text agents (summarizer, translator, validator)
 
@@ -66,7 +66,7 @@ Direct API control with `openai` SDK.
 
 **Components**:
 - `base.py` - Response handling primitives
-- `config.py` - Configuration and registry
+- `configuration.py` - Configuration and registry
 - `tool_call.py` - Tool execution framework
 
 **Design Pattern**: Builder pattern for constructing API calls.

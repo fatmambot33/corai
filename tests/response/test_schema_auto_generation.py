@@ -4,9 +4,9 @@ import pytest
 from pydantic import Field
 from unittest.mock import Mock, patch
 
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
-from openai_sdk_helpers.response.config import ResponseConfiguration
+from openai_sdk_helpers.response.configuration import ResponseConfiguration
 from openai_sdk_helpers.structure.base import StructureBase
 
 
@@ -74,7 +74,7 @@ def test_schema_none_when_no_output_structure(openai_settings):
 
 def test_response_configuration_auto_generates_schema():
     """Test that ResponseConfiguration stores output_structure in gen_response."""
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -85,7 +85,7 @@ def test_response_configuration_auto_generates_schema():
     # But when generating a response, it should store the output_structure
     settings = OpenAISettings(api_key="test-key", default_model="gpt-4o-mini")
 
-    response = config.gen_response(openai_settings=settings)
+    response = configuration.gen_response(openai_settings=settings)
 
     # The generated response should have the output_structure
     assert response._output_structure is not None

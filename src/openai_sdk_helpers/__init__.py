@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-from .environment import get_data_path, get_model
+from .environment import get_data_path
 from .utils.async_utils import run_coroutine_thread_safe, run_coroutine_with_fallback
-from .context_manager import (
-    AsyncManagedResource,
-    ManagedResource,
-    async_context,
-    ensure_closed,
-    ensure_closed_async,
-)
+
 from .errors import (
     OpenAISDKError,
     ConfigurationError,
@@ -23,7 +17,7 @@ from .errors import (
     AsyncExecutionError,
     ResourceCleanupError,
 )
-from .retry import with_exponential_backoff
+
 from .utils.validation import (
     validate_choice,
     validate_dict_mapping,
@@ -51,7 +45,7 @@ from .structure import (
     execute_plan,
 )
 from .prompt import PromptRenderer
-from .config import OpenAISettings
+from .settings import OpenAISettings
 from .files_api import FilesAPIManager, FilePurpose
 from .vector_storage import VectorStorage, VectorStorageFileInfo, VectorStorageFileStats
 from .agent import (
@@ -83,12 +77,7 @@ from .tools import (
     ToolSpec,
     build_tool_definitions,
 )
-from .config import build_openai_settings
-from .utils.deprecation import (
-    deprecated,
-    warn_deprecated,
-    DeprecationHelper,
-)
+from .settings import build_openai_settings
 from .utils.output_validation import (
     ValidationResult,
     ValidationRule,
@@ -98,15 +87,11 @@ from .utils.output_validation import (
     OutputValidator,
     validate_output,
 )
-from .types import (
-    SupportsOpenAIClient,
-    OpenAIClient,
-)
+
 
 __all__ = [
     # Environment utilities
     "get_data_path",
-    "get_model",
     # Async utilities
     "run_coroutine_thread_safe",
     "run_coroutine_with_fallback",
@@ -121,14 +106,6 @@ __all__ = [
     "InputValidationError",
     "AsyncExecutionError",
     "ResourceCleanupError",
-    # Retry utilities
-    "with_exponential_backoff",
-    # Context managers
-    "ManagedResource",
-    "AsyncManagedResource",
-    "ensure_closed",
-    "ensure_closed_async",
-    "async_context",
     # Validation
     "validate_non_empty_string",
     "validate_max_length",
@@ -184,13 +161,6 @@ __all__ = [
     "create_plan",
     "execute_task",
     "execute_plan",
-    # Type definitions
-    "SupportsOpenAIClient",
-    "OpenAIClient",
-    # Deprecation utilities
-    "deprecated",
-    "warn_deprecated",
-    "DeprecationHelper",
     # Output validation
     "ValidationResult",
     "ValidationRule",

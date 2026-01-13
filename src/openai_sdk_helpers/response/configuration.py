@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, Optional, Sequence, Type, TypeVar
 
-from ..config import OpenAISettings
+from ..settings import OpenAISettings
 from ..structure.base import StructureBase
-from ..response.base import ResponseBase, ToolHandler
+from .base import ResponseBase, ToolHandler
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import RegistryBase
 from ..utils.instructions import resolve_instructions_from_path
@@ -26,14 +26,14 @@ class ResponseRegistry(RegistryBase["ResponseConfiguration"]):
     Examples
     --------
     >>> registry = ResponseRegistry()
-    >>> config = ResponseConfiguration(
+    >>> configuration = ResponseConfiguration(
     ...     name="test",
     ...     instructions="Test instructions",
     ...     tools=None,
     ...     input_structure=None,
     ...     output_structure=None
     ... )
-    >>> registry.register(config)
+    >>> registry.register(configuration)
     >>> retrieved = registry.get("test")
     >>> retrieved.name
     'test'
@@ -53,8 +53,8 @@ def get_default_registry() -> ResponseRegistry:
     Examples
     --------
     >>> registry = get_default_registry()
-    >>> config = ResponseConfiguration(...)
-    >>> registry.register(config)
+    >>> configuration = ResponseConfiguration(...)
+    >>> registry.register(configuration)
     """
     return _default_registry
 
@@ -119,13 +119,13 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
 
     Examples
     --------
-    >>> config = Configuration(
+    >>> configuration = Configuration(
     ...     name="targeting_to_plan",
     ...     tools=None,
     ...     input_structure=PromptStructure,
     ...     output_structure=WebSearchStructure,
     ... )
-    >>> config.name
+    >>> configuration.name
     'prompt_to_websearch'
     """
 

@@ -1,7 +1,7 @@
 """Planner response configuration."""
 
 from ..structure.plan.plan import PlanStructure
-from .config import ResponseConfiguration
+from .configuration import ResponseConfiguration
 
 PLANNER = ResponseConfiguration(
     name="planner",

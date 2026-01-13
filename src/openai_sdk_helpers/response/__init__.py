@@ -35,7 +35,7 @@ process_files
 from __future__ import annotations
 
 from .base import ResponseBase
-from .config import ResponseConfiguration, ResponseRegistry, get_default_registry
+from .configuration import ResponseConfiguration, ResponseRegistry, get_default_registry
 from .files import process_files
 from .messages import ResponseMessage, ResponseMessages
 from .runner import run_async, run_streamed, run_sync

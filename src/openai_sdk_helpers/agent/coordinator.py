@@ -11,11 +11,11 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 
-from ..structure import TaskStructure, PlanStructure, PromptStructure
-from ..utils import DataclassJSONSerializable, ensure_directory, log
+from ..structure import TaskStructure, PlanStructure, PromptStructure, AgentEnum
+from ..utils import ensure_directory, log
 from .base import AgentBase
-from .config import AgentConfiguration
-from ..structure.plan.enum import AgentEnum
+from .configuration import AgentConfiguration
+
 
 PromptFn = Callable[[str], PromptStructure]
 BuildPlanFn = Callable[[str], PlanStructure]
@@ -40,7 +40,7 @@ class CoordinatorAgent(AgentBase):
         Base path for persisting project artifacts.
     name : str
         Name of the parent module for data organization.
-    config : AgentConfiguration or None, default=None
+    configuration : AgentConfiguration or None, default=None
         Optional agent configuration describing prompts and metadata.
     prompt_dir : Path or None, default=None
         Optional directory holding prompt templates.
@@ -84,7 +84,7 @@ class CoordinatorAgent(AgentBase):
         summarize_fn: SummarizeFn,
         module_data_path: Path,
         name: str,
-        config: Optional[AgentConfiguration] = None,
+        configuration: Optional[AgentConfiguration] = None,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
@@ -104,7 +104,7 @@ class CoordinatorAgent(AgentBase):
             Base path for persisting project artifacts.
         name : str
             Name of the parent module for data organization.
-        config : AgentConfiguration or None, default=None
+        configuration : AgentConfiguration or None, default=None
             Optional agent configuration describing prompts and metadata.
         prompt_dir : Path or None, default=None
             Optional directory holding prompt templates.
@@ -127,14 +127,16 @@ class CoordinatorAgent(AgentBase):
         ...     name="test",
         ... )
         """
-        if config is None:
-            config = AgentConfiguration(
+        if configuration is None:
+            configuration = AgentConfiguration(
                 name="coordinator_agent",
                 instructions="Coordinate agents for planning and summarization.",
                 description="Coordinates agents for planning and summarization.",
             )
         super().__init__(
-            config=config, prompt_dir=prompt_dir, default_model=default_model
+            configuration=configuration,
+            prompt_dir=prompt_dir,
+            default_model=default_model,
         )
         self._prompt_fn = prompt_fn
         self._build_plan_fn = build_plan_fn

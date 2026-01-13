@@ -61,7 +61,7 @@ def example_multi_tool_config():
 
     tools = build_tool_definitions(tool_specs)
 
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="multi_agent_assistant",
         instructions="You coordinate between multiple specialized agents.",
         tools=tools,
@@ -69,7 +69,7 @@ def example_multi_tool_config():
         output_structure=None,
     )
 
-    print(f"Created configuration '{config.name}' with {len(tools)} tools:")
+    print(f"Created configuration '{configuration.name}' with {len(tools)} tools:")
     for tool in tools:
         print(f"  - {tool['name']}: {tool['description']}")
 
@@ -136,9 +136,9 @@ def example_reusable_tools():
         output_structure=None,
     )
 
-    print(f"Research config has {len(research_config.tools or [])} tools")
-    print(f"Analysis config has {len(analysis_config.tools or [])} tools")
-    print(f"Full pipeline config has {len(full_config.tools or [])} tools")
+    print(f"Research configuration has {len(research_config.tools or [])} tools")
+    print(f"Analysis configuration has {len(analysis_config.tools or [])} tools")
+    print(f"Full pipeline configuration has {len(full_config.tools or [])} tools")
 
 
 # Example 3: Dynamic Tool Composition
@@ -191,9 +191,9 @@ def example_dynamic_tools():
         "full", ["web", "vector", "summarize", "validate"]
     )
 
-    print(f"Basic config: {len(basic_config.tools or [])} tool(s)")
-    print(f"Research config: {len(research_config.tools or [])} tool(s)")
-    print(f"Full config: {len(full_config.tools or [])} tool(s)")
+    print(f"Basic configuration: {len(basic_config.tools or [])} tool(s)")
+    print(f"Research configuration: {len(research_config.tools or [])} tool(s)")
+    print(f"Full configuration: {len(full_config.tools or [])} tool(s)")
 
 
 # Example 4: Comparing Approaches

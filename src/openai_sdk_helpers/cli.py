@@ -18,17 +18,8 @@ registry inspect
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
-from typing import Any
-
-try:
-    import openai_sdk_helpers
-
-    __version__ = getattr(openai_sdk_helpers, "__version__", "unknown")
-except ImportError:
-    __version__ = "unknown"
 
 
 def cmd_agent_test(args: argparse.Namespace) -> int:
@@ -159,8 +150,8 @@ def cmd_registry_list(args: argparse.Namespace) -> int:
 
     print("Registered configurations:")
     for name in sorted(names):
-        config = registry.get(name)
-        tools_count = len(config.tools) if config.tools else 0
+        configuration = registry.get(name)
+        tools_count = len(configuration.tools) if configuration.tools else 0
         print(f"  - {name} ({tools_count} tools)")
 
     return 0
@@ -199,7 +190,7 @@ def cmd_registry_inspect(args: argparse.Namespace) -> int:
     registry = get_default_registry()
 
     try:
-        config = registry.get(args.config_name)
+        configuration = registry.get(args.config_name)
     except KeyError:
         print(f"Error: Configuration '{args.config_name}' not found", file=sys.stderr)
         print("\nAvailable configurations:")
@@ -207,17 +198,17 @@ def cmd_registry_inspect(args: argparse.Namespace) -> int:
             print(f"  - {name}")
         return 1
 
-    print(f"Configuration: {config.name}")
-    instructions_str = str(config.instructions)
+    print(f"Configuration: {configuration.name}")
+    instructions_str = str(configuration.instructions)
     instructions_preview = (
         instructions_str[:100] if len(instructions_str) > 100 else instructions_str
     )
     print(f"Instructions: {instructions_preview}...")
-    print(f"Tools: {len(config.tools) if config.tools else 0}")
+    print(f"Tools: {len(configuration.tools) if configuration.tools else 0}")
 
-    if config.tools:
+    if configuration.tools:
         print("\nTool names:")
-        for tool in config.tools:
+        for tool in configuration.tools:
             tool_name = tool.get("function", {}).get("name", "unknown")
             print(f"  - {tool_name}")
 
@@ -244,11 +235,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="openai-helpers",
         description="OpenAI SDK Helpers CLI",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"openai-sdk-helpers {__version__}",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Commands")

@@ -8,7 +8,7 @@ from typing import Any, cast
 import pytest
 from pydantic import Field
 
-from openai_sdk_helpers.response.config import ResponseConfiguration
+from openai_sdk_helpers.response.configuration import ResponseConfiguration
 from openai_sdk_helpers.structure.base import StructureBase
 
 
@@ -23,16 +23,16 @@ def _build_config(instructions: str | Path) -> ResponseConfiguration:
 
 
 def test_instructions_text_returns_plain_string() -> None:
-    config = _build_config("Use direct instructions.")
-    assert config.get_resolved_instructions == "Use direct instructions."
+    configuration = _build_config("Use direct instructions.")
+    assert configuration.get_resolved_instructions == "Use direct instructions."
 
 
 def test_instructions_text_reads_template_file(tmp_path: Path) -> None:
     template_path = tmp_path / "template.jinja"
     template_path.write_text("Template instructions", encoding="utf-8")
 
-    config = _build_config(template_path)
-    assert config.get_resolved_instructions == "Template instructions"
+    configuration = _build_config(template_path)
+    assert configuration.get_resolved_instructions == "Template instructions"
 
 
 def test_empty_string_instructions_raise_value_error() -> None:
@@ -65,7 +65,7 @@ class _SampleOutput(StructureBase):
 
 
 def test_output_instructions_are_appended(openai_settings) -> None:
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="unit",
         instructions="Base instructions",
         tools=None,
@@ -73,14 +73,14 @@ def test_output_instructions_are_appended(openai_settings) -> None:
         output_structure=_SampleOutput,
     )
 
-    response = config.gen_response(openai_settings=openai_settings)
+    response = configuration.gen_response(openai_settings=openai_settings)
 
-    expected_instructions = config.get_resolved_instructions
+    expected_instructions = configuration.get_resolved_instructions
     assert response._instructions == expected_instructions
 
 
 def test_output_instructions_can_be_skipped(openai_settings) -> None:
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="unit",
         instructions="Base instructions",
         tools=None,
@@ -89,9 +89,9 @@ def test_output_instructions_can_be_skipped(openai_settings) -> None:
         add_output_instructions=False,
     )
 
-    response = config.gen_response(openai_settings=openai_settings)
+    response = configuration.gen_response(openai_settings=openai_settings)
 
-    expected_instructions = config.get_resolved_instructions
+    expected_instructions = configuration.get_resolved_instructions
 
     assert response._instructions == expected_instructions
 

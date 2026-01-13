@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def mock_openai_client(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     client.api_key = "test_api_key"
     client.vector_stores.list.return_value.data = []
     monkeypatch.setattr(
-        "openai_sdk_helpers.config.OpenAI",
+        "openai_sdk_helpers.settings.OpenAI",
         MagicMock(return_value=client),
     )
     return client

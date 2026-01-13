@@ -54,7 +54,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
     Examples
     --------
     >>> from openai_sdk_helpers.streamlit_app import StreamlitAppConfig
-    >>> config = StreamlitAppConfig(
+    >>> configuration = StreamlitAppConfig(
     ...     response=MyResponse,
     ...     display_title="My Assistant",
     ...     description="A helpful AI assistant"
@@ -180,7 +180,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
         Examples
         --------
-        >>> config.normalized_vector_stores()
+        >>> configuration.normalized_vector_stores()
         ['docs', 'knowledge_base']
         """
         return list(self.system_vector_store or [])
@@ -224,7 +224,7 @@ class StreamlitAppConfig(BaseModelJSONSerializable):
 
         Examples
         --------
-        >>> response = config.create_response()
+        >>> response = configuration.create_response()
         >>> result = response.run_sync("Hello")
         """
         return _instantiate_response(self.response)
@@ -238,7 +238,7 @@ class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
 
     Methods
     -------
-    register(config)
+    register(configuration)
         Add a configuration to the registry.
     get(name)
         Retrieve a configuration by name.
@@ -256,9 +256,9 @@ class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
     Examples
     --------
     >>> registry = StreamlitAppRegistry()
-    >>> config = StreamlitAppConfig(response=MyResponse)
-    >>> registry.register(config)
-    >>> registry.get(config.name)
+    >>> configuration = StreamlitAppConfig(response=MyResponse)
+    >>> registry.register(configuration)
+    >>> registry.get(configuration.name)
     StreamlitAppConfig(...)
     """
 
@@ -295,7 +295,7 @@ class StreamlitAppRegistry(RegistryBase[StreamlitAppConfig]):
         Examples
         --------
         >>> from pathlib import Path
-        >>> config = StreamlitAppRegistry.load_app_config(
+        >>> configuration = StreamlitAppRegistry.load_app_config(
         ...     Path("./my_config.py")
         ... )
         """
@@ -328,7 +328,7 @@ def _import_config_module(config_path: Path) -> ModuleType:
 
     Examples
     --------
-    >>> module = _import_config_module(Path("./config.py"))
+    >>> module = _import_config_module(Path("./configuration.py"))
     >>> hasattr(module, 'APP_CONFIG')
     True
     """
@@ -349,7 +349,7 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
 
     Looks for APP_CONFIG in the module and converts it to a validated
     StreamlitAppConfig instance. Supports multiple input formats including
-    dictionaries, ResponseBase instances, and existing config objects.
+    dictionaries, ResponseBase instances, and existing configuration objects.
 
     Parameters
     ----------
@@ -371,8 +371,8 @@ def _extract_config(module: ModuleType) -> StreamlitAppConfig:
 
     Examples
     --------
-    >>> config = _extract_config(module)
-    >>> isinstance(config, StreamlitAppConfig)
+    >>> configuration = _extract_config(module)
+    >>> isinstance(configuration, StreamlitAppConfig)
     True
     """
     if not hasattr(module, "APP_CONFIG"):
@@ -455,7 +455,7 @@ def _config_from_mapping(raw_config: dict) -> StreamlitAppConfig:
 
     Examples
     --------
-    >>> config = _config_from_mapping({
+    >>> configuration = _config_from_mapping({
     ...     'response': MyResponse,
     ...     'display_title': 'My App'
     ... })

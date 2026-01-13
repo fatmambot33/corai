@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from ..environment import DEFAULT_PROMPT_DIR
 from ..structure.validation import ValidationResultStructure
 from .base import AgentBase
-from .config import AgentConfiguration
-from .prompt_utils import DEFAULT_PROMPT_DIR
+from .configuration import AgentConfiguration
 
 
 class ValidatorAgent(AgentBase):
@@ -81,7 +81,7 @@ class ValidatorAgent(AgentBase):
         --------
         >>> validator = ValidatorAgent(default_model="gpt-4o-mini")
         """
-        config = AgentConfiguration(
+        configuration = AgentConfiguration(
             name="validator",
             instructions="Agent instructions",
             description="Validate user input and agent output against guardrails.",
@@ -89,7 +89,9 @@ class ValidatorAgent(AgentBase):
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
-            config=config, prompt_dir=prompt_directory, default_model=default_model
+            configuration=configuration,
+            prompt_dir=prompt_directory,
+            default_model=default_model,
         )
 
     async def run_agent(

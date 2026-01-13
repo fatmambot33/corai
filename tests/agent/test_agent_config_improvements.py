@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import (
+from openai_sdk_helpers.agent.configuration import (
     AgentConfiguration,
     AgentRegistry,
 )
@@ -40,10 +40,10 @@ def test_agent_config_replace_method() -> None:
 
 def test_agent_config_to_agent_base() -> None:
     """Test that AgentConfiguration.gen_agent creates a AgentBase instance."""
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test_agent", model="gpt-4o-mini", instructions="Test instructions"
     )
-    agent = config.gen_agent()
+    agent = configuration.gen_agent()
 
     assert agent.name == "test_agent"
     assert agent.model == "gpt-4o-mini"
@@ -51,7 +51,7 @@ def test_agent_config_to_agent_base() -> None:
 
 def test_agent_registry_load_from_directory(tmp_path: Path) -> None:
     """Test loading configurations from a directory."""
-    # Create some config files
+    # Create some configuration files
     config1 = AgentConfiguration(
         name="agent1",
         model="gpt-4o-mini",
@@ -114,11 +114,11 @@ def test_agent_registry_load_from_directory_invalid_json(tmp_path: Path) -> None
     configs_dir = tmp_path / "configs"
     configs_dir.mkdir()
 
-    # Create valid config
-    config = AgentConfiguration(
+    # Create valid configuration
+    configuration = AgentConfiguration(
         name="valid", model="gpt-4o-mini", instructions="Test instructions"
     )
-    config.to_json_file(configs_dir / "valid.json")
+    configuration.to_json_file(configs_dir / "valid.json")
 
     # Create invalid JSON file
     (configs_dir / "invalid.json").write_text("not valid json {")

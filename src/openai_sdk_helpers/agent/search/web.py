@@ -18,7 +18,7 @@ from ...structure.web_search import (
     WebSearchReportStructure,
 )
 from ...tools import tool_handler_factory
-from ..config import AgentConfiguration
+from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
 
@@ -33,7 +33,7 @@ class WebAgentPlanner(SearchPlanner[WebSearchPlanStructure]):
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -84,7 +84,7 @@ class WebSearchToolAgent(
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -189,7 +189,7 @@ class WebAgentWriter(SearchWriter[WebSearchReportStructure]):
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -236,7 +236,7 @@ class WebAgentSearch:
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
