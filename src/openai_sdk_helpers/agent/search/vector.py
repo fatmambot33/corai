@@ -23,7 +23,7 @@ from .base import SearchPlanner, SearchToolAgent, SearchWriter
 MAX_CONCURRENT_SEARCHES = 10
 
 
-class VectorSearchPlanner(SearchPlanner[VectorSearchPlanStructure]):
+class VectorAgentPlanner(SearchPlanner[VectorSearchPlanStructure]):
     """Plan vector searches to satisfy a user query.
 
     Parameters
@@ -336,7 +336,7 @@ class VectorSearch:
         """
         trace_id = gen_trace_id()
         with trace("VectorSearch trace", trace_id=trace_id):
-            planner = VectorSearchPlanner(
+            planner = VectorAgentPlanner(
                 prompt_dir=self._prompt_dir, default_model=self._default_model
             )
             tool = VectorSearchTool(
@@ -420,7 +420,7 @@ class VectorSearch:
 
 __all__ = [
     "MAX_CONCURRENT_SEARCHES",
-    "VectorSearchPlanner",
+    "VectorAgentPlanner",
     "VectorSearchTool",
     "VectorSearchWriter",
     "VectorSearch",

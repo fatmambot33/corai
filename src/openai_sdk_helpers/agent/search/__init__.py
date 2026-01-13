@@ -10,7 +10,7 @@ from .web import (
 )
 from .vector import (
     MAX_CONCURRENT_SEARCHES as VECTOR_MAX_CONCURRENT_SEARCHES,
-    VectorSearchPlanner,
+    VectorAgentPlanner,
     VectorSearchTool,
     VectorSearchWriter,
     VectorSearch,
@@ -26,7 +26,7 @@ __all__ = [
     "WebAgentWriter",
     "WebAgentSearch",
     "VECTOR_MAX_CONCURRENT_SEARCHES",
-    "VectorSearchPlanner",
+    "VectorAgentPlanner",
     "VectorSearchTool",
     "VectorSearchWriter",
     "VectorSearch",

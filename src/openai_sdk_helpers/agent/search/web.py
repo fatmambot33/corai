@@ -300,55 +300,6 @@ class WebAgentSearch:
             web_search_report=search_report,
         )
 
-    def run_agent_sync(self, search_query: str) -> WebSearchStructure:
-        """Run :meth:`run_agent_async` synchronously for ``search_query``.
-
-        Parameters
-        ----------
-        search_query : str
-            User's research query.
-
-        Returns
-        -------
-        WebSearchStructure
-            Completed research output.
-        """
-        return run_coroutine_agent_sync(self.run_agent_async(search_query))
-
-    async def run_web_agent_async(self, search_query: str) -> WebSearchStructure:
-        """Return a research report for the given query using ``WebAgentSearch``.
-
-        Parameters
-        ----------
-        search_query : str
-            User's research query.
-
-        Returns
-        -------
-        WebSearchStructure
-            Completed research output.
-        """
-        return await self.run_agent_async(search_query=search_query)
-
-    @staticmethod
-    def run_web_agent_sync(search_query: str) -> WebSearchStructure:
-        """Run :meth:`run_web_agent_async` synchronously for ``search_query``.
-
-        Parameters
-        ----------
-        search_query : str
-            User's research query.
-
-        Returns
-        -------
-        WebSearchStructure
-            Completed research output.
-        """
-        return run_coroutine_agent_sync(
-            WebAgentSearch().run_web_agent_async(search_query=search_query)
-        )
-
-
 __all__ = [
     "MAX_CONCURRENT_SEARCHES",
     "WebAgentPlanner",
