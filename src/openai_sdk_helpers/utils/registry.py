@@ -5,7 +5,11 @@ from __future__ import annotations
 import warnings
 from pathlib import Path
 from typing import Generic, TypeVar
-from typing import Protocol, Self
+from typing import Protocol
+try:
+    from typing import Self  # Python 3.11+
+except ImportError:
+    from typing_extensions import Self  # type: ignore[no-redef]
 from .path_utils import ensure_directory
 
 
@@ -30,7 +34,7 @@ class RegistryProtocol(Protocol):
         ...
 
     @classmethod
-    def from_json_file(cls, filepath: Path | str) -> Self:
+    def from_json_file(cls, filepath: Path | str) -> "Self":
         """Load an instance from a JSON file."""
         ...
 
