@@ -24,6 +24,7 @@ from ..utils.json.data_class import DataclassJSONSerializable
 from ..structure.base import StructureBase
 from ..structure.prompt import PromptStructure
 
+
 from ..utils import (
     check_filepath,
     log,
@@ -34,7 +35,7 @@ from ..tools import tool_handler_factory
 from .runner import run_async, run_streamed, run_sync
 
 if TYPE_CHECKING:
-    from ..config import OpenAISettings
+    from ..settings import OpenAISettings
     from ..response.base import ResponseBase, ToolHandler
 
 
@@ -130,22 +131,22 @@ class AgentBase(DataclassJSONSerializable):
     Create a basic agent from configuration:
 
     >>> from openai_sdk_helpers.agent import AgentBase, AgentConfiguration
-    >>> config = AgentConfiguration(
+    >>> configuration = AgentConfiguration(
     ...     name="my_agent",
     ...     description="A custom agent",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
+    >>> agent = AgentBase(configuration=configuration, default_model="gpt-4o-mini")
     >>> result = agent.run_sync("What is 2+2?")
 
     Use absolute path to template:
 
-    >>> config = AgentConfiguration(
+    >>> configuration = AgentConfiguration(
     ...     name="my_agent",
     ...     template_path="/absolute/path/to/template.jinja",
     ...     model="gpt-4o-mini"
     ... )
-    >>> agent = AgentBase(config=config, default_model="gpt-4o-mini")
+    >>> agent = AgentBase(configuration=configuration, default_model="gpt-4o-mini")
 
     Use async execution:
 
@@ -200,7 +201,7 @@ class AgentBase(DataclassJSONSerializable):
     def __init__(
         self,
         *,
-        config: AgentConfigurationProtocol,
+        configuration: AgentConfigurationProtocol,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
         data_path: Path | str | None = None,
         prompt_dir: Optional[Path] = None,
@@ -210,29 +211,29 @@ class AgentBase(DataclassJSONSerializable):
 
         Parameters
         ----------
-        config : AgentConfigurationProtocol
+        configuration : AgentConfigurationProtocol
             Configuration describing this agent.
         run_context_wrapper : RunContextWrapper or None, default=None
             Optional wrapper providing runtime context for prompt rendering.
         prompt_dir : Path or None, default=None
             Optional directory holding prompt templates. Used when
-            ``config.template_path`` is not provided or is relative. If
-            ``config.template_path`` is an absolute path, this parameter is
+            ``configuration.template_path`` is not provided or is relative. If
+            ``configuration.template_path`` is an absolute path, this parameter is
             ignored.
         default_model : str or None, default=None
-            Optional fallback model identifier if the config does not supply one.
+            Optional fallback model identifier if the configuration does not supply one.
         """
-        name = config.name
-        description = config.description or ""
-        model = config.model or default_model
+        name = configuration.name
+        description = configuration.description or ""
+        model = configuration.model or default_model
         if not model:
             raise ValueError("Model is required to construct the agent.")
 
-        prompt_path = config.resolve_prompt_path(prompt_dir)
+        prompt_path = configuration.resolve_prompt_path(prompt_dir)
 
         # Build template from file or fall back to instructions
         if prompt_path is None:
-            instructions_text = config.instructions_text
+            instructions_text = configuration.instructions_text
             self._template = Template(instructions_text)
             self._instructions = instructions_text
         elif prompt_path.exists():
@@ -261,14 +262,16 @@ class AgentBase(DataclassJSONSerializable):
 
             self._data_path = get_data_path(self.__class__.__name__)
 
-        self._input_structure = config.input_structure
-        self._output_structure = config.output_structure or config.input_structure
-        self._tools = config.tools
-        self._model_settings = config.model_settings
-        self._handoffs = config.handoffs
-        self._input_guardrails = config.input_guardrails
-        self._output_guardrails = config.output_guardrails
-        self._session = config.session
+        self._input_structure = configuration.input_structure
+        self._output_structure = (
+            configuration.output_structure or configuration.input_structure
+        )
+        self._tools = configuration.tools
+        self._model_settings = configuration.model_settings
+        self._handoffs = configuration.handoffs
+        self._input_guardrails = configuration.input_guardrails
+        self._output_guardrails = configuration.output_guardrails
+        self._session = configuration.session
         self._run_context_wrapper = run_context_wrapper
 
     def _build_prompt_from_jinja(self) -> str:
@@ -474,7 +477,7 @@ class AgentBase(DataclassJSONSerializable):
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
-            If not provided, uses the session from config if available.
+            If not provided, uses the session from configuration if available.
 
         Returns
         -------
@@ -483,7 +486,7 @@ class AgentBase(DataclassJSONSerializable):
         """
         if self._output_structure is not None and output_structure is None:
             output_structure = self._output_structure
-        # Use session from parameter, fall back to config session
+        # Use session from parameter, fall back to configuration session
         session_to_use = session if session is not None else self._session
         return await run_async(
             agent=self.get_agent(),
@@ -513,7 +516,7 @@ class AgentBase(DataclassJSONSerializable):
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
-            If not provided, uses the session from config if available.
+            If not provided, uses the session from configuration if available.
 
         Returns
         -------
@@ -522,7 +525,7 @@ class AgentBase(DataclassJSONSerializable):
         """
         if self._output_structure is not None and output_structure is None:
             output_structure = self._output_structure
-        # Use session from parameter, fall back to config session
+        # Use session from parameter, fall back to configuration session
         session_to_use = session if session is not None else self._session
         return run_sync(
             agent=self.get_agent(),
@@ -552,14 +555,14 @@ class AgentBase(DataclassJSONSerializable):
             Optional type used to cast the final output.
         session : Session or None, default=None
             Optional session for maintaining conversation history across runs.
-            If not provided, uses the session from config if available.
+            If not provided, uses the session from configuration if available.
 
         Returns
         -------
         RunResultStreaming
             Streaming output wrapper from the agent execution.
         """
-        # Use session from parameter, fall back to config session
+        # Use session from parameter, fall back to configuration session
         session_to_use = session if session is not None else self._session
         output_structure_to_use = output_structure or self._output_structure
         result = run_streamed(
@@ -682,7 +685,7 @@ class AgentBase(DataclassJSONSerializable):
         >>> response = agent.build_response(openai_settings=OpenAISettings.from_env())
         """
         from ..response.base import ResponseBase, ToolHandler
-        from ..config import OpenAISettings
+        from ..settings import OpenAISettings
 
         if not isinstance(openai_settings, OpenAISettings):
             raise TypeError("openai_settings must be an OpenAISettings instance")
@@ -770,7 +773,7 @@ class AgentBase(DataclassJSONSerializable):
 
         Examples
         --------
-        >>> agent = AgentBase(config, default_model="gpt-4o-mini")
+        >>> agent = AgentBase(configuration, default_model="gpt-4o-mini")
         >>> try:
         ...     result = agent.run_sync("query")
         ... finally:

@@ -21,7 +21,7 @@ from typing import Any, Protocol
 from openai import OpenAI
 
 
-class SupportsOpenAIClient(Protocol):
+class OpenAIClientProtocol(Protocol):
     """Protocol describing the subset of the OpenAI client the SDK relies on.
 
     Defines the minimum interface required for OpenAI client compatibility.
@@ -46,7 +46,7 @@ class SupportsOpenAIClient(Protocol):
     files: Any
 
 
-OpenAIClient = OpenAI | SupportsOpenAIClient
+OpenAIClient = OpenAI | OpenAIClientProtocol
 """Type alias for OpenAI client or compatible protocol implementation.
 
 Accepts either the official OpenAI client or any object satisfying the
@@ -54,4 +54,4 @@ SupportsOpenAIClient protocol.
 """
 
 
-__all__ = ["SupportsOpenAIClient", "OpenAIClient"]
+__all__ = ["OpenAIClientProtocol", "OpenAIClient"]

@@ -166,7 +166,7 @@ class BaseModelJSONSerializable(BaseModel):
 
         Examples
         --------
-        >>> instance = MyConfig.from_json_file("config.json")
+        >>> instance = MyConfig.from_json_file("configuration.json")
         """
         target = Path(filepath)
         if not target.exists():

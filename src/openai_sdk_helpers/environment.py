@@ -18,8 +18,6 @@ get_data_path(name)
 
 from __future__ import annotations
 
-import os
-import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -61,18 +59,15 @@ def get_data_path(name: str) -> Path:
     return ensure_directory(path)
 
 
-def get_model() -> str:
-    """Return the default model identifier.
+def get_package_path() -> Path:
+    """Return the root path of the openai-sdk-helpers package.
 
     Returns
     -------
-    str
-        Default OpenAI model identifier.
-
-    Examples
-    --------
-    >>> from openai_sdk_helpers.environment import _get_default_model
-    >>> _get_default_model()
-    'gpt-4o-mini'
+    Path
+        Root directory path of the openai-sdk-helpers package.
     """
-    return os.getenv("DEFAULT_MODEL", DEFAULT_MODEL)
+    return Path(__file__).parent
+
+
+DEFAULT_PROMPT_DIR = get_package_path() / "prompt"

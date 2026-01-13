@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
-from typing import Generic, Protocol, TypeVar
-from typing_extensions import Self
-
+from typing import Generic, TypeVar
+from typing import Protocol, Self
 from .path_utils import ensure_directory
 
 
-class RegistrySerializable(Protocol):
+class RegistryProtocol(Protocol):
     """Protocol describing serializable registry entries.
 
     Methods
@@ -36,7 +35,7 @@ class RegistrySerializable(Protocol):
         ...
 
 
-T = TypeVar("T", bound=RegistrySerializable)
+T = TypeVar("T", bound=RegistryProtocol)
 
 
 class RegistryBase(Generic[T]):
@@ -53,7 +52,7 @@ class RegistryBase(Generic[T]):
 
     Methods
     -------
-    register(config)
+    register(configuration)
         Add a configuration to the registry.
     get(name)
         Retrieve a configuration by name.
@@ -82,12 +81,12 @@ class RegistryBase(Generic[T]):
         """
         return self._configs
 
-    def register(self, config: T) -> None:
+    def register(self, configuration: T) -> None:
         """Add a configuration to the registry.
 
         Parameters
         ----------
-        config : T
+        configuration : T
             Configuration to register. Must have a 'name' attribute.
 
         Raises
@@ -95,13 +94,13 @@ class RegistryBase(Generic[T]):
         ValueError
             If a configuration with the same name is already registered.
         """
-        name = getattr(config, "name")
+        name = getattr(configuration, "name")
         if name in self._configs:
             raise ValueError(
                 f"Configuration '{name}' is already registered. "
                 "Use a unique name or clear the registry first."
             )
-        self._configs[name] = config
+        self._configs[name] = configuration
 
     def get(self, name: str) -> T:
         """Retrieve a configuration by name.
@@ -166,10 +165,10 @@ class RegistryBase(Generic[T]):
             return
 
         for config_name in config_names:
-            config = self.get(config_name)
+            configuration = self.get(config_name)
             filename = f"{config_name}.json"
-            filepath = dir_path / config.__class__.__name__ / filename
-            config.to_json_file(filepath)
+            filepath = dir_path / configuration.__class__.__name__ / filename
+            configuration.to_json_file(filepath)
 
     def load_from_directory(self, path: Path | str, *, config_class: type[T]) -> int:
         """Load all configurations from JSON files in a directory.
@@ -208,8 +207,8 @@ class RegistryBase(Generic[T]):
         count = 0
         for json_file in sorted(dir_path.glob("*.json")):
             try:
-                config = config_class.from_json_file(json_file)
-                self.register(config)
+                configuration = config_class.from_json_file(json_file)
+                self.register(configuration)
                 count += 1
             except Exception as exc:
                 # Log warning but continue processing other files

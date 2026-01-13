@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.streamlit_app import StreamlitAppConfig, StreamlitAppRegistry
 from openai_sdk_helpers.structure.base import StructureBase
@@ -18,7 +18,7 @@ def _write_config(tmp_path: Path, body: str) -> Path:
 
 
 class _DummyResponse(ResponseBase[StructureBase]):
-    """Minimal :class:`ResponseBase` subclass for config construction tests.
+    """Minimal :class:`ResponseBase` subclass for configuration construction tests.
 
     Methods
     -------
@@ -43,12 +43,12 @@ def test_load_app_config_success(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -68,11 +68,11 @@ APP_CONFIG = {"response": TempResponse}
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    assert config.display_title == "Example copilot"
-    assert config.normalized_vector_stores() == []
-    assert isinstance(config.create_response(), ResponseBase)
+    assert configuration.display_title == "Example copilot"
+    assert configuration.normalized_vector_stores() == []
+    assert isinstance(configuration.create_response(), ResponseBase)
 
 
 def test_missing_config_file() -> None:
@@ -130,8 +130,8 @@ def test_vector_store_normalization_returns_copy(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -151,13 +151,13 @@ APP_CONFIG = {"response": TempResponse, "system_vector_store": "files"}
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    stores = config.normalized_vector_stores()
+    stores = configuration.normalized_vector_stores()
     stores.append("mutated")
 
-    assert config.system_vector_store == ["files"]
-    assert config.normalized_vector_stores() == ["files"]
+    assert configuration.system_vector_store == ["files"]
+    assert configuration.normalized_vector_stores() == ["files"]
 
 
 def test_load_app_config_registry(tmp_path: Path) -> None:
@@ -166,7 +166,7 @@ def test_load_app_config_registry(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -186,13 +186,13 @@ APP_CONFIG = {"response": TempResponse}
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    assert isinstance(config, StreamlitAppConfig)
+    assert isinstance(configuration, StreamlitAppConfig)
 
 
 def test_response_base_builds_streamlit_config() -> None:
-    config = _DummyResponse.build_streamlit_config(
+    configuration = _DummyResponse.build_streamlit_config(
         display_title="Custom title",
         description="Custom description",
         system_vector_store="files",
@@ -200,14 +200,14 @@ def test_response_base_builds_streamlit_config() -> None:
         model="dummy",
     )
 
-    assert isinstance(config, StreamlitAppConfig)
-    assert config.display_title == "Custom title"
-    assert config.description == "Custom description"
-    assert config.preserve_vector_stores is True
-    assert config.model == "dummy"
-    assert config.system_vector_store == ["files"]
+    assert isinstance(configuration, StreamlitAppConfig)
+    assert configuration.display_title == "Custom title"
+    assert configuration.description == "Custom description"
+    assert configuration.preserve_vector_stores is True
+    assert configuration.model == "dummy"
+    assert configuration.system_vector_store == ["files"]
 
-    response_instance = config.create_response()
+    response_instance = configuration.create_response()
 
     assert isinstance(response_instance, _DummyResponse)
 
@@ -218,7 +218,7 @@ def test_config_accepts_response_alias(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -238,10 +238,10 @@ APP_CONFIG = {"response": TempResponse, "display_title": "Alias title"}
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    assert config.display_title == "Alias title"
-    assert isinstance(config.create_response(), ResponseBase)
+    assert configuration.display_title == "Alias title"
+    assert isinstance(configuration.create_response(), ResponseBase)
 
 
 def test_config_accepts_response_class_directly(tmp_path: Path) -> None:
@@ -250,7 +250,7 @@ def test_config_accepts_response_class_directly(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -270,9 +270,9 @@ APP_CONFIG = TempResponse
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    response_instance = config.create_response()
+    response_instance = configuration.create_response()
 
     assert isinstance(response_instance, ResponseBase)
     assert response_instance.__class__.__name__ == "TempResponse"
@@ -284,7 +284,7 @@ def test_config_accepts_response_instance(tmp_path: Path) -> None:
         """
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 class TempResponse(ResponseBase[StructureBase]):
@@ -304,9 +304,9 @@ APP_CONFIG = TempResponse()
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
-    response_instance = config.create_response()
+    response_instance = configuration.create_response()
 
     assert isinstance(response_instance, ResponseBase)
     assert response_instance.__class__.__name__ == "TempResponse"
@@ -320,7 +320,7 @@ APP_CONFIG = {"response": lambda: "bad"}
 """,
     )
 
-    config = StreamlitAppRegistry.load_app_config(config_path=config_path)
+    configuration = StreamlitAppRegistry.load_app_config(config_path=config_path)
 
     with pytest.raises(TypeError):
-        config.create_response()
+        configuration.create_response()

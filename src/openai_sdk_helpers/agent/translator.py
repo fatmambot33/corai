@@ -5,11 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .base import AgentBase
-from .config import AgentConfiguration
-from .prompt_utils import DEFAULT_PROMPT_DIR
+
 from ..structure import TranslationStructure
 from ..structure.base import StructureBase
+from ..environment import DEFAULT_PROMPT_DIR
+
+from .base import AgentBase
+from .configuration import AgentConfiguration
 
 
 class TranslatorAgent(AgentBase):
@@ -82,7 +84,7 @@ class TranslatorAgent(AgentBase):
         --------
         >>> translator = TranslatorAgent(default_model="gpt-4o-mini")
         """
-        config = AgentConfiguration(
+        configuration = AgentConfiguration(
             name="translator",
             instructions="Agent instructions",
             description="Translate text into the requested language.",
@@ -90,7 +92,9 @@ class TranslatorAgent(AgentBase):
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
-            config=config, prompt_dir=prompt_directory, default_model=default_model
+            configuration=configuration,
+            prompt_dir=prompt_directory,
+            default_model=default_model,
         )
 
     async def run_agent(

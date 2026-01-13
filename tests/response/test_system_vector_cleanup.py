@@ -4,7 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
 
 
@@ -28,7 +28,7 @@ def test_close_cleans_system_vector_storage(monkeypatch):
 
     dummy_client = DummyClient()
     monkeypatch.setattr(
-        "openai_sdk_helpers.config.OpenAI",
+        "openai_sdk_helpers.settings.OpenAI",
         lambda *_a, **_kw: dummy_client,
     )
 

@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from openai_sdk_helpers.structure.plan.enum import AgentEnum
-from openai_sdk_helpers.agent.coordination import CoordinatorAgent
+from openai_sdk_helpers.agent.coordinator import CoordinatorAgent
 from openai_sdk_helpers.structure import (
     TaskStructure,
     PlanStructure,
@@ -50,7 +50,7 @@ def coordinator_agent(
     mock_summarize_fn,
 ):
     """Return an CoordinatorAgent instance."""
-    with patch("openai_sdk_helpers.agent.coordination.CoordinatorAgent.save"):
+    with patch("openai_sdk_helpers.agent.coordinator.CoordinatorAgent.save"):
         yield CoordinatorAgent(
             prompt_fn=mock_prompt_fn,
             build_plan_fn=mock_build_plan_fn,

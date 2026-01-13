@@ -1,12 +1,9 @@
-import importlib.util
 import json
-import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
-import pytest
 
 # Import normally instead of dynamic loading
 from openai_sdk_helpers.environment import get_data_path
@@ -17,7 +14,7 @@ from openai_sdk_helpers.utils.json import (
     customJSONEncoder,
 )
 from openai_sdk_helpers.utils.path_utils import check_filepath
-from openai_sdk_helpers.logging_config import log
+from openai_sdk_helpers.logging import log
 
 
 def test_ensure_list_behavior():

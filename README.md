@@ -475,7 +475,7 @@ src/openai_sdk_helpers/
 │   ├── summary.py     # Summary output structures
 │   └── validation.py  # Validation result structures
 ├── vector_storage/     # Vector store abstraction layer
-├── config.py          # OpenAI settings and configuration
+├── configuration.py          # OpenAI settings and configuration
 └── utils/             # JSON serialization, logging, and helpers
 
 tests/                  # Comprehensive unit test suite
@@ -527,7 +527,7 @@ These modules use the standard `openai` SDK for direct API interactions with fin
 
 ### Configuration and Data Structures (Shared)
 
-- **`openai_sdk_helpers.config.OpenAISettings`**  
+- **`openai_sdk_helpers.settings.OpenAISettings`**  
   Centralizes OpenAI API configuration with environment variable support.
   Creates configured OpenAI clients with consistent settings.
 

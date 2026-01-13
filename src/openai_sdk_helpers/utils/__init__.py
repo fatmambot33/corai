@@ -58,7 +58,7 @@ from .json import (
 from .registry import RegistryBase
 
 from .path_utils import check_filepath, ensure_directory
-from openai_sdk_helpers.logging_config import log
+from openai_sdk_helpers.logging import log
 from .validation import (
     validate_choice,
     validate_dict_mapping,
@@ -78,7 +78,7 @@ from .output_validation import (
     ValidationRule,
     validate_output,
 )
-from .deprecation import DeprecationHelper, deprecated, warn_deprecated
+
 from .encoding import (
     create_file_data_url,
     create_image_data_url,
@@ -123,10 +123,6 @@ __all__ = [
     "LengthValidator",
     "OutputValidator",
     "validate_output",
-    # Deprecation
-    "deprecated",
-    "warn_deprecated",
-    "DeprecationHelper",
     # Encoding
     "encode_image",
     "encode_file",

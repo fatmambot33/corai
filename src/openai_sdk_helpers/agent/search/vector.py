@@ -18,7 +18,7 @@ from ...structure.vector_search import (
 )
 from ...tools import tool_handler_factory
 from ...vector_storage import VectorStorage
-from ..config import AgentConfiguration
+from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
 
@@ -33,7 +33,7 @@ class VectorAgentPlanner(SearchPlanner[VectorSearchPlanStructure]):
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -86,7 +86,7 @@ class VectorSearchTool(
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
     store_name : str or None, default=None
         Name of the vector store to query.
     max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES
@@ -204,7 +204,7 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -256,7 +256,7 @@ class VectorAgentSearch:
     prompt_dir : Path or None, default=None
         Directory containing prompt templates.
     default_model : str or None, default=None
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
     vector_store_name : str or None, default=None
         Name of the vector store to query.
     max_concurrent_searches : int, default=MAX_CONCURRENT_SEARCHES

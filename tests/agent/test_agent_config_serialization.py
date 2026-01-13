@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from openai_sdk_helpers.agent.config import AgentConfiguration
+from openai_sdk_helpers.agent.configuration import AgentConfiguration
 
 
 def test_agent_config_to_json() -> None:
     """Test that AgentConfiguration can be serialized to JSON."""
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test_agent",
         instructions="Test instructions",
         description="A test agent",
@@ -20,7 +20,7 @@ def test_agent_config_to_json() -> None:
         template_path="/tmp/template.jinja",
     )
 
-    json_data = config.to_json()
+    json_data = configuration.to_json()
 
     assert isinstance(json_data, dict)
     assert json_data["name"] == "test_agent"
@@ -33,7 +33,7 @@ def test_agent_config_to_json() -> None:
 
 def test_agent_config_to_json_file(tmp_path: Path) -> None:
     """Test that AgentConfiguration can be written to a JSON file."""
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test_agent",
         instructions="Test instructions",
         description="A test agent",
@@ -41,7 +41,7 @@ def test_agent_config_to_json_file(tmp_path: Path) -> None:
     )
 
     json_file = tmp_path / "agent_config.json"
-    result_path = config.to_json_file(json_file)
+    result_path = configuration.to_json_file(json_file)
 
     assert result_path == str(json_file)
     assert json_file.exists()
@@ -57,13 +57,13 @@ def test_agent_config_to_json_file(tmp_path: Path) -> None:
 
 def test_agent_config_json_serialization_with_none_fields() -> None:
     """Test JSON serialization with None fields."""
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="minimal_agent",
         instructions="Test instructions",
         model="gpt-4o-mini",
     )
 
-    json_data = config.to_json()
+    json_data = configuration.to_json()
 
     assert json_data["name"] == "minimal_agent"
     assert json_data["model"] == "gpt-4o-mini"
@@ -95,14 +95,14 @@ def test_agent_config_from_json() -> None:
         "session": None,
     }
 
-    config = AgentConfiguration.from_json(json_data)
+    configuration = AgentConfiguration.from_json(json_data)
 
-    assert config.name == "test_agent"
-    assert config.description == "A test agent"
-    assert config.model == "gpt-4o-mini"
-    assert config.instructions == "You are a helpful assistant"
+    assert configuration.name == "test_agent"
+    assert configuration.description == "A test agent"
+    assert configuration.model == "gpt-4o-mini"
+    assert configuration.instructions == "You are a helpful assistant"
     # template_path gets converted to Path when field name contains "path"
-    assert config.template_path == Path("/tmp/template.jinja")
+    assert configuration.template_path == Path("/tmp/template.jinja")
 
 
 def test_agent_config_from_json_file(tmp_path: Path) -> None:
@@ -127,11 +127,11 @@ def test_agent_config_from_json_file(tmp_path: Path) -> None:
     with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
-    config = AgentConfiguration.from_json_file(json_file)
+    configuration = AgentConfiguration.from_json_file(json_file)
 
-    assert config.name == "test_agent"
-    assert config.description == "A test agent"
-    assert config.model == "gpt-4o-mini"
+    assert configuration.name == "test_agent"
+    assert configuration.description == "A test agent"
+    assert configuration.model == "gpt-4o-mini"
 
 
 def test_agent_config_round_trip_serialization() -> None:
@@ -185,14 +185,14 @@ def test_agent_config_with_path_template(tmp_path: Path) -> None:
     template_path = tmp_path / "template.jinja"
     template_path.write_text("Test template")
 
-    config = AgentConfiguration(
+    configuration = AgentConfiguration(
         name="test_agent",
         instructions="Test instructions",
         model="gpt-4o-mini",
         template_path=template_path,
     )
 
-    json_data = config.to_json()
+    json_data = configuration.to_json()
 
     # Path should be converted to string
     assert isinstance(json_data["template_path"], str)

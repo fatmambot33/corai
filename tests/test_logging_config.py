@@ -3,7 +3,7 @@
 import logging
 
 
-from openai_sdk_helpers.logging_config import log
+from openai_sdk_helpers.logging import log
 
 
 class TestLogging:

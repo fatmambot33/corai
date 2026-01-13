@@ -24,12 +24,12 @@ class AgentRegistry(RegistryBase["AgentConfiguration"]):
     Examples
     --------
     >>> registry = AgentRegistry()
-    >>> config = AgentConfiguration(
+    >>> configuration = AgentConfiguration(
     ...     name="test_agent",
     ...     model="gpt-4o-mini",
     ...     instructions="Test instructions"
     ... )
-    >>> registry.register(config)
+    >>> registry.register(configuration)
     >>> retrieved = registry.get("test_agent")
     >>> retrieved.name
     'test_agent'
@@ -85,10 +85,10 @@ def get_default_registry() -> AgentRegistry:
     Examples
     --------
     >>> registry = get_default_registry()
-    >>> config = AgentConfiguration(
+    >>> configuration = AgentConfiguration(
     ...     name="test", model="gpt-4o-mini", instructions="Test instructions"
     ... )
-    >>> registry.register(config)
+    >>> registry.register(configuration)
     """
     return _default_registry
 
@@ -165,12 +165,12 @@ class AgentConfiguration(DataclassJSONSerializable):
 
     Examples
     --------
-    >>> config = AgentConfiguration(
+    >>> configuration = AgentConfiguration(
     ...     name="summarizer",
     ...     description="Summarizes text",
     ...     model="gpt-4o-mini"
     ... )
-    >>> config.name
+    >>> configuration.name
     'summarizer'
     """
 
@@ -308,7 +308,7 @@ class AgentConfiguration(DataclassJSONSerializable):
         prompt_dir : Path or None, default=None
             Optional directory holding prompt templates.
         default_model : str or None, default=None
-            Optional fallback model identifier if config doesn't specify one.
+            Optional fallback model identifier if configuration doesn't specify one.
 
         Returns
         -------
@@ -317,17 +317,17 @@ class AgentConfiguration(DataclassJSONSerializable):
 
         Examples
         --------
-        >>> config = AgentConfiguration(
+        >>> configuration = AgentConfiguration(
         ...     name="helper", model="gpt-4o-mini", instructions="Help the user"
         ... )
-        >>> agent = config.gen_agent()
+        >>> agent = configuration.gen_agent()
         >>> result = agent.run_sync("Hello!")
         """
         # Import here to avoid circular dependency
         from .base import AgentBase
 
         return AgentBase(
-            config=self,
+            configuration=self,
             run_context_wrapper=run_context_wrapper,
             prompt_dir=prompt_dir,
             default_model=default_model,
@@ -352,10 +352,10 @@ class AgentConfiguration(DataclassJSONSerializable):
 
         Examples
         --------
-        >>> config = AgentConfiguration(
+        >>> configuration = AgentConfiguration(
         ...     name="agent1", model="gpt-4o-mini", instructions="Agent instructions"
         ... )
-        >>> config2 = config.replace(name="agent2", description="Modified")
+        >>> config2 = configuration.replace(name="agent2", description="Modified")
         >>> config2.name
         'agent2'
         >>> config2.model
@@ -387,7 +387,7 @@ class AgentConfiguration(DataclassJSONSerializable):
         >>> response_config.name
         'responder'
         """
-        from ..response.config import ResponseConfiguration
+        from ..response.configuration import ResponseConfiguration
 
         return ResponseConfiguration(
             name=self.name,

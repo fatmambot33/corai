@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional, Type
 from ..structure import SummaryStructure
 from ..structure.base import StructureBase
 from .base import AgentBase
-from .config import AgentConfiguration
-from .prompt_utils import DEFAULT_PROMPT_DIR
+from .configuration import AgentConfiguration
+from ..environment import DEFAULT_PROMPT_DIR
 
 
 class SummarizerAgent(AgentBase):
@@ -84,7 +84,7 @@ class SummarizerAgent(AgentBase):
         --------
         >>> summarizer = SummarizerAgent(default_model="gpt-4o-mini")
         """
-        config = AgentConfiguration(
+        configuration = AgentConfiguration(
             name="summarizer",
             instructions="Agent instructions",
             description="Summarize passages into concise findings.",
@@ -92,7 +92,9 @@ class SummarizerAgent(AgentBase):
         )
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
-            config=config, prompt_dir=prompt_directory, default_model=default_model
+            configuration=configuration,
+            prompt_dir=prompt_directory,
+            default_model=default_model,
         )
 
     async def run_agent(

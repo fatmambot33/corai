@@ -16,7 +16,7 @@ def test_response_registry_basic_operations():
     registry = ResponseRegistry()
 
     # Create a simple configuration
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -25,7 +25,7 @@ def test_response_registry_basic_operations():
     )
 
     # Register configuration
-    registry.register(config)
+    registry.register(configuration)
 
     # Retrieve configuration
     retrieved = registry.get("test_config")
@@ -76,7 +76,7 @@ def test_response_registry_clear():
     """Test that clear removes all configurations."""
     registry = ResponseRegistry()
 
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test",
         instructions="Test",
         tools=None,
@@ -84,7 +84,7 @@ def test_response_registry_clear():
         output_structure=None,
     )
 
-    registry.register(config)
+    registry.register(configuration)
     assert len(registry.list_names()) == 1
 
     registry.clear()
@@ -106,8 +106,8 @@ def test_response_registry_multiple_configs():
         for i in range(5)
     ]
 
-    for config in configs:
-        registry.register(config)
+    for configuration in configs:
+        registry.register(configuration)
 
     names = registry.list_names()
     assert len(names) == 5
@@ -121,8 +121,8 @@ def test_get_default_registry():
 
     assert registry1 is registry2  # Same instance
 
-    # Add a config to verify it persists
-    config = ResponseConfiguration(
+    # Add a configuration to verify it persists
+    configuration = ResponseConfiguration(
         name="singleton_test",
         instructions="Test",
         tools=None,
@@ -130,7 +130,7 @@ def test_get_default_registry():
         output_structure=None,
     )
 
-    registry1.register(config)
+    registry1.register(configuration)
     assert "singleton_test" in registry2.list_names()
 
     # Clean up
@@ -161,6 +161,6 @@ def test_response_registry_isolated_instances():
     registry1.register(config1)
     registry2.register(config2)
 
-    # Each registry should only have its own config
+    # Each registry should only have its own configuration
     assert registry1.list_names() == ["config1"]
     assert registry2.list_names() == ["config2"]

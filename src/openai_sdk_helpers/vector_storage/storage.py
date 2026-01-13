@@ -21,7 +21,7 @@ from openai.types.vector_store import VectorStore
 from openai.types.vector_store_search_response import VectorStoreSearchResponse
 from tqdm import tqdm
 
-from ..config import OpenAISettings
+from ..settings import OpenAISettings
 from ..errors import ConfigurationError, VectorStorageError
 from ..types import OpenAIClient
 from ..utils import ensure_list, ensure_directory, log

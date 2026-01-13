@@ -53,7 +53,7 @@ class TestExceptionHierarchy:
 
     def test_configuration_error(self) -> None:
         """ConfigurationError should work correctly."""
-        exc = ConfigurationError("Missing config")
+        exc = ConfigurationError("Missing configuration")
         assert isinstance(exc, OpenAISDKError)
         assert isinstance(exc, ConfigurationError)
 

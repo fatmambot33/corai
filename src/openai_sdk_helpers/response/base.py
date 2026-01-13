@@ -43,7 +43,7 @@ from openai.types.responses.response_input_text_param import ResponseInputTextPa
 from openai.types.responses.response_output_message import ResponseOutputMessage
 
 from .messages import ResponseMessage, ResponseMessages
-from ..config import OpenAISettings
+from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
 from ..utils import (
@@ -55,7 +55,7 @@ from ..utils import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover - only for typing hints
-    from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
+    from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
 
 T = TypeVar("T", bound=StructureBase)
 ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
@@ -814,14 +814,14 @@ class ResponseBase(Generic[T]):
 
         Examples
         --------
-        >>> config = MyResponse.build_streamlit_config(
+        >>> configuration = MyResponse.build_streamlit_config(
         ...     display_title="My Assistant",
         ...     description="A helpful AI assistant",
         ...     system_vector_store=["docs", "kb"],
         ...     model="gpt-4"
         ... )
         """
-        from openai_sdk_helpers.streamlit_app.config import StreamlitAppConfig
+        from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
 
         normalized_stores = None
         if system_vector_store is not None:

@@ -6,7 +6,7 @@ This document describes the new features added to `openai-sdk-helpers` for respo
 
 ### 1. Response Configuration Registry
 
-**Module:** `openai_sdk_helpers.response.config`
+**Module:** `openai_sdk_helpers.response.configuration`
 
 A centralized registry system for managing `ResponseConfiguration` instances across your application.
 
@@ -25,7 +25,7 @@ from openai_sdk_helpers.response import (
 )
 
 # Create a configuration
-config = ResponseConfiguration(
+configuration = ResponseConfiguration(
     name="search_assistant",
     instructions="You are a search assistant",
     tools=None,
@@ -35,10 +35,10 @@ config = ResponseConfiguration(
 
 # Register it globally
 registry = get_default_registry()
-registry.register(config)
+registry.register(configuration)
 
 # Retrieve it later
-config = registry.get("search_assistant")
+configuration = registry.get("search_assistant")
 
 # List all registered configs
 print(registry.list_names())  # ['search_assistant']
@@ -274,8 +274,8 @@ response2 = ResponseBase(instructions="...", ...)
 # Centralized registry
 registry = get_default_registry()
 registry.register(ResponseConfiguration(name="assistant", ...))
-config = registry.get("assistant")
-response = config.gen_response(settings, handlers)
+configuration = registry.get("assistant")
+response = configuration.gen_response(settings, handlers)
 ```
 
 #### 2. Use Tool Handler Factory

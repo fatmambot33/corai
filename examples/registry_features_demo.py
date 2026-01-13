@@ -67,8 +67,8 @@ def example_response_registry():
     print(f"Registered configs: {registry.list_names()}")
 
     # Retrieve a configuration
-    config = registry.get("search_assistant")
-    print(f"Retrieved config: {config.name}")
+    configuration = registry.get("search_assistant")
+    print(f"Retrieved configuration: {configuration.name}")
 
     # Clear for cleanup
     registry.clear()

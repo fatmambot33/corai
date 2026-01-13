@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Generic, List, Optional, TypeVar, Union
 
 from ..base import AgentBase
-from ..config import AgentConfiguration
+from ..configuration import AgentConfiguration
 from ...structure.base import StructureBase
 
 # Type variables for search workflow components
@@ -36,7 +36,7 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
     prompt_dir : Path, optional
         Directory containing prompt templates.
     default_model : str, optional
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -68,9 +68,9 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
         default_model: Optional[str] = None,
     ) -> None:
         """Initialize the planner agent."""
-        config = self._configure_agent()
+        configuration = self._configure_agent()
         super().__init__(
-            config=config,
+            configuration=configuration,
             prompt_dir=prompt_dir,
             default_model=default_model,
         )
@@ -86,12 +86,12 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
 
         Examples
         --------
-        >>> config = AgentConfiguration(
+        >>> configuration = AgentConfiguration(
         ...     name="web_planner",
         ...     description="Plan web searches",
         ...     output_structure=WebSearchPlanStructure,
         ... )
-        >>> return config
+        >>> return configuration
         """
         pass
 
@@ -127,7 +127,7 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
     prompt_dir : Path, optional
         Directory containing prompt templates.
     default_model : str, optional
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
     max_concurrent_searches : int, default=10
         Maximum number of concurrent search operations.
 
@@ -168,9 +168,9 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
     ) -> None:
         """Initialize the search tool agent."""
         self._max_concurrent_searches = max_concurrent_searches
-        config = self._configure_agent()
+        configuration = self._configure_agent()
         super().__init__(
-            config=config,
+            configuration=configuration,
             prompt_dir=prompt_dir,
             default_model=default_model,
         )
@@ -186,13 +186,13 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
 
         Examples
         --------
-        >>> config = AgentConfiguration(
+        >>> configuration = AgentConfiguration(
         ...     name="web_search",
         ...     description="Perform web searches",
         ...     input_structure=WebSearchPlanStructure,
         ...     tools=[WebSearchTool()],
         ... )
-        >>> return config
+        >>> return configuration
         """
         pass
 
@@ -250,7 +250,7 @@ class SearchWriter(AgentBase, Generic[ReportType]):
     prompt_dir : Path, optional
         Directory containing prompt templates.
     default_model : str, optional
-        Default model identifier to use when not defined in config.
+        Default model identifier to use when not defined in configuration.
 
     Methods
     -------
@@ -282,9 +282,9 @@ class SearchWriter(AgentBase, Generic[ReportType]):
         default_model: Optional[str] = None,
     ) -> None:
         """Initialize the writer agent."""
-        config = self._configure_agent()
+        configuration = self._configure_agent()
         super().__init__(
-            config=config,
+            configuration=configuration,
             prompt_dir=prompt_dir,
             default_model=default_model,
         )
@@ -300,12 +300,12 @@ class SearchWriter(AgentBase, Generic[ReportType]):
 
         Examples
         --------
-        >>> config = AgentConfiguration(
+        >>> configuration = AgentConfiguration(
         ...     name="web_writer",
         ...     description="Write web search report",
         ...     output_structure=WebSearchReportStructure,
         ... )
-        >>> return config
+        >>> return configuration
         """
         pass
 

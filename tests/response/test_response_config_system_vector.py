@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from openai_sdk_helpers.response.config import ResponseConfiguration
+from openai_sdk_helpers.response.configuration import ResponseConfiguration
 
 
 def _mock_vector_store_client(monkeypatch, store_names: list[str]) -> None:
@@ -30,7 +30,7 @@ def _mock_vector_store_client(monkeypatch, store_names: list[str]) -> None:
 
     dummy_client = DummyClient()
     monkeypatch.setattr(
-        "openai_sdk_helpers.config.OpenAI",
+        "openai_sdk_helpers.settings.OpenAI",
         lambda *_a, **_kw: dummy_client,
     )
 
@@ -41,7 +41,7 @@ def test_system_vector_store_passed_to_gen_response(
     """Test that system_vector_store is passed through to ResponseBase."""
     _mock_vector_store_client(monkeypatch, ["store1", "store2"])
 
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -50,7 +50,7 @@ def test_system_vector_store_passed_to_gen_response(
         system_vector_store=["store1", "store2"],
     )
 
-    response = config.gen_response(openai_settings=openai_settings)
+    response = configuration.gen_response(openai_settings=openai_settings)
 
     # The ResponseBase should have received the system_vector_store parameter
     # We can verify this indirectly by checking that no error was raised
@@ -60,7 +60,7 @@ def test_system_vector_store_passed_to_gen_response(
 
 def test_system_vector_store_none_default(openai_settings) -> None:
     """Test that system_vector_store defaults to None."""
-    config = ResponseConfiguration(
+    configuration = ResponseConfiguration(
         name="test_config",
         instructions="Test instructions",
         tools=None,
@@ -69,7 +69,7 @@ def test_system_vector_store_none_default(openai_settings) -> None:
     )
 
     # system_vector_store should be None when not provided
-    assert config.system_vector_store is None
+    assert configuration.system_vector_store is None
 
-    response = config.gen_response(openai_settings=openai_settings)
+    response = configuration.gen_response(openai_settings=openai_settings)
     assert response.name == "test_config"

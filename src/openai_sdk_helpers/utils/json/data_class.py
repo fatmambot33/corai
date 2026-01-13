@@ -180,7 +180,7 @@ class DataclassJSONSerializable:
 
         Examples
         --------
-        >>> instance = MyClass.from_json_file("config.json")
+        >>> instance = MyClass.from_json_file("configuration.json")
         """
         target = Path(filepath)
         if not target.exists():

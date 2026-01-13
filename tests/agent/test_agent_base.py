@@ -66,7 +66,7 @@ def mock_run_context_wrapper():
 
 def test_base_agent_initialization(mock_config):
     """Test AgentBase initialization."""
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     assert agent.name == "test_agent"
     assert agent.model == "test_model"
 
@@ -77,7 +77,7 @@ def test_base_agent_initialization_with_prompt_dir(mock_config, tmp_path: Path):
     prompt_dir.mkdir()
     prompt_file = prompt_dir / "test_agent.jinja"
     prompt_file.write_text("Hello, {{ key }}!")
-    agent = AgentBase(config=mock_config, prompt_dir=prompt_dir)
+    agent = AgentBase(configuration=mock_config, prompt_dir=prompt_dir)
     assert agent._template.render(key="world") == "Hello, world!"
 
 
@@ -86,19 +86,19 @@ def test_base_agent_initialization_with_absolute_template_path(tmp_path: Path):
     template_file = tmp_path / "custom_template.jinja"
     template_file.write_text("Greetings, {{ name }}!")
 
-    config = MockConfig(
+    configuration = MockConfig(
         name="test_agent",
         model="test_model",
         instructions="Test instructions",
         template_path=str(template_file.resolve()),
     )
-    agent = AgentBase(config=config)
+    agent = AgentBase(configuration=configuration)
     assert agent._template.render(name="Alice") == "Greetings, Alice!"
 
 
 def test_base_agent_build_prompt_from_jinja(mock_config, mock_run_context_wrapper):
     """Test building a prompt from a Jinja template."""
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     agent._template = MagicMock()
     agent._template.render.return_value = "Hello, value!"
     prompt = agent.build_prompt_from_jinja(mock_run_context_wrapper)
@@ -109,7 +109,7 @@ def test_base_agent_build_prompt_from_jinja(mock_config, mock_run_context_wrappe
 @patch("openai_sdk_helpers.agent.base.Agent")
 def test_get_agent(mock_agent, mock_config):
     """Test getting a configured agent instance."""
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     agent.get_agent()
     mock_agent.assert_called_once_with(
         name="test_agent",
@@ -122,7 +122,7 @@ def test_get_agent(mock_agent, mock_config):
 @patch("asyncio.run")
 def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner_run, mock_config):
     """Test that _run_agent_sync creates a new event loop when none is running."""
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     agent.run_sync("test_input")
     mock_asyncio_run.assert_called_once()
 
@@ -131,7 +131,7 @@ def test_run_agent_sync_no_loop(mock_asyncio_run, mock_runner_run, mock_config):
 def test_run_agent_sync(mock_run_sync, mock_config):
     """Test running the agent synchronously."""
     mock_run_sync.return_value = "result"
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     result = agent.run_sync("test_input")
     assert result == "result"
     mock_run_sync.assert_called_once()
@@ -141,7 +141,7 @@ def test_run_agent_sync(mock_run_sync, mock_config):
 def test_run_agent_streamed(mock_run_streamed, mock_config):
     """Test running the agent with streaming."""
     mock_run_streamed.return_value = "result"
-    agent = AgentBase(config=mock_config)
+    agent = AgentBase(configuration=mock_config)
     result = agent.run_streamed("test_input")
     assert result == "result"
     mock_run_streamed.assert_called_once()
@@ -151,7 +151,7 @@ def test_as_tool(mock_config):
     """Test returning the agent as a tool."""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        agent = AgentBase(config=mock_config)
+        agent = AgentBase(configuration=mock_config)
         mock_agent = Mock()
         mock_tool = Mock()
         mock_agent.as_tool.return_value = mock_tool

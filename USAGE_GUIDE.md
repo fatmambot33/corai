@@ -238,7 +238,7 @@ try:
         if not model:
             raise ConfigurationError("Model is required")
         return AgentBase(
-            config=AgentConfig(model=model),
+            configuration=AgentConfig(model=model),
             default_model=model
         )
     

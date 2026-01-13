@@ -17,7 +17,7 @@ _load_configuration
     Load configuration with user-friendly error handling for Streamlit UI.
 """
 
-from .config import (
+from .configuration import (
     StreamlitAppConfig,
     StreamlitAppRegistry,
     _load_configuration,

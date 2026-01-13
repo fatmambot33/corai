@@ -14,7 +14,7 @@ from openai_sdk_helpers.agent.search.base import (
     SearchToolAgent,
     SearchWriter,
 )
-from openai_sdk_helpers.agent.config import AgentConfiguration
+from openai_sdk_helpers.agent.configuration import AgentConfiguration
 
 
 # Mock StructureBase models for testing

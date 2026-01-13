@@ -1,6 +1,6 @@
 import pytest
 
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 
 
 def test_from_env_loads_dotenv(monkeypatch, tmp_path):

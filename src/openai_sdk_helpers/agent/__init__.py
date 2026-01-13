@@ -1,16 +1,15 @@
 """Shared agent helpers built on the OpenAI Agents SDK."""
 
 from __future__ import annotations
-
 from .base import AgentBase
-from .config import AgentConfiguration, AgentRegistry, get_default_registry
+from .configuration import AgentConfiguration, AgentRegistry, get_default_registry
 from ..structure.plan.enum import AgentEnum
-from .coordination import CoordinatorAgent
+from .coordinator import CoordinatorAgent
 from .runner import run_sync, run_async, run_streamed
 from .search.base import SearchPlanner, SearchToolAgent, SearchWriter
 from .summarizer import SummarizerAgent
 from .translator import TranslatorAgent
-from .validation import ValidatorAgent
+from .validator import ValidatorAgent
 from .utils import run_coroutine_agent_sync
 from .search.vector import VectorAgentSearch
 from .search.web import WebAgentSearch

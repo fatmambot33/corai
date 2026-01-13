@@ -2,7 +2,7 @@
 
 import json
 from openai_sdk_helpers.agent.search.web import WebAgentSearch
-from openai_sdk_helpers.config import OpenAISettings
+from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.web_search import WebSearchStructure
 from openai_sdk_helpers.structure.prompt import PromptStructure
@@ -56,7 +56,7 @@ async def perform_search(tool) -> str:
 APP_CONFIG = {
     "response": StreamlitWebSearch,
     "display_title": "Web Search Assistant",
-    "description": "Config-driven chat experience for performing web searches.",
+    "description": "configuration-driven chat experience for performing web searches.",
 }
 
 if __name__ == "__main__":

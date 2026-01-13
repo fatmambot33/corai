@@ -15,7 +15,7 @@ class _StubAgentBase(AgentBase):
     """Minimal AgentBase subclass for testing async aliases.
 
     Note: Intentionally bypasses parent __init__ to set up minimal test fixture
-    without requiring full agent initialization (templates, config validation, etc).
+    without requiring full agent initialization (templates, configuration validation, etc).
     """
 
     def __init__(self) -> None:

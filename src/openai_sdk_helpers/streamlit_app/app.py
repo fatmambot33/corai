@@ -28,7 +28,6 @@ from openai_sdk_helpers.utils import (
     coerce_jsonable,
     customJSONEncoder,
     ensure_list,
-    log,
 )
 
 # Supported file extensions for OpenAI Assistants file search and vision
@@ -226,7 +225,7 @@ def _build_raw_output(result: Any, response: ResponseBase[Any]) -> dict[str, Any
     }
 
 
-def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
+def _get_response_instance(configuration: StreamlitAppConfig) -> ResponseBase[Any]:
     """Instantiate and cache the configured ResponseBase.
 
     Creates a new response instance from the configuration if not already
@@ -235,7 +234,7 @@ def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
 
     Parameters
     ----------
-    config : StreamlitAppConfig
+    configuration : StreamlitAppConfig
         Loaded configuration with response handler definition.
 
     Returns
@@ -258,13 +257,13 @@ def _get_response_instance(config: StreamlitAppConfig) -> ResponseBase[Any]:
         if isinstance(cached, ResponseBase):
             return cached
 
-    response = config.create_response()
+    response = configuration.create_response()
 
-    if config.preserve_vector_stores:
+    if configuration.preserve_vector_stores:
         setattr(response, "_cleanup_system_vector_storage", False)
         setattr(response, "_cleanup_user_vector_storage", False)
 
-    vector_stores = config.normalized_vector_stores()
+    vector_stores = configuration.normalized_vector_stores()
     if vector_stores:
         attach_vector_store(response=response, vector_stores=vector_stores)
 
@@ -357,7 +356,7 @@ def _render_chat_history() -> None:
 
 def _handle_user_message(
     prompt: str,
-    config: StreamlitAppConfig,
+    configuration: StreamlitAppConfig,
     attachment_paths: list[str] | None = None,
     attachment_names: list[str] | None = None,
 ) -> None:
@@ -371,7 +370,7 @@ def _handle_user_message(
     ----------
     prompt : str
         User-entered text to send to the assistant.
-    config : StreamlitAppConfig
+    configuration : StreamlitAppConfig
         Loaded configuration with response handler definition.
     attachment_paths : list[str] or None, default None
         Optional list of file paths to attach to the message.
@@ -395,7 +394,7 @@ def _handle_user_message(
         {"role": "user", "content": prompt, "attachments": display_names}
     )
     try:
-        response = _get_response_instance(config)
+        response = _get_response_instance(configuration)
     except Exception as exc:  # pragma: no cover - surfaced in UI
         st.error(f"Failed to start response session: {exc}")
         return
@@ -442,15 +441,15 @@ def main(config_path: Path) -> None:
     >>> from pathlib import Path
     >>> main(Path("./my_config.py"))
     """
-    config = _load_configuration(config_path)
-    st.set_page_config(page_title=config.display_title, layout="wide")
+    configuration = _load_configuration(config_path)
+    st.set_page_config(page_title=configuration.display_title, layout="wide")
     _init_session_state()
 
-    st.title(config.display_title)
-    if config.description:
-        st.caption(config.description)
-    if config.model:
-        st.caption(f"Model: {config.model}")
+    st.title(configuration.display_title)
+    if configuration.description:
+        st.caption(configuration.description)
+    if configuration.model:
+        st.caption(f"Model: {configuration.model}")
 
     close_col, _ = st.columns([1, 5])
     with close_col:
@@ -514,7 +513,7 @@ def main(config_path: Path) -> None:
         st.session_state["attachment_names"] = []
         _handle_user_message(
             prompt,
-            config,
+            configuration,
             attachment_paths or None,
             attachment_display_names or None,
         )
