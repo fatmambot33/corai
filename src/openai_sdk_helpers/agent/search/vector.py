@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, List, Optional
 from agents import custom_span, gen_trace_id, trace
 from agents.model_settings import ModelSettings
 
+from ...environment import DEFAULT_PROMPT_DIR
 from ...structure.prompt import PromptStructure
 from ...structure.vector_search import (
     VectorSearchItemStructure,

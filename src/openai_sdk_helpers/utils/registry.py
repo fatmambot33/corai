@@ -6,6 +6,7 @@ import warnings
 from pathlib import Path
 from typing import Generic, TypeVar
 from typing import Protocol
+
 try:
     from typing import Self  # Python 3.11+
 except ImportError:
