@@ -22,6 +22,7 @@ from jinja2 import Template
 
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..structure.base import StructureBase
+from ..structure.prompt import PromptStructure
 
 from ..utils import (
     check_filepath,
@@ -651,12 +652,25 @@ class AgentBase(DataclassJSONSerializable):
         )
         return tool_obj
 
-    def as_response_tool(self) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+    def as_response_tool(
+        self,
+        *,
+        tool_name: str | None = None,
+        tool_description: str | None = None,
+    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
         """Return response tool handler and definition for Responses API use.
 
         The returned handler serializes tool output as JSON using
         ``tool_handler_factory`` so downstream response flows can rely on a
         consistent payload format.
+
+        Parameters
+        ----------
+        tool_name : str or None, default=None
+            Optional override for the tool name. When None, uses the agent name.
+        tool_description : str or None, default=None
+            Optional override for the tool description. When None, uses the
+            agent description.
 
         Returns
         -------
@@ -686,11 +700,14 @@ class AgentBase(DataclassJSONSerializable):
                     prompt = json.dumps(kwargs)
             return self.run_sync(str(prompt))
 
-        tool_handler = {self.name: tool_handler_factory(_run_agent)}
+        name = tool_name or self.name
+        description = tool_description or self.description
+        input_model = self._input_structure or PromptStructure
+        tool_handler = {name: tool_handler_factory(_run_agent, input_model=input_model)}
         tool_definition = {
             "type": "function",
-            "name": self.name,
-            "description": self.description,
+            "name": name,
+            "description": description,
             "strict": True,
             "additionalProperties": False,
             "parameters": self._build_response_parameters(),

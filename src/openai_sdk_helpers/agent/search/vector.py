@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from agents import custom_span, gen_trace_id, trace
 
+from ...structure.prompt import PromptStructure
 from ...structure.vector_search import (
     VectorSearchItemStructure,
     VectorSearchItemResultStructure,
@@ -15,6 +16,7 @@ from ...structure.vector_search import (
     VectorSearchPlanStructure,
     VectorSearchReportStructure,
 )
+from ...tools import tool_handler_factory
 from ...vector_storage import VectorStorage
 from ..config import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
@@ -292,6 +294,8 @@ class VectorSearch:
         Execute the research workflow asynchronously.
     run_agent_sync(search_query)
         Execute the research workflow synchronously.
+    as_response_tool(vector_store_name, tool_name, tool_description)
+        Build a Responses API tool definition and handler.
     run_vector_agent(search_query)
         Convenience asynchronous entry point for the workflow.
     run_vector_agent_sync(search_query)
@@ -382,6 +386,49 @@ class VectorSearch:
             Completed research output.
         """
         return run_coroutine_agent_sync(self.run_agent(search_query))
+
+    def as_response_tool(
+        self,
+        *,
+        vector_store_name: str,
+        tool_name: str = "vector_search",
+        tool_description: str = "Run the vector search workflow.",
+    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+        """Return a Responses API tool handler and definition.
+
+        Parameters
+        ----------
+        vector_store_name : str
+            Name of the vector store to use for the response tool.
+        tool_name : str, default="vector_search"
+            Name to use for the response tool.
+        tool_description : str, default="Run the vector search workflow."
+            Description for the response tool.
+
+        Returns
+        -------
+        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
+            Tool handler mapping and tool definition for Responses API usage.
+        """
+        search = VectorSearch(
+            prompt_dir=self._prompt_dir,
+            default_model=self._default_model,
+            vector_store_name=vector_store_name,
+            max_concurrent_searches=self._max_concurrent_searches,
+            vector_storage=self._vector_storage,
+            vector_storage_factory=self._vector_storage_factory,
+        )
+
+        def _run_search(prompt: str) -> VectorSearchStructure:
+            return run_coroutine_agent_sync(search.run_agent(search_query=prompt))
+
+        tool_handler = {
+            tool_name: tool_handler_factory(_run_search, input_model=PromptStructure)
+        }
+        tool_definition = PromptStructure.response_tool_definition(
+            tool_name, tool_description=tool_description
+        )
+        return tool_handler, tool_definition
 
     @staticmethod
     async def run_vector_agent(search_query: str) -> VectorSearchStructure:

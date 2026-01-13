@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from agents import custom_span, gen_trace_id, trace
 from agents.model_settings import ModelSettings
 from agents.tool import WebSearchTool
 
+from ...structure.prompt import PromptStructure
 from ...structure.web_search import (
     WebSearchItemStructure,
     WebSearchItemResultStructure,
@@ -16,6 +17,7 @@ from ...structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
+from ...tools import tool_handler_factory
 from ..config import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
@@ -242,6 +244,8 @@ class WebAgentSearch:
         Execute the research workflow asynchronously.
     run_agent_sync(search_query)
         Execute the research workflow synchronously.
+    as_response_tool(tool_name, tool_description)
+        Build a Responses API tool definition and handler.
     run_web_agent_async(search_query)
         Convenience asynchronous entry point for the workflow.
     run_web_agent_sync(search_query)
@@ -315,6 +319,38 @@ class WebAgentSearch:
 
         """
         return run_coroutine_agent_sync(self.run_agent_async(search_query))
+
+    def as_response_tool(
+        self,
+        *,
+        tool_name: str = "web_search",
+        tool_description: str = "Run the web search workflow.",
+    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+        """Return a Responses API tool handler and definition.
+
+        Parameters
+        ----------
+        tool_name : str, default="web_search"
+            Name to use for the response tool.
+        tool_description : str, default="Run the web search workflow."
+            Description for the response tool.
+
+        Returns
+        -------
+        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
+            Tool handler mapping and tool definition for Responses API usage.
+        """
+
+        def _run_search(prompt: str) -> WebSearchStructure:
+            return run_coroutine_agent_sync(self.run_agent_async(search_query=prompt))
+
+        tool_handler = {
+            tool_name: tool_handler_factory(_run_search, input_model=PromptStructure)
+        }
+        tool_definition = PromptStructure.response_tool_definition(
+            tool_name, tool_description=tool_description
+        )
+        return tool_handler, tool_definition
 
 
 __all__ = [
