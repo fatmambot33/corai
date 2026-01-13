@@ -107,6 +107,7 @@ class AgentConfigurationProtocol(Protocol):
         """Session."""
         ...
 
+
 class AgentProtocol(Protocol):
     """Protocol describing the methods for AgentBase."""
 
@@ -114,10 +115,12 @@ class AgentProtocol(Protocol):
     def name(self) -> str:
         """Agent name."""
         ...
+
     @property
     def description(self) -> str:
         """Agent description."""
         ...
+
     @property
     def output_structure(self) -> Optional[type[StructureBase]]:
         """Output type."""
@@ -144,11 +147,11 @@ class AgentProtocol(Protocol):
     ) -> RunResultStreaming | StructureBase:
         """Return a streaming result for the agent execution."""
         ...
-    
+
     def as_tool(self) -> Tool:
         """Return the agent as a callable tool."""
         ...
-    
+
     def as_response_tool(self) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
         """Return the agent as a callable response tool.
 
@@ -168,6 +171,7 @@ class AgentProtocol(Protocol):
         if self.output_structure:
             tool_definition["parameters"] = self.output_structure.get_schema()
         return tool_handler, tool_definition
+
 
 class AgentBase(DataclassJSONSerializable):
     """Factory for creating and configuring specialized agents.

@@ -300,6 +300,7 @@ class WebAgentSearch:
             web_search_report=search_report,
         )
 
+
 __all__ = [
     "MAX_CONCURRENT_SEARCHES",
     "WebAgentPlanner",
