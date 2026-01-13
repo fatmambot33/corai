@@ -29,6 +29,7 @@ def test_agent_config_to_json() -> None:
     assert json_data["template_path"] == "/tmp/template.jinja"
     assert json_data["instructions"] == "Test instructions"
     assert json_data["tools"] is None
+    assert json_data["add_web_search_tool"] is False
 
 
 def test_agent_config_to_json_file(tmp_path: Path) -> None:
@@ -75,6 +76,7 @@ def test_agent_config_json_serialization_with_none_fields() -> None:
     assert json_data["input_guardrails"] is None
     assert json_data["output_guardrails"] is None
     assert json_data["session"] is None
+    assert json_data["add_web_search_tool"] is False
 
 
 def test_agent_config_from_json() -> None:
