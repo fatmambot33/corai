@@ -158,10 +158,11 @@ report = vector_search.run_agent_sync("Explain quantum entanglement for beginner
 print(report.report)
 ```
 
-**Note**: The vector search workflow requires prompt templates for each agent
-(`vector_planner.jinja`, `vector_search.jinja`, and `vector_writer.jinja`). 
-If your `prompt_dir` doesn't contain these files, agent construction will fail 
-with a `FileNotFoundError`.
+**Note**: The vector search workflow ships with default prompt templates
+(`vector_planner.jinja`, `vector_search.jinja`, and `vector_writer.jinja`).
+You only need to pass a `prompt_dir` when you want to override them; if the
+directory you supply is missing any of the templates, agent construction will
+fail with a `FileNotFoundError`.
 
 ### Text utilities
 
@@ -661,4 +662,3 @@ recognizing types:
 - Check the [Key Modules](#key-modules) section for API documentation
 - Review examples in the [Quickstart](#quickstart) and [Advanced Usage](#advanced-usage) sections
 - Open an issue on GitHub for bugs or feature requests
-

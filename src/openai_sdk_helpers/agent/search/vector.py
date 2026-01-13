@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from agents import custom_span, gen_trace_id, trace
+from agents.model_settings import ModelSettings
 
 from ...structure.prompt import PromptStructure
 from ...structure.vector_search import (
@@ -19,6 +20,7 @@ from ...structure.vector_search import (
 from ...tools import tool_handler_factory
 from ...vector_storage import VectorStorage
 from ..config import AgentConfiguration
+from ..prompt_utils import DEFAULT_PROMPT_DIR
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
 
@@ -31,7 +33,8 @@ class VectorAgentPlanner(SearchPlanner[VectorSearchPlanStructure]):
     Parameters
     ----------
     prompt_dir : Path or None, default=None
-        Directory containing prompt templates.
+        Directory containing prompt templates. Defaults to the packaged
+        ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Default model identifier to use when not defined in config.
 
@@ -54,7 +57,8 @@ class VectorAgentPlanner(SearchPlanner[VectorSearchPlanStructure]):
         self, prompt_dir: Optional[Path] = None, default_model: Optional[str] = None
     ) -> None:
         """Initialize the planner agent."""
-        super().__init__(prompt_dir=prompt_dir, default_model=default_model)
+        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
+        super().__init__(prompt_dir=prompt_directory, default_model=default_model)
 
     def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector planner agent.
@@ -69,6 +73,7 @@ class VectorAgentPlanner(SearchPlanner[VectorSearchPlanStructure]):
             instructions="Agent instructions",
             description="Plan vector searches based on a user query.",
             output_structure=VectorSearchPlanStructure,
+            model_settings=ModelSettings(tool_choice="none"),
         )
 
 
@@ -84,7 +89,8 @@ class VectorSearchTool(
     Parameters
     ----------
     prompt_dir : Path or None, default=None
-        Directory containing prompt templates.
+        Directory containing prompt templates. Defaults to the packaged
+        ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Default model identifier to use when not defined in config.
     store_name : str or None, default=None
@@ -125,13 +131,14 @@ class VectorSearchTool(
         vector_storage_factory: Optional[Callable[[str], VectorStorage]] = None,
     ) -> None:
         """Initialize the search tool agent."""
+        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         self._vector_storage: Optional[VectorStorage] = None
         self._store_name = store_name or "editorial"
         self._vector_storage_factory = vector_storage_factory
         if vector_storage is not None:
             self._vector_storage = vector_storage
         super().__init__(
-            prompt_dir=prompt_dir,
+            prompt_dir=prompt_directory,
             default_model=default_model,
             max_concurrent_searches=max_concurrent_searches,
         )
@@ -150,6 +157,7 @@ class VectorSearchTool(
             description="Perform vector searches based on a search plan.",
             input_structure=VectorSearchPlanStructure,
             output_structure=VectorSearchItemResultsStructure,
+            model_settings=ModelSettings(tool_choice="none"),
         )
 
     def _get_vector_storage(self) -> VectorStorage:
@@ -202,7 +210,8 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
     Parameters
     ----------
     prompt_dir : Path or None, default=None
-        Directory containing prompt templates.
+        Directory containing prompt templates. Defaults to the packaged
+        ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Default model identifier to use when not defined in config.
 
@@ -225,7 +234,8 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
         self, prompt_dir: Optional[Path] = None, default_model: Optional[str] = None
     ) -> None:
         """Initialize the writer agent."""
-        super().__init__(prompt_dir=prompt_dir, default_model=default_model)
+        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
+        super().__init__(prompt_dir=prompt_directory, default_model=default_model)
 
     def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector writer agent.
@@ -240,6 +250,7 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
             instructions="Agent instructions",
             description="Write a report based on search results.",
             output_structure=VectorSearchReportStructure,
+            model_settings=ModelSettings(tool_choice="none"),
         )
 
 
@@ -254,7 +265,8 @@ class VectorAgentSearch:
     Parameters
     ----------
     prompt_dir : Path or None, default=None
-        Directory containing prompt templates.
+        Directory containing prompt templates. Defaults to the packaged
+        ``prompt`` directory when not provided.
     default_model : str or None, default=None
         Default model identifier to use when not defined in config.
     vector_store_name : str or None, default=None
@@ -318,7 +330,7 @@ class VectorAgentSearch:
         vector_storage_factory: Optional[Callable[[str], VectorStorage]] = None,
     ) -> None:
         """Create the main VectorSearch agent."""
-        self._prompt_dir = prompt_dir
+        self._prompt_dir = prompt_dir or DEFAULT_PROMPT_DIR
         self._default_model = default_model
         self._vector_store_name = vector_store_name
         self._max_concurrent_searches = max_concurrent_searches
