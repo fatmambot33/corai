@@ -60,6 +60,7 @@ def get_data_path(name: str) -> Path:
     path = base / name
     return ensure_directory(path)
 
+
 def get_model() -> str:
     """Return the default model identifier.
 
@@ -74,5 +75,4 @@ def get_model() -> str:
     >>> _get_default_model()
     'gpt-4o-mini'
     """
-
-    return os.getenv("DEFAULT_MODEL", DEFAULT_MODEL)    
+    return os.getenv("DEFAULT_MODEL", DEFAULT_MODEL)

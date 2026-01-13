@@ -75,7 +75,8 @@ def test_response_config_json_serialization_with_none_fields() -> None:
 
     assert json_data["name"] == "minimal_config"
     assert json_data["system_vector_store"] is None
-    assert json_data["add_output_instructions"] is True
+    assert json_data["add_output_instructions"] is False
+    assert json_data["add_web_search_tool"] is False
 
 
 def test_response_config_from_json() -> None:

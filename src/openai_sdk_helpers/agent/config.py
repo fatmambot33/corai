@@ -187,9 +187,8 @@ class AgentConfiguration(DataclassJSONSerializable):
     input_guardrails: Optional[list[InputGuardrail]] = None
     output_guardrails: Optional[list[OutputGuardrail]] = None
     session: Optional[Session] = None
-    _instructions_cache: Optional[str] = field(
-        default=None, init=False, repr=False, compare=False
-    )
+    add_output_instructions: bool = False
+    add_web_search_tool: bool = False
 
     def __post_init__(self) -> None:
         """Validate configuration invariants after initialization.
@@ -258,11 +257,16 @@ class AgentConfiguration(DataclassJSONSerializable):
         str
             Plain-text instructions, loading template files when necessary.
         """
-        cached = self._instructions_cache
-        if cached is None:
-            cached = self._resolve_instructions()
-            object.__setattr__(self, "_instructions_cache", cached)
-        return cached
+        resolved_instructions: str = resolve_instructions_from_path(self.instructions)
+        output_instructions = ""
+        if self.output_structure is not None and self.add_output_instructions:
+            output_instructions = self.output_structure.get_prompt(
+                add_enum_values=False
+            )
+            if output_instructions:
+                return f"{resolved_instructions}\n{output_instructions}"
+
+        return resolved_instructions
 
     def _resolve_instructions(self) -> str:
         """Resolve instructions from string or file path."""
@@ -392,6 +396,7 @@ class AgentConfiguration(DataclassJSONSerializable):
             output_structure=self.output_structure,
             tools=self.tools,
         )
+
 
 # Global default registry instance
 _default_registry = AgentRegistry()

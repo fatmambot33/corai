@@ -135,7 +135,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
     input_structure: Optional[Type[TIn]]
     output_structure: Optional[Type[TOut]]
     system_vector_store: Optional[list[str]] = None
-    add_output_instructions: bool = True
+    add_output_instructions: bool = False
     add_web_search_tool: bool = False
 
     def __post_init__(self) -> None:

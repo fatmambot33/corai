@@ -32,6 +32,7 @@ def get_module_qualname(obj: Any) -> tuple[str, str] | None:
     ...     pass
     >>> get_module_qualname(MyClass)
     ('__main__', 'MyClass')
+
     """
     module = getattr(obj, "__module__", None)
     qualname = getattr(obj, "__qualname__", None)
@@ -59,6 +60,7 @@ def encode_module_qualname(obj: Any) -> dict[str, Any] | None:
     ...     pass
     >>> encode_module_qualname(MyClass)
     {'module': '__main__', 'qualname': 'MyClass'}
+
     """
     result = get_module_qualname(obj)
     if result is None:
@@ -85,6 +87,7 @@ def decode_module_qualname(ref: dict[str, Any]) -> Any | None:
     >>> ref = {'module': 'pathlib', 'qualname': 'Path'}
     >>> decode_module_qualname(ref)
     <class 'pathlib.Path'>
+
     """
     if not isinstance(ref, dict):
         return None

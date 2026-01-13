@@ -307,10 +307,12 @@ class WebAgentSearch:
         ----------
         search_query : str
             User's research query.
+
         Returns
         -------
         WebSearchStructure
             Completed research output.
+
         """
         return run_coroutine_agent_sync(self.run_agent_async(search_query))
 

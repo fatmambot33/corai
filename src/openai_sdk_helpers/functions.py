@@ -24,7 +24,7 @@ from . import (
     WebSearchStructure,
     VectorSearchStructure,
     tool_handler_factory,
-    get_model
+    get_model,
 )
 from .logging_config import log
 
@@ -39,6 +39,7 @@ def _resolve_task_type(task_type: AgentEnum | str) -> str:
         return AgentEnum(task_type).value
     except ValueError:
         return str(task_type)
+
 
 async def generate_prompt(prompt: str) -> PromptStructure:
     """Generate a prompt structure from a given prompt string.
@@ -60,6 +61,7 @@ async def generate_prompt(prompt: str) -> PromptStructure:
     """
     log("generate_prompt")
     from .response import prompter
+
     open_ai_settings = OpenAISettings.from_env()
     with prompter.PROMPTER.gen_response(openai_settings=open_ai_settings) as prompter:
         # Ensure we await the asynchronous response generation.
@@ -86,6 +88,7 @@ def create_plan(prompt: PromptStructure | str) -> PlanStructure:
     """
     log("create_plan")
     from .response import planner
+
     open_ai_settings = OpenAISettings.from_env()
 
     try:
@@ -300,9 +303,7 @@ async def _run_web_agent(prompt: str) -> WebSearchStructure:
 
 async def _run_vector_agent(prompt: str) -> VectorSearchStructure:
     """Run the vector agent for a prompt."""
-    return await VectorSearch(default_model=get_model()).run_agent(
-        search_query=prompt
-    )
+    return await VectorSearch(default_model=get_model()).run_agent(search_query=prompt)
 
 
 web_agent_handler = tool_handler_factory(
