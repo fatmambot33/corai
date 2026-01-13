@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Protocol, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Protocol, cast
 import uuid
 
 from agents import (
@@ -27,7 +28,13 @@ from ..utils import (
     log,
 )
 
+from ..tools import tool_handler_factory
+
 from .runner import run_async, run_streamed, run_sync
+
+if TYPE_CHECKING:
+    from ..config import OpenAISettings
+    from ..response.base import ResponseBase, ToolHandler
 
 
 class AgentConfigurationProtocol(Protocol):
@@ -246,6 +253,10 @@ class AgentBase(DataclassJSONSerializable):
         Return a streaming result for the agent execution.
     as_tool()
         Return the agent as a callable tool.
+    as_response_tool()
+        Return response tool handler and definition for Responses API use.
+    build_response(openai_settings, data_path=None, tool_handlers=None, system_vector_store=None)
+        Build a ResponseBase instance based on this agent.
     close()
         Clean up agent resources (can be overridden by subclasses).
     """
@@ -641,24 +652,138 @@ class AgentBase(DataclassJSONSerializable):
         return tool_obj
 
     def as_response_tool(self) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
-        """Return the agent as a callable response tool.
+        """Return response tool handler and definition for Responses API use.
+
+        The returned handler serializes tool output as JSON using
+        ``tool_handler_factory`` so downstream response flows can rely on a
+        consistent payload format.
 
         Returns
         -------
-        Tool
-            Tool instance wrapping this agent for response generation.
+        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
+            Tool handler mapping and tool definition for Responses API usage.
+
+        Examples
+        --------
+        >>> tool_handler, tool_definition = agent.as_response_tool()
+        >>> response = ResponseBase(
+        ...     name="agent_tool",
+        ...     instructions="Use the agent tool when needed.",
+        ...     tools=[tool_definition],
+        ...     output_structure=None,
+        ...     tool_handlers=tool_handler,
+        ...     openai_settings=settings,
+        ... )
+        >>> response.run_sync("Invoke the agent tool")  # doctest: +SKIP
         """
-        tool_handler = {self.name: self.run_sync}
+
+        def _run_agent(**kwargs: Any) -> Any:
+            prompt = kwargs.get("prompt")
+            if prompt is None:
+                if len(kwargs) == 1:
+                    prompt = next(iter(kwargs.values()))
+                else:
+                    prompt = json.dumps(kwargs)
+            return self.run_sync(str(prompt))
+
+        tool_handler = {self.name: tool_handler_factory(_run_agent)}
         tool_definition = {
             "type": "function",
             "name": self.name,
             "description": self.description,
             "strict": True,
             "additionalProperties": False,
+            "parameters": self._build_response_parameters(),
         }
-        if self.output_structure:
-            tool_definition["parameters"] = self.output_structure.get_schema()
         return tool_handler, tool_definition
+
+    def build_response(
+        self,
+        *,
+        openai_settings: OpenAISettings,
+        data_path: Path | str | None = None,
+        tool_handlers: dict[str, ToolHandler] | None = None,
+        system_vector_store: list[str] | None = None,
+    ) -> ResponseBase[StructureBase]:
+        """Build a ResponseBase instance from this agent configuration.
+
+        Parameters
+        ----------
+        openai_settings : OpenAISettings
+            Authentication and model settings applied to the generated response.
+        data_path : Path, str, or None, default None
+            Optional path for storing response artifacts. When None, the
+            response uses the default data directory.
+        tool_handlers : dict[str, ToolHandler] or None, default None
+            Optional mapping of tool names to handler callables.
+        system_vector_store : list[str] or None, default None
+            Optional list of vector store names to attach as system context.
+
+        Returns
+        -------
+        ResponseBase[StructureBase]
+            ResponseBase instance configured with this agent's settings.
+
+        Examples
+        --------
+        >>> from openai_sdk_helpers import OpenAISettings
+        >>> response = agent.build_response(openai_settings=OpenAISettings.from_env())
+        """
+        from ..response.base import ResponseBase, ToolHandler
+        from ..config import OpenAISettings
+
+        if not isinstance(openai_settings, OpenAISettings):
+            raise TypeError("openai_settings must be an OpenAISettings instance")
+
+        tools = self._normalize_response_tools(self.tools)
+
+        return ResponseBase(
+            name=self.name,
+            instructions=self.instructions_text,
+            tools=tools,
+            output_structure=self.output_structure,
+            system_vector_store=system_vector_store,
+            data_path=data_path,
+            tool_handlers=tool_handlers,
+            openai_settings=openai_settings,
+        )
+
+    def _build_response_parameters(self) -> dict[str, Any]:
+        """Build the Responses API parameter schema for this agent tool.
+
+        Returns
+        -------
+        dict[str, Any]
+            JSON schema describing tool input parameters.
+        """
+        if self._input_structure is not None:
+            return self._input_structure.get_schema()
+        return {
+            "type": "object",
+            "properties": {
+                "prompt": {"type": "string", "description": "Prompt text to run."}
+            },
+            "required": ["prompt"],
+            "additionalProperties": False,
+        }
+
+    @staticmethod
+    def _normalize_response_tools(tools: Optional[list]) -> Optional[list]:
+        """Normalize tool definitions for the Responses API."""
+        if not tools:
+            return tools
+
+        normalized: list[Any] = []
+        for tool in tools:
+            if hasattr(tool, "to_dict") and callable(tool.to_dict):
+                normalized.append(tool.to_dict())
+            elif hasattr(tool, "to_openai_tool") and callable(tool.to_openai_tool):
+                normalized.append(tool.to_openai_tool())
+            elif hasattr(tool, "schema"):
+                normalized.append(tool.schema)
+            else:
+                normalized.append(tool)
+        return normalized
 
     def __enter__(self) -> AgentBase:
         """Enter the context manager for resource management.
