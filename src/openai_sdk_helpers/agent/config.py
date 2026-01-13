@@ -361,67 +361,37 @@ class AgentConfiguration(DataclassJSONSerializable):
 
         return replace(self, **changes)
 
-    def to_json(self) -> dict[str, Any]:
-        """Return a JSON-compatible dict representation.
+    def to_response_config(self) -> Any:
+        """Convert this AgentConfiguration to a ResponseConfiguration.
+
+        This is a convenience method for creating a ResponseConfiguration
+        instance using the relevant fields from this agent configuration.
 
         Returns
         -------
-        dict[str, Any]
-            Serialized configuration data without cached fields.
+        ResponseConfiguration
+            New response configuration instance.
+
+        Examples
+        --------
+        >>> agent_config = AgentConfiguration(
+        ...     name="responder",
+        ...     model="gpt-4o-mini",
+        ...     instructions="Respond to user queries"
+        ... )
+        >>> response_config = agent_config.to_response_config()
+        >>> response_config.name
+        'responder'
         """
-        data = DataclassJSONSerializable.to_json(self)
-        data.pop("_instructions_cache", None)
-        return data
+        from ..response.config import ResponseConfiguration
 
-    @classmethod
-    def from_json(cls, data: dict[str, Any]) -> AgentConfiguration:
-        """Create an AgentConfiguration from JSON data.
-
-        Overrides the default JSONSerializable.from_json to properly handle
-        the instructions field, converting string paths that look like file
-        paths back to Path objects for proper file loading.
-
-        Parameters
-        ----------
-        data : dict[str, Any]
-            Dictionary containing the configuration data.
-
-        Returns
-        -------
-        AgentConfiguration
-            New configuration instance.
-
-        Notes
-        -----
-        This method attempts to preserve the original type of the instructions
-        field. If instructions is a string that represents an existing file path,
-        it will be converted to a Path object to ensure proper file loading
-        behavior is maintained across JSON round-trips.
-        """
-        # Make a copy to avoid modifying the input
-        data = data.copy()
-        data.pop("_instructions_cache", None)
-
-        # Handle instructions field: if it's a string path to an existing file,
-        # convert it back to Path for proper file loading
-        if "instructions" in data and data["instructions"] is not None:
-            instructions_value = data["instructions"]
-            if isinstance(instructions_value, str):
-                # Check if it looks like a file path and the file exists
-                # This preserves the intended behavior for file-based instructions
-                try:
-                    potential_path = Path(instructions_value)
-                    # Only convert to Path if it's an existing file
-                    # This way, plain text instructions stay as strings
-                    if potential_path.exists() and potential_path.is_file():
-                        data["instructions"] = potential_path
-                except (OSError, ValueError):
-                    # If path parsing fails, keep it as a string (likely plain text)
-                    pass
-
-        # Use the parent class method for the rest
-        return super(AgentConfiguration, cls).from_json(data)
-
+        return ResponseConfiguration(
+            name=self.name,
+            instructions=self.instructions,
+            input_structure=self.input_structure,
+            output_structure=self.output_structure,
+            tools=self.tools,
+        )
 
 # Global default registry instance
 _default_registry = AgentRegistry()

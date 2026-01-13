@@ -300,6 +300,20 @@ class WebAgentSearch:
             web_search_report=search_report,
         )
 
+    def run_agent_sync(self, search_query: str) -> WebSearchStructure:
+        """Execute the entire research workflow for ``search_query`` synchronously.
+
+        Parameters
+        ----------
+        search_query : str
+            User's research query.
+        Returns
+        -------
+        WebSearchStructure
+            Completed research output.
+        """
+        return run_coroutine_agent_sync(self.run_agent_async(search_query))
+
 
 __all__ = [
     "MAX_CONCURRENT_SEARCHES",

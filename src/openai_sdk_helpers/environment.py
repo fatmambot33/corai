@@ -18,10 +18,15 @@ get_data_path(name)
 
 from __future__ import annotations
 
+import os
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+
 
 from openai_sdk_helpers.utils import ensure_directory
 
+load_dotenv()
 DATETIME_FMT = "%Y%m%d_%H%M%S"
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -54,3 +59,20 @@ def get_data_path(name: str) -> Path:
     base = Path(__file__).parent.parent.parent / "data"
     path = base / name
     return ensure_directory(path)
+
+def get_model() -> str:
+    """Return the default model identifier.
+
+    Returns
+    -------
+    str
+        Default OpenAI model identifier.
+
+    Examples
+    --------
+    >>> from openai_sdk_helpers.environment import _get_default_model
+    >>> _get_default_model()
+    'gpt-4o-mini'
+    """
+
+    return os.getenv("DEFAULT_MODEL", DEFAULT_MODEL)    

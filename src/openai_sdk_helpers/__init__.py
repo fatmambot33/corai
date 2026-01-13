@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .environment import get_data_path, get_model
 from .utils.async_utils import run_coroutine_thread_safe, run_coroutine_with_fallback
 from .context_manager import (
     AsyncManagedResource,
@@ -103,6 +104,9 @@ from .types import (
 )
 
 __all__ = [
+    # Environment utilities
+    "get_data_path",
+    "get_model",
     # Async utilities
     "run_coroutine_thread_safe",
     "run_coroutine_with_fallback",
