@@ -62,7 +62,7 @@ from .agent import (
     SummarizerAgent,
     TranslatorAgent,
     ValidatorAgent,
-    VectorSearch,
+    VectorAgentSearch,
     WebAgentSearch,
 )
 from .response import (
@@ -160,7 +160,7 @@ __all__ = [
     "SummarizerAgent",
     "TranslatorAgent",
     "ValidatorAgent",
-    "VectorSearch",
+    "VectorAgentSearch",
     "WebAgentSearch",
     "ExtendedSummaryStructure",
     "WebSearchStructure",

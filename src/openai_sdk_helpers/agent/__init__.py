@@ -12,7 +12,7 @@ from .summarizer import SummarizerAgent
 from .translator import TranslatorAgent
 from .validation import ValidatorAgent
 from .utils import run_coroutine_agent_sync
-from .search.vector import VectorSearch
+from .search.vector import VectorAgentSearch
 from .search.web import WebAgentSearch
 
 __all__ = [
@@ -32,6 +32,6 @@ __all__ = [
     "SummarizerAgent",
     "TranslatorAgent",
     "ValidatorAgent",
-    "VectorSearch",
+    "VectorAgentSearch",
     "WebAgentSearch",
 ]

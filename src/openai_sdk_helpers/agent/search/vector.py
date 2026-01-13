@@ -243,7 +243,7 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
         )
 
 
-class VectorSearch:
+class VectorAgentSearch:
     """Manage the complete vector search workflow.
 
     This high-level agent orchestrates a multi-step research process that plans
@@ -310,9 +310,9 @@ class VectorSearch:
     def __init__(
         self,
         *,
+        vector_store_name: str,
         prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
-        vector_store_name: Optional[str] = None,
         max_concurrent_searches: int = MAX_CONCURRENT_SEARCHES,
         vector_storage: Optional[VectorStorage] = None,
         vector_storage_factory: Optional[Callable[[str], VectorStorage]] = None,
@@ -390,7 +390,6 @@ class VectorSearch:
     def as_response_tool(
         self,
         *,
-        vector_store_name: str,
         tool_name: str = "vector_search",
         tool_description: str = "Run the vector search workflow.",
     ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
@@ -410,10 +409,10 @@ class VectorSearch:
         tuple[dict[str, Callable[..., Any]], dict[str, Any]]
             Tool handler mapping and tool definition for Responses API usage.
         """
-        search = VectorSearch(
+        search = VectorAgentSearch(
             prompt_dir=self._prompt_dir,
             default_model=self._default_model,
-            vector_store_name=vector_store_name,
+            vector_store_name=self._vector_store_name,
             max_concurrent_searches=self._max_concurrent_searches,
             vector_storage=self._vector_storage,
             vector_storage_factory=self._vector_storage_factory,
@@ -430,45 +429,11 @@ class VectorSearch:
         )
         return tool_handler, tool_definition
 
-    @staticmethod
-    async def run_vector_agent(search_query: str) -> VectorSearchStructure:
-        """Return a research report for the given query using ``VectorSearch``.
-
-        Parameters
-        ----------
-        search_query : str
-            User's research query.
-
-        Returns
-        -------
-        VectorSearchStructure
-            Completed research output.
-        """
-        return await VectorSearch().run_agent(search_query=search_query)
-
-    @staticmethod
-    def run_vector_agent_sync(search_query: str) -> VectorSearchStructure:
-        """Run :meth:`run_vector_agent` synchronously for ``search_query``.
-
-        Parameters
-        ----------
-        search_query : str
-            User's research query.
-
-        Returns
-        -------
-        VectorSearchStructure
-            Completed research output.
-        """
-        return run_coroutine_agent_sync(
-            VectorSearch.run_vector_agent(search_query=search_query)
-        )
-
 
 __all__ = [
     "MAX_CONCURRENT_SEARCHES",
     "VectorAgentPlanner",
     "VectorSearchTool",
     "VectorSearchWriter",
-    "VectorSearch",
+    "VectorAgentSearch",
 ]

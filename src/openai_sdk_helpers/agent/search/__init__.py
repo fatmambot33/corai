@@ -13,7 +13,7 @@ from .vector import (
     VectorAgentPlanner,
     VectorSearchTool,
     VectorSearchWriter,
-    VectorSearch,
+    VectorAgentSearch,
 )
 
 __all__ = [
@@ -29,5 +29,5 @@ __all__ = [
     "VectorAgentPlanner",
     "VectorSearchTool",
     "VectorSearchWriter",
-    "VectorSearch",
+    "VectorAgentSearch",
 ]
