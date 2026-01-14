@@ -104,7 +104,7 @@ def _unwrap_arguments(parsed: dict, tool_name: str) -> dict:
     return parsed
 
 
-def parse_tool_arguments(arguments: str, tool_name: str) -> dict:
+def _parse_tool_arguments(arguments: str, tool_name: str) -> dict:
     """Parse tool call arguments with fallback for malformed JSON.
 
     Attempts to parse arguments as JSON first, then falls back to
@@ -135,13 +135,13 @@ def parse_tool_arguments(arguments: str, tool_name: str) -> dict:
 
     Examples
     --------
-    >>> parse_tool_arguments('{"key": "value"}', tool_name="search")
+    >>> _parse_tool_arguments('{"key": "value"}', tool_name="search")
     {'key': 'value'}
 
-    >>> parse_tool_arguments("{'key': 'value'}", tool_name="search")
+    >>> _parse_tool_arguments("{'key': 'value'}", tool_name="search")
     {'key': 'value'}
 
-    >>> parse_tool_arguments('{"ExampleTool": {"arg": "value"}}', "ExampleTool")
+    >>> _parse_tool_arguments('{"ExampleTool": {"arg": "value"}}', "ExampleTool")
     {'arg': 'value'}
     """
     try:
@@ -234,7 +234,7 @@ def unserialize_tool_arguments(
         If input validation fails.
     """
     tool_name = getattr(tool_call, "name", tool_spec.tool_name)
-    parsed_args = parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
+    parsed_args = _parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
     return tool_spec.input_structure.from_json(parsed_args)
 
 
@@ -460,6 +460,71 @@ class ToolSpec:
     input_structure: StructureType
     output_structure: StructureType | None = None
 
+    def serialize_tool_result(self, result: Any) -> str:
+        """Serialize tool results into a standardized JSON string.
+
+        Handles structured outputs with consistent JSON formatting. Outputs are
+        validated and serialized through the ToolSpec output structure.
+
+        Parameters
+        ----------
+        result : Any
+            Tool result to serialize. Can be a structure instance or a compatible
+            mapping for validation.
+
+        Returns
+        -------
+        str
+            JSON-formatted string representation of the result.
+
+        Raises
+        ------
+        ValueError
+            If the tool specification is missing an output structure.
+
+        Examples
+        --------
+        >>> from openai_sdk_helpers import ToolSpec
+        >>> from openai_sdk_helpers.structure import PromptStructure
+        >>> spec = ToolSpec(
+        ...     tool_name="echo",
+        ...     tool_description="Echo a prompt",
+        ...     input_structure=PromptStructure,
+        ...     output_structure=PromptStructure,
+        ... )
+        >>> spec.serialize_tool_result({"prompt": "hello"})
+        '{"prompt": "hello"}'
+        """
+        if self.output_structure is None:
+            raise ValueError("ToolSpec.output_structure must be set for serialization.")
+
+        output_structure = self.output_structure
+        payload = output_structure.model_validate(result).to_json()
+        return json.dumps(payload, cls=customJSONEncoder)
+
+    def unserialize_tool_arguments(self, tool_call: Any) -> StructureBase:
+        """Unserialize tool call arguments into a structured input instance.
+
+        Parameters
+        ----------
+        tool_call : Any
+            Tool call object with 'arguments' and 'name' attributes.
+
+        Returns
+        -------
+        StructureBase
+            Validated input structure instance.
+
+        Raises
+        ------
+        ValueError
+            If argument parsing fails.
+        ValidationError
+            If input validation fails.
+        """
+        tool_name = getattr(tool_call, "name", self.tool_name)
+        parsed_args = _parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
+        return self.input_structure.from_json(parsed_args)
 
 def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     """Build tool definitions from named tool specs.

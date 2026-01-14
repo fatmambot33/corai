@@ -7,7 +7,7 @@ import json
 from openai_sdk_helpers.tools import (
     ToolSpec,
     tool_handler_factory,
-    parse_tool_arguments,
+    _parse_tool_arguments,
 )
 from openai_sdk_helpers.structure import StructureBase
 from openai_sdk_helpers.structure.base import spec_field
@@ -277,23 +277,23 @@ def test_parse_tool_arguments_directly():
     # Test parse_tool_arguments directly without going through handler factory
 
     # Wrapped by exact tool name
-    result = parse_tool_arguments(
+    result = _parse_tool_arguments(
         '{"ExampleTool": {"key": "value"}}', tool_name="ExampleTool"
     )
     assert result == {"key": "value"}
 
     # Wrapped by snake_case
-    result = parse_tool_arguments(
+    result = _parse_tool_arguments(
         '{"example_tool": {"key": "value"}}', tool_name="ExampleTool"
     )
     assert result == {"key": "value"}
 
     # Case insensitive
-    result = parse_tool_arguments(
+    result = _parse_tool_arguments(
         '{"exampletool": {"key": "value"}}', tool_name="ExampleTool"
     )
     assert result == {"key": "value"}
 
     # No wrapper
-    result = parse_tool_arguments('{"key": "value"}', tool_name="ExampleTool")
+    result = _parse_tool_arguments('{"key": "value"}', tool_name="ExampleTool")
     assert result == {"key": "value"}

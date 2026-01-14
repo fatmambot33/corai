@@ -14,7 +14,7 @@ from openai_sdk_helpers.tools import (
     StructureType,
     ToolSpec,
     build_tool_definitions,
-    parse_tool_arguments,
+    _parse_tool_arguments,
 )
 
 from openai_sdk_helpers.structure import (
@@ -612,7 +612,7 @@ def test_parse_tool_arguments_unwraps_matching_wrapper():
     """Test that parse_tool_arguments unwraps arguments wrapped by class name."""
     # Wrapper matches tool name exactly
     args = '{"ExampleTool": {"key": "value", "number": 42}}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"key": "value", "number": 42}
 
 
@@ -620,7 +620,7 @@ def test_parse_tool_arguments_unwraps_snake_case_wrapper():
     """Test unwrapping with snake_case wrapper key."""
     # Wrapper is snake_case version of tool name
     args = '{"example_tool": {"key": "value"}}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"key": "value"}
 
 
@@ -628,7 +628,7 @@ def test_parse_tool_arguments_unwraps_case_insensitive():
     """Test case-insensitive wrapper unwrapping."""
     # Wrapper key differs only in case
     args = '{"exampletool": {"key": "value"}}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"key": "value"}
 
 
@@ -636,7 +636,7 @@ def test_parse_tool_arguments_no_unwrap_multiple_keys():
     """Test that multi-key dicts are not unwrapped."""
     # Multiple keys - should not unwrap even if one matches
     args = '{"ExampleTool": {"key": "value"}, "other": "data"}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"ExampleTool": {"key": "value"}, "other": "data"}
 
 
@@ -644,7 +644,7 @@ def test_parse_tool_arguments_no_unwrap_non_dict_value():
     """Test that wrappers with non-dict values are not unwrapped."""
     # Value is not a dict
     args = '{"ExampleTool": "string_value"}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"ExampleTool": "string_value"}
 
 
@@ -652,14 +652,14 @@ def test_parse_tool_arguments_no_unwrap_non_matching():
     """Test that non-matching wrappers are not unwrapped."""
     # Wrapper doesn't match tool name
     args = '{"DifferentTool": {"key": "value"}}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"DifferentTool": {"key": "value"}}
 
 
 def test_parse_tool_arguments_flat_dict_unchanged():
     """Test that flat dicts without wrappers work as before."""
     args = '{"key": "value", "number": 42}'
-    result = parse_tool_arguments(args, tool_name="ExampleTool")
+    result = _parse_tool_arguments(args, tool_name="ExampleTool")
     assert result == {"key": "value", "number": 42}
 
 

@@ -75,7 +75,6 @@ from .tools import (
     StructureType,
     ToolSpec,
     build_tool_definitions,
-    parse_tool_arguments,
 )
 from .settings import build_openai_settings
 from .utils.output_validation import (
@@ -150,7 +149,6 @@ __all__ = [
     "ResponseConfiguration",
     "ResponseRegistry",
     "get_default_registry",
-    "parse_tool_arguments",
     "attach_vector_store",
     "serialize_tool_result",
     "tool_handler_factory",
