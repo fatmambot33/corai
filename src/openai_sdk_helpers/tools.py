@@ -225,13 +225,13 @@ class ToolSpec:
 
     Attributes
     ----------
-    structure : StructureType
-        The StructureBase class that defines the tool's input parameter schema.
-        Used to generate the OpenAI tool definition.
     tool_name : str
         Name identifier for the tool.
     tool_description : str
         Human-readable description of what the tool does.
+    input_structure : StructureType
+        The StructureBase class that defines the tool's input parameter schema.
+        Used to generate the OpenAI tool definition.
     output_structure : StructureType or None, default=None
         Optional StructureBase class that defines the tool's output schema.
         This is for documentation/reference only and is not sent to OpenAI.
@@ -245,18 +245,19 @@ class ToolSpec:
     >>> from openai_sdk_helpers import ToolSpec
     >>> from openai_sdk_helpers.structure import PromptStructure
     >>> spec = ToolSpec(
-    ...     structure=PromptStructure,
     ...     tool_name="web_agent",
-    ...     tool_description="Run a web research workflow"
+    ...     tool_description="Run a web research workflow",
+    ...     input_structure=PromptStructure,
+    ...     output_structure=PromptStructure
     ... )
 
     Define a tool with different input and output structures:
 
     >>> from openai_sdk_helpers.structure import PromptStructure, SummaryStructure
     >>> spec = ToolSpec(
-    ...     structure=PromptStructure,
     ...     tool_name="summarizer",
     ...     tool_description="Summarize the provided prompt",
+    ...     input_structure=PromptStructure,
     ...     output_structure=SummaryStructure
     ... )
     """
@@ -293,14 +294,15 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     >>> from openai_sdk_helpers.structure import PromptStructure
     >>> tools = build_tool_definitions([
     ...     ToolSpec(
-    ...         structure=PromptStructure,
     ...         tool_name="web_agent",
-    ...         tool_description="Run a web research workflow"
+    ...         tool_description="Run a web research workflow",
+    ...         input_structure=PromptStructure,
+    ...         output_structure=PromptStructure
     ...     ),
     ...     ToolSpec(
-    ...         structure=PromptStructure,
     ...         tool_name="vector_agent",
-    ...         tool_description="Run a vector search workflow"
+    ...         tool_description="Run a vector search workflow",
+    ...         input_structure=PromptStructure
     ...     ),
     ... ])
     """
