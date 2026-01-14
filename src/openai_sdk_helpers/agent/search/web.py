@@ -17,7 +17,7 @@ from ...structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
-from ...tools import tool_handler_factory
+from ...tools import ToolSpec, tool_handler_factory
 from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
@@ -345,7 +345,15 @@ class WebAgentSearch:
             return run_coroutine_agent_sync(self.run_agent_async(search_query=prompt))
 
         tool_handler = {
-            tool_name: tool_handler_factory(_run_search, input_model=PromptStructure)
+            tool_name: tool_handler_factory(
+                _run_search,
+                tool_spec=ToolSpec(
+                    tool_name=tool_name,
+                    tool_description=tool_description,
+                    input_structure=PromptStructure,
+                    output_structure=WebSearchStructure,
+                ),
+            )
         }
         tool_definition = PromptStructure.response_tool_definition(
             tool_name, tool_description=tool_description
