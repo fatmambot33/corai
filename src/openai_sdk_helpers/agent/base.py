@@ -30,7 +30,7 @@ from ..utils import (
     log,
 )
 
-from ..tools import ToolSpec, tool_handler_factory
+from ..tools import ToolSpec, build_response_tool_handler
 
 from .runner import run_async, run_streamed, run_sync
 
@@ -599,8 +599,8 @@ class AgentBase(DataclassJSONSerializable):
         """Return response tool handler and definition for Responses API use.
 
         The returned handler serializes tool output as JSON using
-        ``tool_handler_factory`` so downstream response flows can rely on a
-        consistent payload format.
+        ``build_response_tool_handler`` and ``ToolSpec`` so downstream response flows
+        can rely on a consistent payload format.
 
         Parameters
         ----------
@@ -642,26 +642,13 @@ class AgentBase(DataclassJSONSerializable):
         description = tool_description or self.description
         input_structure = self._input_structure or PromptStructure
         output_structure = self.output_structure or input_structure
-        tool_handler = {
-            name: tool_handler_factory(
-                _run_agent,
-                tool_spec=ToolSpec(
-                    tool_name=name,
-                    tool_description=description,
-                    input_structure=input_structure,
-                    output_structure=output_structure,
-                ),
-            )
-        }
-        tool_definition = {
-            "type": "function",
-            "name": name,
-            "description": description,
-            "strict": True,
-            "additionalProperties": False,
-            "parameters": self._build_response_parameters(),
-        }
-        return tool_handler, tool_definition
+        tool_spec = ToolSpec(
+            tool_name=name,
+            tool_description=description,
+            input_structure=input_structure,
+            output_structure=output_structure,
+        )
+        return build_response_tool_handler(_run_agent, tool_spec=tool_spec)
 
     def build_response(
         self,

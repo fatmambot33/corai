@@ -46,6 +46,7 @@ from .messages import ResponseMessage, ResponseMessages
 from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
+from ..tools import ToolSpec, build_response_tool_handler
 from ..utils import (
     check_filepath,
     coerce_jsonable,
@@ -125,6 +126,8 @@ class ResponseBase(Generic[T]):
         Execute run_async synchronously with thread management.
     run_streamed(content, attachments=None)
         Execute run_async and await the result (streaming not yet supported).
+    register_tool(func, tool_spec)
+        Register a tool handler and definition from a ToolSpec.
     get_last_tool_message()
         Return the most recent tool message or None.
     get_last_user_message()
@@ -369,6 +372,36 @@ class ResponseBase(Generic[T]):
         None
         """
         return self._output_structure
+
+    def register_tool(
+        self,
+        func: Callable[..., Any],
+        *,
+        tool_spec: ToolSpec,
+    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+        """Register a tool handler and definition using a ToolSpec.
+
+        Parameters
+        ----------
+        func : Callable[..., Any]
+            Tool implementation function to wrap for argument parsing and
+            result serialization.
+        tool_spec : ToolSpec
+            Tool specification describing input/output structures and metadata.
+
+        Returns
+        -------
+        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
+            Tool handler mapping and tool definition created from the ToolSpec.
+        """
+        tool_handler, tool_definition = build_response_tool_handler(
+            func, tool_spec=tool_spec
+        )
+        self._tool_handlers.update(tool_handler)
+        if self._tools is None:
+            self._tools = []
+        self._tools.append(tool_definition)
+        return tool_handler, tool_definition
 
     def _build_input(
         self,

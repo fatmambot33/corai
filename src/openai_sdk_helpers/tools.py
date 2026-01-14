@@ -516,7 +516,7 @@ class ToolSpec:
         return self.input_structure.from_json(parsed_args)
 
 
-def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
+def build_tool_definition_list(tool_specs: list[ToolSpec]) -> list[dict]:
     """Build tool definitions from named tool specs.
 
     Converts a list of ToolSpec objects into OpenAI-compatible tool
@@ -538,9 +538,9 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     --------
     Build multiple tool definitions:
 
-    >>> from openai_sdk_helpers import ToolSpec, build_tool_definitions
+    >>> from openai_sdk_helpers import ToolSpec, build_tool_definition_list
     >>> from openai_sdk_helpers.structure import PromptStructure
-    >>> tools = build_tool_definitions([
+    >>> tools = build_tool_definition_list([
     ...     ToolSpec(
     ...         tool_name="web_agent",
     ...         tool_description="Run a web research workflow",
@@ -564,11 +564,60 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     ]
 
 
+def build_response_tool_handler(
+    func: Callable[..., Any], *, tool_spec: ToolSpec
+) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+    """Build a Responses API tool handler and definition from a ToolSpec.
+
+    Centralizes tool handler creation so that parsing and serialization are
+    handled consistently via ToolSpec. The returned handler is generated
+    through ``tool_handler_factory`` and the definition is generated from the
+    input structure schema.
+
+    Parameters
+    ----------
+    func : Callable[..., Any]
+        Tool implementation function to wrap with parsing and serialization.
+    tool_spec : ToolSpec
+        Tool specification describing input/output structures and metadata.
+
+    Returns
+    -------
+    tuple[dict[str, Callable[..., Any]], dict[str, Any]]
+        Tool handler mapping and tool definition for Responses API usage.
+
+    Examples
+    --------
+    >>> from openai_sdk_helpers import ToolSpec, build_response_tool_handler
+    >>> from openai_sdk_helpers.structure import PromptStructure
+    >>> def echo(prompt: PromptStructure):
+    ...     return {"prompt": prompt.prompt}
+    >>> handler, definition = build_response_tool_handler(
+    ...     echo,
+    ...     tool_spec=ToolSpec(
+    ...         tool_name="echo",
+    ...         tool_description="Echo a prompt",
+    ...         input_structure=PromptStructure,
+    ...         output_structure=PromptStructure,
+    ...     ),
+    ... )
+    """
+    tool_handler = {
+        tool_spec.tool_name: tool_handler_factory(func, tool_spec=tool_spec)
+    }
+    tool_definition = tool_spec.input_structure.response_tool_definition(
+        tool_spec.tool_name,
+        tool_description=tool_spec.tool_description,
+    )
+    return tool_handler, tool_definition
+
+
 __all__ = [
     "serialize_tool_result",
     "unserialize_tool_arguments",
     "tool_handler_factory",
     "StructureType",
     "ToolSpec",
-    "build_tool_definitions",
+    "build_tool_definition_list",
+    "build_response_tool_handler",
 ]
