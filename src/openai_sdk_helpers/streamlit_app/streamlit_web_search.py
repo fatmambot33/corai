@@ -45,7 +45,7 @@ class StreamlitWebSearch(ResponseBase[WebSearchStructure]):
 
 async def perform_search(tool) -> str:
     """Perform a web search and return structured results."""
-    structured_data = PromptStructure.from_tool_arguments(tool.arguments)
+    structured_data = PromptStructure.from_string(tool.arguments)
     web_result = await WebAgentSearch(default_model=DEFAULT_MODEL).run_agent_async(
         structured_data.prompt
     )

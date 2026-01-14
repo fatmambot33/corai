@@ -8,20 +8,15 @@ generation, validation, and serialization.
 from __future__ import annotations
 
 # Standard library imports
-import ast
 import inspect
 import json
-import logging
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import (
     Any,
     ClassVar,
     TypeVar,
     cast,
-    get_args,
-    get_origin,
 )
 
 # Third-party imports
@@ -31,7 +26,7 @@ from openai.types.responses.response_text_config_param import ResponseTextConfig
 
 # Internal imports
 
-from ..utils import check_filepath, log, BaseModelJSONSerializable
+from ..utils import check_filepath, BaseModelJSONSerializable
 
 T = TypeVar("T", bound="StructureBase")
 DEFAULT_DATA_PATH: Path | None = None
@@ -460,48 +455,6 @@ class StructureBase(BaseModelJSONSerializable):
         with file_path.open("w", encoding="utf-8") as file_handle:
             json.dump(schema, file_handle, indent=2, ensure_ascii=False)
         return file_path
-
-    @classmethod
-    def from_tool_arguments(cls: type[T], arguments: str) -> T:
-        """Parse tool call arguments which may not be valid JSON.
-
-        The OpenAI API is expected to return well-formed JSON for tool arguments,
-        but minor formatting issues (such as the use of single quotes) can occur.
-        This helper first tries ``json.loads`` and falls back to
-        ``ast.literal_eval`` for simple cases.
-
-        Parameters
-        ----------
-        arguments
-            Raw argument string from the tool call.
-
-        Returns
-        -------
-        dict
-            Parsed dictionary of arguments.
-
-        Raises
-        ------
-        ValueError
-            If the arguments cannot be parsed as JSON.
-
-        Examples
-        --------
-        >>> parse_tool_arguments('{"key": "value"}')["key"]
-        'value'
-        """
-        try:
-            structured_data = json.loads(arguments)
-
-        except json.JSONDecodeError:
-            try:
-                structured_data = ast.literal_eval(arguments)
-            except (SyntaxError, ValueError) as exc:
-                raise ValueError(
-                    f"Invalid JSON arguments: {arguments}. "
-                    f"Expected valid JSON or Python literal."
-                ) from exc
-        return cls.from_json(structured_data)
 
     @staticmethod
     def format_output(label: str, *, value: Any) -> str:

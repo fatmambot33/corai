@@ -12,11 +12,12 @@ import json
 from pathlib import Path
 import inspect
 import logging
+import ast
 from typing import Any, TypeVar, get_args, get_origin
 from pydantic import BaseModel
 from ...logging import log
 
-from .utils import _to_jsonable, customJSONEncoder
+from .utils import customJSONEncoder
 
 P = TypeVar("P", bound="BaseModelJSONSerializable")
 
@@ -251,6 +252,48 @@ class BaseModelJSONSerializable(BaseModel):
             data = json.load(handle)
 
         return cls.from_json(data)
+
+    @classmethod
+    def from_string(cls: type[P], arguments: str) -> P:
+        """Parse tool call arguments which may not be valid JSON.
+
+        The OpenAI API is expected to return well-formed JSON for tool arguments,
+        but minor formatting issues (such as the use of single quotes) can occur.
+        This helper first tries ``json.loads`` and falls back to
+        ``ast.literal_eval`` for simple cases.
+
+        Parameters
+        ----------
+        arguments
+            Raw argument string from the tool call.
+
+        Returns
+        -------
+        dict
+            Parsed dictionary of arguments.
+
+        Raises
+        ------
+        ValueError
+            If the arguments cannot be parsed as JSON.
+
+        Examples
+        --------
+        >>> parse_tool_arguments('{"key": "value"}')["key"]
+        'value'
+        """
+        try:
+            structured_data = json.loads(arguments)
+
+        except json.JSONDecodeError:
+            try:
+                structured_data = ast.literal_eval(arguments)
+            except (SyntaxError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid JSON arguments: {arguments}. "
+                    f"Expected valid JSON or Python literal."
+                ) from exc
+        return cls.from_json(structured_data)
 
 
 __all__ = ["BaseModelJSONSerializable"]
