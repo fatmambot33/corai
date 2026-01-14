@@ -173,16 +173,15 @@ def test_tool_handler_factory_returns_string():
     assert parsed == {"items": ["a", "b", "c"]}
 
 
-def test_serialize_tool_result_requires_output_structure():
-    """Test that serialize_tool_result requires an output structure."""
-    spec = ToolSpec(
-        input_structure=BasicInputStructure,
-        tool_name="missing_output",
-        tool_description="Missing output structure.",
-    )
-
+def test_tool_spec_requires_output_structure():
+    """Test that ToolSpec requires an output structure."""
     with pytest.raises(ValueError):
-        serialize_tool_result({"query": "test"}, tool_spec=spec)
+        ToolSpec(
+            input_structure=BasicInputStructure,
+            output_structure=None,
+            tool_name="missing_output",
+            tool_description="Missing output structure.",
+        )
 
 
 def test_unserialize_tool_arguments_returns_structure():
@@ -328,6 +327,7 @@ def test_tool_spec_creation():
     """Test creating a ToolSpec instance."""
     spec = ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="test_tool",
         tool_description="A test tool description",
     )
@@ -341,6 +341,7 @@ def test_tool_spec_frozen():
     """Test that ToolSpec is immutable."""
     spec = ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="test_tool",
         tool_description="A test tool description",
     )
@@ -354,6 +355,7 @@ def test_build_tool_definitions_single_tool():
     specs = [
         ToolSpec(
             input_structure=CustomStructure,
+            output_structure=CustomStructure,
             tool_name="search_tool",
             tool_description="Search for relevant information",
         )
@@ -377,16 +379,19 @@ def test_build_tool_definitions_multiple_tools():
     specs = [
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow for the provided prompt.",
         ),
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow for the provided prompt.",
         ),
         ToolSpec(
             input_structure=CustomStructure,
+            output_structure=CustomStructure,
             tool_name="custom_agent",
             tool_description="Run a custom workflow.",
         ),
@@ -448,16 +453,19 @@ def test_tool_spec_with_different_structures():
     specs = [
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="prompt_tool",
             tool_description="Process prompts",
         ),
         ToolSpec(
             input_structure=SummaryStructure,
+            output_structure=SummaryStructure,
             tool_name="summary_tool",
             tool_description="Generate summaries",
         ),
         ToolSpec(
             input_structure=ValidationResultStructure,
+            output_structure=ValidationResultStructure,
             tool_name="validation_tool",
             tool_description="Validate results",
         ),
@@ -475,6 +483,7 @@ def test_tool_definitions_have_correct_schema():
     """Test that generated tool definitions contain valid schemas."""
     spec = ToolSpec(
         input_structure=CustomStructure,
+        output_structure=CustomStructure,
         tool_name="test_tool",
         tool_description="Test tool",
     )
@@ -494,13 +503,22 @@ def test_build_tool_definitions_preserves_order():
     """Test that tool definitions are built in the same order as specs."""
     specs = [
         ToolSpec(
-            input_structure=PromptStructure, tool_name="tool_a", tool_description="A"
+            input_structure=PromptStructure,
+            output_structure=PromptStructure,
+            tool_name="tool_a",
+            tool_description="A",
         ),
         ToolSpec(
-            input_structure=PromptStructure, tool_name="tool_b", tool_description="B"
+            input_structure=PromptStructure,
+            output_structure=PromptStructure,
+            tool_name="tool_b",
+            tool_description="B",
         ),
         ToolSpec(
-            input_structure=PromptStructure, tool_name="tool_c", tool_description="C"
+            input_structure=PromptStructure,
+            output_structure=PromptStructure,
+            tool_name="tool_c",
+            tool_description="C",
         ),
     ]
 
@@ -515,16 +533,19 @@ def test_tool_spec_equality():
     """Test ToolSpec equality comparison."""
     spec1 = ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="test",
         tool_description="Test tool",
     )
     spec2 = ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="test",
         tool_description="Test tool",
     )
     spec3 = ToolSpec(
         input_structure=CustomStructure,
+        output_structure=CustomStructure,
         tool_name="test",
         tool_description="Test tool",
     )
@@ -560,15 +581,15 @@ def test_tool_spec_with_output_structure():
     assert "topics" not in schema["properties"]
 
 
-def test_tool_spec_output_structure_optional():
-    """Test that output_structure is optional and defaults to None."""
-    spec = ToolSpec(
-        input_structure=PromptStructure,
-        tool_name="test_tool",
-        tool_description="Test tool",
-    )
-
-    assert spec.output_structure is None
+def test_tool_spec_rejects_none_output_structure():
+    """Test that output_structure cannot be None."""
+    with pytest.raises(ValueError):
+        ToolSpec(
+            input_structure=PromptStructure,
+            output_structure=None,
+            tool_name="test_tool",
+            tool_description="Test tool",
+        )
 
 
 def test_tool_spec_with_different_io_structures():
@@ -577,6 +598,7 @@ def test_tool_spec_with_different_io_structures():
         # Tool with same input/output (implicit)
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="echo",
             tool_description="Echo the prompt",
         ),
