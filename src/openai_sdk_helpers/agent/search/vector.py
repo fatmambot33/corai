@@ -18,7 +18,7 @@ from ...structure.vector_search import (
     VectorSearchPlanStructure,
     VectorSearchReportStructure,
 )
-from ...tools import tool_handler_factory
+from ...tools import ToolSpec, tool_handler_factory
 from ...vector_storage import VectorStorage
 from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
@@ -434,7 +434,15 @@ class VectorAgentSearch:
             return run_coroutine_agent_sync(search.run_agent(search_query=prompt))
 
         tool_handler = {
-            tool_name: tool_handler_factory(_run_search, input_model=PromptStructure)
+            tool_name: tool_handler_factory(
+                _run_search,
+                tool_spec=ToolSpec(
+                    tool_name=tool_name,
+                    tool_description=tool_description,
+                    input_structure=PromptStructure,
+                    output_structure=VectorSearchStructure,
+                ),
+            )
         }
         tool_definition = PromptStructure.response_tool_definition(
             tool_name, tool_description=tool_description

@@ -5,10 +5,12 @@ from __future__ import annotations
 import asyncio
 import json
 import pytest
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
 from openai_sdk_helpers.tools import (
+    serialize_tool_result,
     tool_handler_factory,
+    unserialize_tool_arguments,
     StructureType,
     ToolSpec,
     build_tool_definitions,
@@ -21,20 +23,6 @@ from openai_sdk_helpers.structure import (
     ValidationResultStructure,
 )
 from openai_sdk_helpers.structure.base import spec_field
-
-
-class SampleInput(BaseModel):
-    """Sample Pydantic model for testing."""
-
-    query: str
-    limit: int = 10
-
-
-class SampleOutput(BaseModel):
-    """Sample output model."""
-
-    results: list[str]
-    count: int
 
 
 def test_parse_tool_arguments_with_tool_name():
@@ -79,10 +67,16 @@ class MockToolCall:
 def test_tool_handler_factory_basic():
     """Test basic tool handler without validation."""
 
-    def simple_tool(query: str, limit: int = 10):
-        return {"query": query, "limit": limit}
+    def simple_tool(payload: BasicInputStructure) -> dict[str, int | str]:
+        return payload.model_dump()
 
-    handler = tool_handler_factory(simple_tool)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="simple_tool",
+        tool_description="Return the query and limits.",
+    )
+    handler = tool_handler_factory(simple_tool, tool_spec=spec)
 
     tool_call = MockToolCall('{"query": "test", "limit": 5}')
     result = handler(tool_call)
@@ -96,26 +90,38 @@ def test_tool_handler_factory_basic():
 def test_tool_handler_factory_with_validation():
     """Test tool handler with Pydantic validation."""
 
-    def search_tool(query: str, limit: int = 10):
-        return SampleOutput(results=[f"result for {query}"], count=1)
+    def search_tool(payload: BasicInputStructure) -> dict[str, int | str]:
+        return payload.model_dump()
 
-    handler = tool_handler_factory(search_tool, input_model=SampleInput)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="search",
+        tool_description="Run a search query.",
+    )
+    handler = tool_handler_factory(search_tool, tool_spec=spec)
 
     tool_call = MockToolCall('{"query": "test search", "limit": 20}')
     result = handler(tool_call)
 
     parsed = json.loads(result)
-    assert parsed["results"] == ["result for test search"]
-    assert parsed["count"] == 1
+    assert parsed["query"] == "test search"
+    assert parsed["limit"] == 20
 
 
 def test_tool_handler_factory_validation_failure():
     """Test that validation errors are raised with context."""
 
-    def dummy_tool(query: str, limit: int):
-        return {}
+    def dummy_tool(payload: BasicInputStructure) -> dict[str, int | str]:
+        return payload.model_dump()
 
-    handler = tool_handler_factory(dummy_tool, input_model=SampleInput)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="search",
+        tool_description="Run a search query.",
+    )
+    handler = tool_handler_factory(dummy_tool, tool_spec=spec)
 
     # Missing required field 'query'
     tool_call = MockToolCall('{"limit": 10}', name="search")
@@ -127,10 +133,16 @@ def test_tool_handler_factory_validation_failure():
 def test_tool_handler_factory_with_defaults():
     """Test that default values work correctly."""
 
-    def tool_with_defaults(query: str, limit: int = 10, offset: int = 0):
-        return {"query": query, "limit": limit, "offset": offset}
+    def tool_with_defaults(payload: BasicInputStructure) -> dict[str, int | str]:
+        return payload.model_dump()
 
-    handler = tool_handler_factory(tool_with_defaults)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="defaults",
+        tool_description="Return defaults for the query.",
+    )
+    handler = tool_handler_factory(tool_with_defaults, tool_spec=spec)
 
     # Only provide query, use defaults
     tool_call = MockToolCall('{"query": "test"}')
@@ -145,10 +157,16 @@ def test_tool_handler_factory_with_defaults():
 def test_tool_handler_factory_argument_parsing_error():
     """Test that argument parsing errors include tool name."""
 
-    def simple_tool(query: str):
-        return {"query": query}
+    def simple_tool(payload: BasicInputStructure) -> dict[str, int | str]:
+        return payload.model_dump()
 
-    handler = tool_handler_factory(simple_tool)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="simple_tool",
+        tool_description="Return the query and limits.",
+    )
+    handler = tool_handler_factory(simple_tool, tool_spec=spec)
 
     # Invalid JSON
     tool_call = MockToolCall("invalid json", name="my_tool")
@@ -163,12 +181,18 @@ def test_tool_handler_factory_argument_parsing_error():
 def test_tool_handler_factory_returns_string():
     """Test that the result from handler is a JSON string."""
 
-    def tool_returning_list():
-        return ["a", "b", "c"]
+    def tool_returning_list(_: BasicInputStructure) -> dict[str, list[str]]:
+        return {"items": ["a", "b", "c"]}
 
-    handler = tool_handler_factory(tool_returning_list)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=ItemsOutputStructure,
+        tool_name="list_tool",
+        tool_description="Return a list of items.",
+    )
+    handler = tool_handler_factory(tool_returning_list, tool_spec=spec)
 
-    tool_call = MockToolCall("{}")
+    tool_call = MockToolCall('{"query": "test"}')
     result = handler(tool_call)
 
     # Should be a string
@@ -176,7 +200,37 @@ def test_tool_handler_factory_returns_string():
 
     # Should be valid JSON
     parsed = json.loads(result)
-    assert parsed == ["a", "b", "c"]
+    assert parsed == {"items": ["a", "b", "c"]}
+
+
+def test_serialize_tool_result_requires_output_structure():
+    """Test that serialize_tool_result requires an output structure."""
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        tool_name="missing_output",
+        tool_description="Missing output structure.",
+    )
+
+    with pytest.raises(ValueError):
+        serialize_tool_result({"query": "test"}, tool_spec=spec)
+
+
+def test_unserialize_tool_arguments_returns_structure():
+    """Test unserialize_tool_arguments returns a validated structure."""
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="unserialize",
+        tool_description="Unserialize arguments.",
+    )
+    tool_call = MockToolCall('{"query": "test", "limit": 3, "offset": 1}')
+
+    result = unserialize_tool_arguments(tool_call, tool_spec=spec)
+
+    assert isinstance(result, BasicInputStructure)
+    assert result.query == "test"
+    assert result.limit == 3
+    assert result.offset == 1
 
 
 # ToolSpec and build_tool_definitions tests
@@ -188,6 +242,116 @@ class CustomStructure(StructureBase):
 
     query: str = spec_field("query", description="The search query.")
     limit: int = spec_field("limit", description="Maximum number of results.")
+
+
+class BasicInputStructure(StructureBase):
+    """Input structure for tool handler tests."""
+
+    query: str = spec_field("query", allow_null=False, description="Search query.")
+    limit: int = spec_field(
+        "limit",
+        allow_null=False,
+        description="Maximum number of results.",
+        default=10,
+    )
+    offset: int = spec_field(
+        "offset",
+        allow_null=False,
+        description="Pagination offset.",
+        default=0,
+    )
+
+
+class BasicOutputStructure(StructureBase):
+    """Output structure for tool handler tests."""
+
+    query: str = spec_field("query", allow_null=False, description="Search query.")
+    limit: int = spec_field(
+        "limit",
+        allow_null=False,
+        description="Maximum number of results.",
+    )
+    offset: int = spec_field(
+        "offset",
+        allow_null=False,
+        description="Pagination offset.",
+    )
+
+
+class ItemsOutputStructure(StructureBase):
+    """Output structure for list results."""
+
+    items: list[str] = spec_field(
+        "items",
+        allow_null=False,
+        description="Returned items.",
+    )
+
+
+class AsyncQueryOutputStructure(StructureBase):
+    """Output structure for async query results."""
+
+    query: str = spec_field("query", allow_null=False, description="Search query.")
+    limit: int = spec_field(
+        "limit",
+        allow_null=False,
+        description="Maximum number of results.",
+    )
+    async_flag: bool = spec_field(
+        "async_flag",
+        allow_null=False,
+        description="Whether the call ran asynchronously.",
+    )
+
+
+class AsyncValueInputStructure(StructureBase):
+    """Input structure for async value tests."""
+
+    value: int = spec_field(
+        "value",
+        allow_null=False,
+        description="Input value.",
+    )
+
+
+class AsyncValueOutputStructure(StructureBase):
+    """Output structure for async value tests."""
+
+    result: int = spec_field(
+        "result",
+        allow_null=False,
+        description="Doubled result.",
+    )
+
+
+class AsyncItemsInputStructure(StructureBase):
+    """Input structure for async list processing tests."""
+
+    items: list[str] = spec_field(
+        "items",
+        allow_null=False,
+        description="Input items.",
+    )
+
+
+class AsyncComplexOutputStructure(StructureBase):
+    """Output structure for async list processing tests."""
+
+    processed: list[str] = spec_field(
+        "processed",
+        allow_null=False,
+        description="Processed items.",
+    )
+    count: int = spec_field(
+        "count",
+        allow_null=False,
+        description="Number of items.",
+    )
+    nested: dict[str, str] = spec_field(
+        "nested",
+        allow_null=False,
+        description="Nested status payload.",
+    )
 
 
 def test_tool_spec_creation():
@@ -536,11 +700,17 @@ def test_parse_tool_arguments_flat_dict_unchanged():
 def test_tool_handler_factory_with_async_function():
     """Test tool handler factory with async function."""
 
-    async def async_search(query: str, limit: int = 10):
+    async def async_search(payload: BasicInputStructure) -> dict[str, int | str | bool]:
         await asyncio.sleep(0.001)  # Simulate async work
-        return {"query": query, "limit": limit, "async": True}
+        return {"query": payload.query, "limit": payload.limit, "async_flag": True}
 
-    handler = tool_handler_factory(async_search)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=AsyncQueryOutputStructure,
+        tool_name="async_search",
+        tool_description="Run an async search query.",
+    )
+    handler = tool_handler_factory(async_search, tool_spec=spec)
 
     tool_call = MockToolCall('{"query": "test", "limit": 5}')
     result = handler(tool_call)
@@ -548,34 +718,47 @@ def test_tool_handler_factory_with_async_function():
     parsed = json.loads(result)
     assert parsed["query"] == "test"
     assert parsed["limit"] == 5
-    assert parsed["async"] is True
+    assert parsed["async_flag"] is True
 
 
 def test_tool_handler_factory_async_with_validation():
     """Test async tool handler with Pydantic validation."""
 
-    async def async_search(query: str, limit: int = 10):
+    async def async_search(payload: BasicInputStructure) -> dict[str, int | str]:
         await asyncio.sleep(0.001)
-        return SampleOutput(results=[f"async result for {query}"], count=1)
+        return {"query": payload.query, "limit": payload.limit, "offset": payload.offset}
 
-    handler = tool_handler_factory(async_search, input_model=SampleInput)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="async_search",
+        tool_description="Run an async search query.",
+    )
+    handler = tool_handler_factory(async_search, tool_spec=spec)
 
     tool_call = MockToolCall('{"query": "async test", "limit": 20}')
     result = handler(tool_call)
 
     parsed = json.loads(result)
-    assert parsed["results"] == ["async result for async test"]
-    assert parsed["count"] == 1
+    assert parsed["query"] == "async test"
+    assert parsed["limit"] == 20
+    assert parsed["offset"] == 0
 
 
 def test_tool_handler_factory_async_raises_validation_error():
     """Test that async handlers properly raise validation errors."""
 
-    async def async_tool(query: str, limit: int):
+    async def async_tool(payload: BasicInputStructure) -> dict[str, int | str]:
         await asyncio.sleep(0.001)
-        return {}
+        return payload.model_dump()
 
-    handler = tool_handler_factory(async_tool, input_model=SampleInput)
+    spec = ToolSpec(
+        input_structure=BasicInputStructure,
+        output_structure=BasicOutputStructure,
+        tool_name="async_search",
+        tool_description="Run an async search query.",
+    )
+    handler = tool_handler_factory(async_tool, tool_spec=spec)
 
     # Missing required field 'query'
     tool_call = MockToolCall('{"limit": 10}', name="async_search")
@@ -587,11 +770,17 @@ def test_tool_handler_factory_async_raises_validation_error():
 def test_tool_handler_factory_async_inside_event_loop():
     """Test async handler when already inside an event loop."""
 
-    async def async_tool(value: int):
+    async def async_tool(payload: AsyncValueInputStructure) -> dict[str, int]:
         await asyncio.sleep(0.001)
-        return {"result": value * 2}
+        return {"result": payload.value * 2}
 
-    handler = tool_handler_factory(async_tool)
+    spec = ToolSpec(
+        input_structure=AsyncValueInputStructure,
+        output_structure=AsyncValueOutputStructure,
+        tool_name="async_value",
+        tool_description="Double the input value.",
+    )
+    handler = tool_handler_factory(async_tool, tool_spec=spec)
 
     async def test_in_loop():
         tool_call = MockToolCall('{"value": 21}')
@@ -606,15 +795,23 @@ def test_tool_handler_factory_async_inside_event_loop():
 def test_tool_handler_factory_async_complex_return():
     """Test async handler with complex return types."""
 
-    async def async_complex_tool(items: list[str]):
+    async def async_complex_tool(
+        payload: AsyncItemsInputStructure,
+    ) -> dict[str, list[str] | int | dict[str, str]]:
         await asyncio.sleep(0.001)
         return {
-            "processed": [item.upper() for item in items],
-            "count": len(items),
+            "processed": [item.upper() for item in payload.items],
+            "count": len(payload.items),
             "nested": {"status": "success"},
         }
 
-    handler = tool_handler_factory(async_complex_tool)
+    spec = ToolSpec(
+        input_structure=AsyncItemsInputStructure,
+        output_structure=AsyncComplexOutputStructure,
+        tool_name="async_complex",
+        tool_description="Process items asynchronously.",
+    )
+    handler = tool_handler_factory(async_complex_tool, tool_spec=spec)
 
     tool_call = MockToolCall('{"items": ["a", "b", "c"]}')
     result = handler(tool_call)

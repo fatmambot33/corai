@@ -12,78 +12,106 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import json
 import threading
 from dataclasses import dataclass
-from typing import Any, Callable, TypeAlias, TypeVar
-
-from pydantic import BaseModel
+from typing import Any, Callable, TypeAlias
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
 from openai_sdk_helpers.structure.base import StructureBase
-from openai_sdk_helpers.utils import coerce_jsonable, customJSONEncoder
-import json
+from openai_sdk_helpers.utils import customJSONEncoder
 
-T = TypeVar("T", bound=BaseModel)
 StructureType: TypeAlias = type[StructureBase]
 
 
-def serialize_tool_result(result: Any) -> str:
+def serialize_tool_result(result: Any, *, tool_spec: "ToolSpec") -> str:
     """Serialize tool results into a standardized JSON string.
 
-    Handles Pydantic models, lists, dicts, and plain strings with consistent
-    JSON formatting. Pydantic models are serialized using model_dump(),
-    while other types are converted to JSON or string representation.
+    Handles structured outputs with consistent JSON formatting. Outputs are
+    validated and serialized through the ToolSpec output structure.
 
     Parameters
     ----------
     result : Any
-        Tool result to serialize. Can be a Pydantic model, list, dict, str,
-        or any JSON-serializable type.
+        Tool result to serialize. Can be a structure instance or a compatible
+        mapping for validation.
+    tool_spec : ToolSpec
+        Tool specification describing the expected output structure. The output
+        structure validates and serializes the result.
 
     Returns
     -------
     str
         JSON-formatted string representation of the result.
 
+    Raises
+    ------
+    ValueError
+        If the tool specification is missing an output structure.
+
     Examples
     --------
-    >>> from pydantic import BaseModel
-    >>> class Result(BaseModel):
-    ...     value: int
-    >>> serialize_tool_result(Result(value=42))
-    '{"value": 42}'
-
-    >>> serialize_tool_result(["item1", "item2"])
-    '["item1", "item2"]'
-
-    >>> serialize_tool_result("plain text")
-    '"plain text"'
-
-    >>> serialize_tool_result({"key": "value"})
-    '{"key": "value"}'
+    >>> from openai_sdk_helpers import ToolSpec
+    >>> from openai_sdk_helpers.structure import PromptStructure
+    >>> spec = ToolSpec(
+    ...     tool_name="echo",
+    ...     tool_description="Echo a prompt",
+    ...     input_structure=PromptStructure,
+    ...     output_structure=PromptStructure,
+    ... )
+    >>> serialize_tool_result({"prompt": "hello"}, tool_spec=spec)
+    '{"prompt": "hello"}'
     """
-    if isinstance(result, BaseModel):
-        return result.model_dump_json()
+    if tool_spec.output_structure is None:
+        raise ValueError("ToolSpec.output_structure must be set for serialization.")
 
-    payload = coerce_jsonable(result)
+    output_structure = tool_spec.output_structure
+    payload = output_structure.model_validate(result).to_json()
     return json.dumps(payload, cls=customJSONEncoder)
+
+
+def unserialize_tool_arguments(tool_call: Any, *, tool_spec: "ToolSpec") -> StructureBase:
+    """Unserialize tool call arguments into a structured input instance.
+
+    Parameters
+    ----------
+    tool_call : Any
+        Tool call object with 'arguments' and 'name' attributes.
+    tool_spec : ToolSpec
+        Tool specification describing the expected input structure.
+
+    Returns
+    -------
+    StructureBase
+        Validated input structure instance.
+
+    Raises
+    ------
+    ValueError
+        If argument parsing fails.
+    ValidationError
+        If input validation fails.
+    """
+    tool_name = getattr(tool_call, "name", tool_spec.tool_name)
+    parsed_args = parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
+    return tool_spec.input_structure.from_json(parsed_args)
 
 
 def tool_handler_factory(
     func: Callable[..., Any],
     *,
-    input_model: type[T] | None = None,
+    tool_spec: "ToolSpec",
 ) -> Callable[[Any], str]:
     """Create a generic tool handler that parses, validates, and serializes.
 
-    Wraps a tool function with automatic argument parsing, optional Pydantic
+    Wraps a tool function with automatic argument parsing, structured
     validation, execution, and result serialization. This eliminates
     repetitive boilerplate for tool implementations.
 
     The returned handler:
     1. Parses tool_call.arguments using parse_tool_arguments
-    2. Validates arguments with input_model if provided
-    3. Calls func with validated/parsed arguments (handles both sync and async)
+    2. Validates arguments with the input structure
+    3. Calls func with structured input (handles both sync and async)
     4. Serializes the result using serialize_tool_result
 
     Parameters
@@ -92,10 +120,10 @@ def tool_handler_factory(
         The actual tool implementation function. Should accept keyword
         arguments matching the tool's parameter schema. Can be synchronous
         or asynchronous.
-    input_model : type[BaseModel] or None, default None
-        Optional Pydantic model for input validation. When provided,
-        arguments are validated and converted to this model before being
-        passed to func.
+    tool_spec : ToolSpec
+        Tool specification describing input and output structures. When
+        provided, input parsing uses the input structure and output
+        serialization uses the output structure.
 
     Returns
     -------
@@ -105,34 +133,42 @@ def tool_handler_factory(
 
     Raises
     ------
-    ValidationError
-        If input_model is provided and validation fails.
     ValueError
         If argument parsing fails.
+    ValidationError
+        If input validation fails.
 
     Examples
     --------
-    Basic usage without validation:
+    Basic usage with ToolSpec:
 
-    >>> def search_tool(query: str, limit: int = 10):
-    ...     return {"results": [f"Result for {query}"]}
-    >>> handler = tool_handler_factory(search_tool)
-
-    With Pydantic validation:
-
-    >>> from pydantic import BaseModel
-    >>> class SearchInput(BaseModel):
-    ...     query: str
-    ...     limit: int = 10
-    >>> def search_tool(query: str, limit: int = 10):
-    ...     return {"results": [f"Result for {query}"]}
-    >>> handler = tool_handler_factory(search_tool, input_model=SearchInput)
+    >>> from openai_sdk_helpers import ToolSpec
+    >>> from openai_sdk_helpers.structure import PromptStructure
+    >>> def search_tool(prompt: PromptStructure):
+    ...     return {"prompt": prompt.prompt}
+    >>> handler = tool_handler_factory(
+    ...     search_tool,
+    ...     tool_spec=ToolSpec(
+    ...         tool_name="search",
+    ...         tool_description="Run a search query",
+    ...         input_structure=PromptStructure,
+    ...         output_structure=PromptStructure,
+    ...     ),
+    ... )
 
     With async function:
 
-    >>> async def async_search_tool(query: str, limit: int = 10):
-    ...     return {"results": [f"Result for {query}"]}
-    >>> handler = tool_handler_factory(async_search_tool)
+    >>> async def async_search_tool(prompt: PromptStructure):
+    ...     return {"prompt": prompt.prompt}
+    >>> handler = tool_handler_factory(
+    ...     async_search_tool,
+    ...     tool_spec=ToolSpec(
+    ...         tool_name="async_search",
+    ...         tool_description="Run an async search query",
+    ...         input_structure=PromptStructure,
+    ...         output_structure=PromptStructure,
+    ...     ),
+    ... )
 
     The handler can then be used with OpenAI tool calls:
 
@@ -144,6 +180,15 @@ def tool_handler_factory(
     >>> result = handler(tool_call)  # doctest: +SKIP
     """
     is_async = inspect.iscoroutinefunction(func)
+
+    def _call_with_input(validated_input: StructureBase) -> Any:
+        signature = inspect.signature(func)
+        params = list(signature.parameters.values())
+        if len(params) == 1:
+            param = params[0]
+            if param.annotation is tool_spec.input_structure:
+                return func(validated_input)
+        return func(**validated_input.model_dump())
 
     def handler(tool_call: Any) -> str:
         """Handle tool execution with parsing, validation, and serialization.
@@ -163,21 +208,9 @@ def tool_handler_factory(
         ValueError
             If argument parsing fails.
         ValidationError
-            If Pydantic validation fails (when input_model is provided).
+            If input validation fails.
         """
-        # Extract tool name for error context (required)
-        tool_name = getattr(tool_call, "name", "unknown")
-
-        # Parse arguments with error context
-        parsed_args = parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
-
-        # Validate with Pydantic if model provided
-        if input_model is not None:
-            validated_input = input_model(**parsed_args)
-            # Convert back to dict for function call
-            call_kwargs = validated_input.model_dump()
-        else:
-            call_kwargs = parsed_args
+        validated_input = unserialize_tool_arguments(tool_call, tool_spec=tool_spec)
 
         # Execute function (sync or async with event loop detection)
         if is_async:
@@ -189,7 +222,9 @@ def tool_handler_factory(
 
                 def _thread_func() -> None:
                     try:
-                        result_holder["value"] = asyncio.run(func(**call_kwargs))
+                        result_holder["value"] = asyncio.run(
+                            _call_with_input(validated_input)
+                        )
                     except Exception as exc:
                         result_holder["exception"] = exc
 
@@ -202,12 +237,12 @@ def tool_handler_factory(
                 result = result_holder["value"]
             except RuntimeError:
                 # No event loop running, can use asyncio.run directly
-                result = asyncio.run(func(**call_kwargs))
+                result = asyncio.run(_call_with_input(validated_input))
         else:
-            result = func(**call_kwargs)
+            result = _call_with_input(validated_input)
 
         # Serialize result
-        return serialize_tool_result(result)
+        return serialize_tool_result(result, tool_spec=tool_spec)
 
     return handler
 
@@ -317,6 +352,7 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
 
 __all__ = [
     "serialize_tool_result",
+    "unserialize_tool_arguments",
     "tool_handler_factory",
     "StructureType",
     "ToolSpec",

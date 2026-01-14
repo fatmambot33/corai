@@ -30,7 +30,7 @@ from ..utils import (
     log,
 )
 
-from ..tools import tool_handler_factory
+from ..tools import ToolSpec, tool_handler_factory
 
 from .runner import run_async, run_streamed, run_sync
 
@@ -640,8 +640,19 @@ class AgentBase(DataclassJSONSerializable):
 
         name = tool_name or self.name
         description = tool_description or self.description
-        input_model = self._input_structure or PromptStructure
-        tool_handler = {name: tool_handler_factory(_run_agent, input_model=input_model)}
+        input_structure = self._input_structure or PromptStructure
+        output_structure = self.output_structure or input_structure
+        tool_handler = {
+            name: tool_handler_factory(
+                _run_agent,
+                tool_spec=ToolSpec(
+                    tool_name=name,
+                    tool_description=description,
+                    input_structure=input_structure,
+                    output_structure=output_structure,
+                ),
+            )
+        }
         tool_definition = {
             "type": "function",
             "name": name,
