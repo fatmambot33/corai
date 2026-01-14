@@ -116,6 +116,9 @@ def tool_handler_factory(
     3. Calls func with structured input (handles both sync and async)
     4. Serializes the result using serialize_tool_result
 
+    Forward-referenced annotations on single-argument tool callables are
+    resolved when possible to decide whether to pass the structured input.
+
     Parameters
     ----------
     func : Callable[..., Any]
