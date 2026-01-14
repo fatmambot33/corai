@@ -26,8 +26,6 @@ from openai_sdk_helpers.structure import (
 from openai_sdk_helpers.structure.base import spec_field
 
 
-
-
 class MockToolCall:
     """Mock tool call object for testing."""
 

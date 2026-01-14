@@ -94,4 +94,3 @@ class ResponseToolCall(DataclassJSONSerializable):
             },
         )
         return function_call, function_call_output
-
