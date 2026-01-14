@@ -16,7 +16,7 @@ import threading
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias, TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
 from openai_sdk_helpers.structure.base import StructureBase

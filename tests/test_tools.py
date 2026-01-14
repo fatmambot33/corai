@@ -8,7 +8,6 @@ import pytest
 from pydantic import BaseModel, ValidationError
 
 from openai_sdk_helpers.tools import (
-    serialize_tool_result,
     tool_handler_factory,
     StructureType,
     ToolSpec,
@@ -36,55 +35,6 @@ class SampleOutput(BaseModel):
 
     results: list[str]
     count: int
-
-
-def test_serialize_tool_result_with_pydantic():
-    """Test serialization of Pydantic models."""
-    output = SampleOutput(results=["result1", "result2"], count=2)
-    serialized = serialize_tool_result(output)
-
-    assert isinstance(serialized, str)
-    parsed = json.loads(serialized)
-    assert parsed["results"] == ["result1", "result2"]
-    assert parsed["count"] == 2
-
-
-def test_serialize_tool_result_with_list():
-    """Test serialization of lists."""
-    result = ["item1", "item2", "item3"]
-    serialized = serialize_tool_result(result)
-
-    assert isinstance(serialized, str)
-    parsed = json.loads(serialized)
-    assert parsed == result
-
-
-def test_serialize_tool_result_with_dict():
-    """Test serialization of dictionaries."""
-    result = {"key": "value", "number": 42}
-    serialized = serialize_tool_result(result)
-
-    assert isinstance(serialized, str)
-    parsed = json.loads(serialized)
-    assert parsed == result
-
-
-def test_serialize_tool_result_with_string():
-    """Test serialization of plain strings."""
-    result = "plain text result"
-    serialized = serialize_tool_result(result)
-
-    assert isinstance(serialized, str)
-    parsed = json.loads(serialized)
-    assert parsed == result
-
-
-def test_serialize_tool_result_with_primitives():
-    """Test serialization of primitive types."""
-    assert serialize_tool_result(42) == "42"
-    assert serialize_tool_result(3.14) == "3.14"
-    assert serialize_tool_result(True) == "true"
-    assert serialize_tool_result(None) == "null"
 
 
 def test_parse_tool_arguments_with_tool_name():
