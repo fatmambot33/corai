@@ -131,8 +131,8 @@ class BaseModelJSONSerializable(BaseModel):
     def _build_enum_field_mapping(cls) -> dict[str, type[Enum]]:
         """Build a mapping from field names to their Enum classes.
 
-        Used by from_raw_input to correctly process enum values from
-        raw API responses.
+        Used by from_json to correctly process enum values from raw API
+        responses.
 
         Returns
         -------
@@ -151,6 +151,42 @@ class BaseModelJSONSerializable(BaseModel):
         return mapping
 
     @classmethod
+    def _coerce_enum_value(
+        cls, field_name: str, enum_cls: type[Enum], raw_value: Any
+    ) -> Enum | None:
+        """Coerce a raw enum value into an Enum member.
+
+        Parameters
+        ----------
+        field_name : str
+            Field name being converted.
+        enum_cls : type[Enum]
+            Enum class to coerce into.
+        raw_value : Any
+            Value to coerce into an Enum member.
+
+        Returns
+        -------
+        Enum or None
+            Enum member when conversion succeeds, otherwise None.
+        """
+        if isinstance(raw_value, enum_cls):
+            return raw_value
+        if isinstance(raw_value, str):
+            if raw_value in enum_cls._value2member_map_:
+                return enum_cls(raw_value)
+            if raw_value in enum_cls.__members__:
+                return enum_cls.__members__[raw_value]
+        log(
+            message=(
+                f"[{cls.__name__}] Invalid value for '{field_name}': "
+                f"'{raw_value}' not in {enum_cls.__name__}"
+            ),
+            level=logging.WARNING,
+        )
+        return None
+
+    @classmethod
     def from_json(cls: type[P], data: dict[str, Any]) -> P:
         """Construct an instance from a dictionary of raw input data.
 
@@ -160,18 +196,18 @@ class BaseModelJSONSerializable(BaseModel):
 
         Parameters
         ----------
-        data : dict
+        data : dict[str, Any]
             Raw input data dictionary from API response.
 
         Returns
         -------
-        T
-            Validated instance of the structure class.
+        P
+            Validated instance of the model class.
 
         Examples
         --------
         >>> raw_data = {"title": "Test", "score": 0.95}
-        >>> instance = MyStructure.from_raw_input(raw_data)
+        >>> instance = MyStructure.from_json(raw_data)
         """
         mapping = cls._build_enum_field_mapping()
         clean_data = data.copy()
@@ -184,40 +220,19 @@ class BaseModelJSONSerializable(BaseModel):
 
             # List of enum values
             if isinstance(raw_value, list):
-                converted = []
-                for v in raw_value:
-                    if isinstance(v, enum_cls):
-                        converted.append(v)
-                    elif isinstance(v, str):
-                        # Check if it's a valid value
-                        if v in enum_cls._value2member_map_:
-                            converted.append(enum_cls(v))
-                        # Check if it's a valid name
-                        elif v in enum_cls.__members__:
-                            converted.append(enum_cls.__members__[v])
-                        else:
-                            log(
-                                f"[{cls.__name__}] Skipping invalid value for '{field}': '{v}' not in {enum_cls.__name__}",
-                                level=logging.WARNING,
-                            )
-                clean_data[field] = converted
-
-            # Single enum value
-            elif (
-                isinstance(raw_value, str) and raw_value in enum_cls._value2member_map_
-            ):
-                clean_data[field] = enum_cls(raw_value)
-
-            elif isinstance(raw_value, enum_cls):
-                # already the correct type
-                continue
-
+                converted_values = [
+                    converted
+                    for v in raw_value
+                    if (converted := cls._coerce_enum_value(field, enum_cls, v))
+                    is not None
+                ]
+                clean_data[field] = converted_values
             else:
-                log(
-                    message=f"[{cls.__name__}] Invalid value for '{field}': '{raw_value}' not in {enum_cls.__name__}",
-                    level=logging.WARNING,
-                )
-                clean_data[field] = None
+                enum_value = cls._coerce_enum_value(field, enum_cls, raw_value)
+                if enum_value is None:
+                    clean_data[field] = None
+                else:
+                    clean_data[field] = enum_value
 
         return cls(**clean_data)
 
@@ -264,13 +279,13 @@ class BaseModelJSONSerializable(BaseModel):
 
         Parameters
         ----------
-        arguments
+        arguments : str
             Raw argument string from the tool call.
 
         Returns
         -------
-        dict
-            Parsed dictionary of arguments.
+        P
+            Parsed model instance from the arguments.
 
         Raises
         ------
@@ -279,7 +294,7 @@ class BaseModelJSONSerializable(BaseModel):
 
         Examples
         --------
-        >>> parse_tool_arguments('{"key": "value"}')["key"]
+        >>> MyModel.from_string('{"key": "value"}').key
         'value'
         """
         try:

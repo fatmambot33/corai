@@ -187,7 +187,7 @@ def test_from_raw_input(caplog):
     data = {"colors": ["red", "yellow", "green"]}
     instance = MultiColorStructure.from_json(data)
     assert instance.colors == [Color.RED, Color.GREEN]
-    assert "Skipping invalid value for 'colors'" in caplog.text
+    assert "Invalid value for 'colors'" in caplog.text
 
     # Test with pre-converted enum
     data = {"name": "Test", "age": 42, "color": Color.GREEN}

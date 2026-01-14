@@ -182,25 +182,49 @@ def test_dataclass_json_serializable_alias():
     assert restored.count == 5
 
 
-def test_basemodel_json_serializable(tmp_path):
+def test_basemodel_json_serializable(tmp_path, caplog):
     """Test BaseModelJSONSerializable for Pydantic models."""
+    import logging
+
     from pydantic import BaseModel
     from openai_sdk_helpers.utils import BaseModelJSONSerializable
+
+    class Color(Enum):
+        RED = "red"
 
     class TestModel(BaseModelJSONSerializable, BaseModel):
         name: str
         value: int
+        color: Color | None = None
 
     # Test to_json
-    instance = TestModel(name="test", value=42)
+    instance = TestModel(name="test", value=42, color=Color.RED)
     json_data = instance.to_json()
     assert json_data["name"] == "test"
     assert json_data["value"] == 42
+    assert json_data["color"] is Color.RED
 
     # Test from_json
     restored = TestModel.from_json(json_data)
     assert restored.name == "test"
     assert restored.value == 42
+    assert restored.color is Color.RED
+
+    assert (
+        TestModel.from_json({"name": "test", "value": 1, "color": "RED"}).color
+        is Color.RED
+    )
+    assert (
+        TestModel.from_json({"name": "test", "value": 1, "color": "red"}).color
+        is Color.RED
+    )
+
+    caplog.set_level(logging.WARNING, logger="openai_sdk_helpers")
+    restored_none = TestModel.from_json({"name": "test", "value": 1, "color": "blue"})
+    assert restored_none.color is None
+    assert any(
+        "Invalid value for 'color'" in record.message for record in caplog.records
+    )
 
     # Test file I/O
     filepath = tmp_path / "model.json"
