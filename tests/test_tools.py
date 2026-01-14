@@ -409,9 +409,15 @@ def test_tool_definitions_have_correct_schema():
 def test_build_tool_definitions_preserves_order():
     """Test that tool definitions are built in the same order as specs."""
     specs = [
-        ToolSpec(input_structure=PromptStructure, tool_name="tool_a", tool_description="A"),
-        ToolSpec(input_structure=PromptStructure, tool_name="tool_b", tool_description="B"),
-        ToolSpec(input_structure=PromptStructure, tool_name="tool_c", tool_description="C"),
+        ToolSpec(
+            input_structure=PromptStructure, tool_name="tool_a", tool_description="A"
+        ),
+        ToolSpec(
+            input_structure=PromptStructure, tool_name="tool_b", tool_description="B"
+        ),
+        ToolSpec(
+            input_structure=PromptStructure, tool_name="tool_c", tool_description="C"
+        ),
     ]
 
     tools = build_tool_definitions(specs)
