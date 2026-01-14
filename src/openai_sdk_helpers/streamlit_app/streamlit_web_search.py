@@ -30,7 +30,7 @@ class StreamlitWebSearch(ResponseBase[WebSearchStructure]):
             tools=build_tool_definitions(
                 [
                     ToolSpec(
-                        structure=PromptStructure,
+                        input_structure=PromptStructure,
                         tool_name="perform_search",
                         tool_description="Tool to perform web searches and generate reports.",
                         output_structure=WebSearchStructure,

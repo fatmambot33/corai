@@ -261,9 +261,9 @@ class ToolSpec:
     ... )
     """
 
-    structure: StructureType
     tool_name: str
     tool_description: str
+    input_structure: StructureType
     output_structure: StructureType | None = None
 
 
@@ -305,7 +305,7 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     ... ])
     """
     return [
-        spec.structure.response_tool_definition(
+        spec.input_structure.response_tool_definition(
             tool_name=spec.tool_name,
             tool_description=spec.tool_description,
         )

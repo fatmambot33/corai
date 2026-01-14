@@ -43,17 +43,17 @@ def example_multi_tool_config():
     # After: Named specifications with explicit metadata
     tool_specs = [
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow for the provided prompt.",
         ),
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow for the provided prompt.",
         ),
         ToolSpec(
-            structure=SummaryStructure,
+            input_structure=SummaryStructure,
             tool_name="summarize",
             tool_description="Generate a comprehensive summary with topic breakdown.",
         ),
@@ -80,12 +80,12 @@ def example_multi_tool_config():
 # Define common tools once
 RESEARCH_TOOLS = [
     ToolSpec(
-        structure=PromptStructure,
+        input_structure=PromptStructure,
         tool_name="web_agent",
         tool_description="Run a web research workflow for the provided prompt.",
     ),
     ToolSpec(
-        structure=PromptStructure,
+        input_structure=PromptStructure,
         tool_name="vector_agent",
         tool_description="Run a vector search workflow for the provided prompt.",
     ),
@@ -93,12 +93,12 @@ RESEARCH_TOOLS = [
 
 ANALYSIS_TOOLS = [
     ToolSpec(
-        structure=SummaryStructure,
+        input_structure=SummaryStructure,
         tool_name="summarize",
         tool_description="Generate a comprehensive summary with topic breakdown.",
     ),
     ToolSpec(
-        structure=ValidationResultStructure,
+        input_structure=ValidationResultStructure,
         tool_name="validate",
         tool_description="Validate the results and provide pass/fail status.",
     ),
@@ -152,22 +152,22 @@ def example_dynamic_tools():
     # Tool registry
     TOOL_REGISTRY = {
         "web": ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow.",
         ),
         "vector": ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow.",
         ),
         "summarize": ToolSpec(
-            structure=SummaryStructure,
+            input_structure=SummaryStructure,
             tool_name="summarize",
             tool_description="Generate summaries.",
         ),
         "validate": ToolSpec(
-            structure=ValidationResultStructure,
+            input_structure=ValidationResultStructure,
             tool_name="validate",
             tool_description="Validate results.",
         ),
@@ -217,12 +217,12 @@ def example_comparison():
     # ToolSpec approach (new)
     tool_specs = [
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow",
         ),
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow",
         ),
@@ -261,21 +261,21 @@ def example_different_io_structures():
     tool_specs = [
         # Tool that accepts a prompt and returns a summary
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="summarizer",
             tool_description="Generate a summary from the provided prompt",
             output_structure=SummaryStructure,
         ),
         # Tool that accepts a prompt and validates it
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="validator",
             tool_description="Validate the provided prompt",
             output_structure=ValidationResultStructure,
         ),
         # Tool that accepts and returns the same type
         ToolSpec(
-            structure=PromptStructure,
+            input_structure=PromptStructure,
             tool_name="processor",
             tool_description="Process the prompt",
             # output_structure not specified - same as input
@@ -286,7 +286,7 @@ def example_different_io_structures():
 
     print(f"\nBuilt {len(tools)} tools with mixed I/O structures:")
     for i, (spec, tool) in enumerate(zip(tool_specs, tools), 1):
-        input_structure = spec.structure.__name__
+        input_structure = spec.input_structure.__name__
         output_structure = (
             spec.output_structure.__name__ if spec.output_structure else input_structure
         )
