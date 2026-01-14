@@ -526,6 +526,7 @@ class ToolSpec:
         parsed_args = _parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
         return self.input_structure.from_json(parsed_args)
 
+
 def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     """Build tool definitions from named tool specs.
 
