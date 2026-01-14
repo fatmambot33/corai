@@ -39,7 +39,7 @@ from .configuration import ResponseConfiguration, ResponseRegistry, get_default_
 from .files import process_files
 from .messages import ResponseMessage, ResponseMessages
 from .runner import run_async, run_streamed, run_sync
-from .tool_call import ResponseToolCall, parse_tool_arguments
+from .tool_call import ResponseToolCall
 from .vector_store import attach_vector_store
 
 __all__ = [
@@ -53,7 +53,6 @@ __all__ = [
     "run_async",
     "run_streamed",
     "ResponseToolCall",
-    "parse_tool_arguments",
     "attach_vector_store",
     "process_files",
 ]

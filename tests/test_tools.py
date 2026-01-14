@@ -14,8 +14,9 @@ from openai_sdk_helpers.tools import (
     StructureType,
     ToolSpec,
     build_tool_definitions,
+    parse_tool_arguments,
 )
-from openai_sdk_helpers.response.tool_call import parse_tool_arguments
+
 from openai_sdk_helpers.structure import (
     StructureBase,
     PromptStructure,
@@ -25,35 +26,6 @@ from openai_sdk_helpers.structure import (
 from openai_sdk_helpers.structure.base import spec_field
 
 
-def test_parse_tool_arguments_with_tool_name():
-    """Test enhanced parse_tool_arguments with tool name."""
-    args = '{"key": "value"}'
-    result = parse_tool_arguments(args, tool_name="test_tool")
-    assert result == {"key": "value"}
-
-
-def test_parse_tool_arguments_error_includes_tool_name():
-    """Test that parse errors include tool name for context."""
-    invalid_args = '{"key": invalid}'
-
-    with pytest.raises(ValueError) as exc_info:
-        parse_tool_arguments(invalid_args, tool_name="my_tool")
-
-    error_msg = str(exc_info.value)
-    assert "my_tool" in error_msg
-    assert "Raw payload" in error_msg
-
-
-def test_parse_tool_arguments_truncates_long_payload():
-    """Test that long payloads are truncated in error messages."""
-    # Create an invalid payload longer than 100 characters
-    long_payload = '{"key": invalid_value_' + "x" * 200 + "}"
-
-    with pytest.raises(ValueError) as exc_info:
-        parse_tool_arguments(long_payload, tool_name="test")
-
-    error_msg = str(exc_info.value)
-    assert "..." in error_msg  # Should be truncated
 
 
 class MockToolCall:

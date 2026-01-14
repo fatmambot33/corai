@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from openai_sdk_helpers.tools import ToolSpec, tool_handler_factory
-from openai_sdk_helpers.response.tool_call import parse_tool_arguments
+from openai_sdk_helpers.tools import ToolSpec, tool_handler_factory, parse_tool_arguments
 from openai_sdk_helpers.structure import StructureBase
 from openai_sdk_helpers.structure.base import spec_field
 
