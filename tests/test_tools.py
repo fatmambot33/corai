@@ -726,7 +726,11 @@ def test_tool_handler_factory_async_with_validation():
 
     async def async_search(payload: BasicInputStructure) -> dict[str, int | str]:
         await asyncio.sleep(0.001)
-        return {"query": payload.query, "limit": payload.limit, "offset": payload.offset}
+        return {
+            "query": payload.query,
+            "limit": payload.limit,
+            "offset": payload.offset,
+        }
 
     spec = ToolSpec(
         input_structure=BasicInputStructure,

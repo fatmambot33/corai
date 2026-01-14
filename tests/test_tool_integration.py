@@ -187,7 +187,9 @@ def test_flat_arguments_with_async_handler():
             description="Results.",
         )
 
-    async def async_search(payload: AsyncSearchInput) -> dict[str, int | str | list[str]]:
+    async def async_search(
+        payload: AsyncSearchInput,
+    ) -> dict[str, int | str | list[str]]:
         await asyncio.sleep(0.001)
         return {
             "query": payload.query,

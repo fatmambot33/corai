@@ -15,7 +15,7 @@ import inspect
 import json
 import threading
 from dataclasses import dataclass
-from typing import Any, Callable, TypeAlias
+from typing import Any, Callable, TypeAlias, get_type_hints
 
 from openai_sdk_helpers.response.tool_call import parse_tool_arguments
 from openai_sdk_helpers.structure.base import StructureBase
@@ -70,7 +70,9 @@ def serialize_tool_result(result: Any, *, tool_spec: "ToolSpec") -> str:
     return json.dumps(payload, cls=customJSONEncoder)
 
 
-def unserialize_tool_arguments(tool_call: Any, *, tool_spec: "ToolSpec") -> StructureBase:
+def unserialize_tool_arguments(
+    tool_call: Any, *, tool_spec: "ToolSpec"
+) -> StructureBase:
     """Unserialize tool call arguments into a structured input instance.
 
     Parameters
@@ -186,7 +188,21 @@ def tool_handler_factory(
         params = list(signature.parameters.values())
         if len(params) == 1:
             param = params[0]
-            if param.annotation is tool_spec.input_structure:
+            try:
+                type_hints = get_type_hints(func)
+            except (NameError, TypeError):
+                type_hints = {}
+            annotated_type = type_hints.get(param.name, param.annotation)
+            if isinstance(annotated_type, str):
+                if (
+                    annotated_type == tool_spec.input_structure.__name__
+                    or annotated_type.endswith(f".{tool_spec.input_structure.__name__}")
+                ):
+                    return func(validated_input)
+            if annotated_type is tool_spec.input_structure or (
+                inspect.isclass(annotated_type)
+                and issubclass(annotated_type, StructureBase)
+            ):
                 return func(validated_input)
         return func(**validated_input.model_dump())
 
