@@ -133,7 +133,7 @@ def test_to_json():
     json_data = instance.to_json()
     assert json_data["name"] == "Test"
     assert json_data["age"] == 42
-    assert json_data["color"] == "red"
+    assert json_data["color"] == Color.RED
     assert json_data["tags"] == ["a", "b"]
 
 
@@ -164,14 +164,14 @@ def test_from_raw_input(caplog):
     """Test the from_raw_input method."""
     # Test with valid string enum value
     data = {"name": "Test", "age": 42, "color": "red"}
-    instance = DummyStructure.from_raw_input(data)
+    instance = DummyStructure.from_json(data)
     assert instance.name == "Test"
     assert instance.age == 42
     assert instance.color == Color.RED
 
     # Test with invalid enum value
     data = {"name": "Test", "age": 42, "color": "purple"}
-    instance = DummyStructure.from_raw_input(data)
+    instance = DummyStructure.from_json(data)
     assert instance.color is None
     assert "Invalid value for 'color'" in caplog.text
 
@@ -180,18 +180,18 @@ def test_from_raw_input(caplog):
         colors: List[Color]
 
     data = {"colors": ["red", "blue"]}
-    instance = MultiColorStructure.from_raw_input(data)
+    instance = MultiColorStructure.from_json(data)
     assert instance.colors == [Color.RED, Color.BLUE]
 
     # Test with a mix of valid and invalid enum values in a list
     data = {"colors": ["red", "yellow", "green"]}
-    instance = MultiColorStructure.from_raw_input(data)
+    instance = MultiColorStructure.from_json(data)
     assert instance.colors == [Color.RED, Color.GREEN]
     assert "Skipping invalid value for 'colors'" in caplog.text
 
     # Test with pre-converted enum
     data = {"name": "Test", "age": 42, "color": Color.GREEN}
-    instance = DummyStructure.from_raw_input(data)
+    instance = DummyStructure.from_json(data)
     assert instance.color == Color.GREEN
 
 

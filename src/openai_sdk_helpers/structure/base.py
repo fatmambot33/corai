@@ -462,136 +462,6 @@ class StructureBase(BaseModelJSONSerializable):
         return file_path
 
     @classmethod
-    def _extract_enum_class(cls, field_type: Any) -> type[Enum] | None:
-        """Extract an Enum class from a field's type annotation.
-
-        Handles direct Enum types, list[Enum], and optional Enums.
-
-        Parameters
-        ----------
-        field_type : Any
-            Type annotation of a field.
-
-        Returns
-        -------
-        type[Enum] or None
-            Enum class if found, otherwise None.
-        """
-        origin = get_origin(field_type)
-        args = get_args(field_type)
-
-        if inspect.isclass(field_type) and issubclass(field_type, Enum):
-            return field_type
-        elif (
-            origin is list
-            and args
-            and inspect.isclass(args[0])
-            and issubclass(args[0], Enum)
-        ):
-            return args[0]
-        elif origin is not None:
-            # Handle Union types
-            for arg in args:
-                enum_cls = cls._extract_enum_class(arg)
-                if enum_cls:
-                    return enum_cls
-        return None
-
-    @classmethod
-    def _build_enum_field_mapping(cls) -> dict[str, type[Enum]]:
-        """Build a mapping from field names to their Enum classes.
-
-        Used by from_raw_input to correctly process enum values from
-        raw API responses.
-
-        Returns
-        -------
-        dict[str, type[Enum]]
-            Mapping of field names to Enum types.
-        """
-        mapping: dict[str, type[Enum]] = {}
-
-        for name, model_field in cls.model_fields.items():
-            field_type = model_field.annotation
-            enum_cls = cls._extract_enum_class(field_type)
-
-            if enum_cls is not None:
-                mapping[name] = enum_cls
-
-        return mapping
-
-    @classmethod
-    def from_raw_input(cls: type[T], data: dict) -> T:
-        """Construct an instance from a dictionary of raw input data.
-
-        Particularly useful for converting data from OpenAI API tool calls
-        or assistant outputs into validated structure instances. Handles
-        enum value conversion automatically.
-
-        Parameters
-        ----------
-        data : dict
-            Raw input data dictionary from API response.
-
-        Returns
-        -------
-        T
-            Validated instance of the structure class.
-
-        Examples
-        --------
-        >>> raw_data = {"title": "Test", "score": 0.95}
-        >>> instance = MyStructure.from_raw_input(raw_data)
-        """
-        mapping = cls._build_enum_field_mapping()
-        clean_data = data.copy()
-
-        for field, enum_cls in mapping.items():
-            raw_value = clean_data.get(field)
-
-            if raw_value is None:
-                continue
-
-            # List of enum values
-            if isinstance(raw_value, list):
-                converted = []
-                for v in raw_value:
-                    if isinstance(v, enum_cls):
-                        converted.append(v)
-                    elif isinstance(v, str):
-                        # Check if it's a valid value
-                        if v in enum_cls._value2member_map_:
-                            converted.append(enum_cls(v))
-                        # Check if it's a valid name
-                        elif v in enum_cls.__members__:
-                            converted.append(enum_cls.__members__[v])
-                        else:
-                            log(
-                                f"[{cls.__name__}] Skipping invalid value for '{field}': '{v}' not in {enum_cls.__name__}",
-                                level=logging.WARNING,
-                            )
-                clean_data[field] = converted
-
-            # Single enum value
-            elif (
-                isinstance(raw_value, str) and raw_value in enum_cls._value2member_map_
-            ):
-                clean_data[field] = enum_cls(raw_value)
-
-            elif isinstance(raw_value, enum_cls):
-                # already the correct type
-                continue
-
-            else:
-                log(
-                    message=f"[{cls.__name__}] Invalid value for '{field}': '{raw_value}' not in {enum_cls.__name__}",
-                    level=logging.WARNING,
-                )
-                clean_data[field] = None
-
-        return cls(**clean_data)
-
-    @classmethod
     def from_tool_arguments(cls: type[T], arguments: str) -> T:
         """Parse tool call arguments which may not be valid JSON.
 
@@ -631,7 +501,7 @@ class StructureBase(BaseModelJSONSerializable):
                     f"Invalid JSON arguments: {arguments}. "
                     f"Expected valid JSON or Python literal."
                 ) from exc
-        return cls.from_raw_input(structured_data)
+        return cls.from_json(structured_data)
 
     @staticmethod
     def format_output(label: str, *, value: Any) -> str:

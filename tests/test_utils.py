@@ -212,36 +212,6 @@ def test_basemodel_json_serializable(tmp_path):
     assert loaded.value == 42
 
 
-def test_basemodel_serialization_hooks():
-    """Test _serialize_fields and _deserialize_fields hooks."""
-    from pydantic import BaseModel
-    from openai_sdk_helpers.utils import BaseModelJSONSerializable
-
-    class CustomModel(BaseModelJSONSerializable, BaseModel):
-        value: int
-
-        def _serialize_fields(self, data: dict) -> dict:
-            # Add a custom field during serialization
-            data["doubled"] = data["value"] * 2
-            return data
-
-        @classmethod
-        def _deserialize_fields(cls, data: dict) -> dict:
-            # Remove the custom field during deserialization
-            data = data.copy()
-            data.pop("doubled", None)
-            return data
-
-    instance = CustomModel(value=5)
-    json_data = instance.to_json()
-    assert json_data["value"] == 5
-    assert json_data["doubled"] == 10
-
-    # Test round-trip with hooks
-    restored = CustomModel.from_json(json_data)
-    assert restored.value == 5
-
-
 def test_to_jsonable_with_sets():
     """Test that sets are converted to lists."""
     from openai_sdk_helpers.utils import to_jsonable

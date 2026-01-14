@@ -7,11 +7,15 @@ customizable _serialize_fields/_deserialize_fields hooks.
 
 from __future__ import annotations
 
+from enum import Enum
 import json
 from pathlib import Path
-from typing import Any, TypeVar
+import inspect
+import logging
+from typing import Any, TypeVar, get_args, get_origin
 from pydantic import BaseModel
-from ..path_utils import check_filepath
+from ...logging import log
+
 from .utils import _to_jsonable, customJSONEncoder
 
 P = TypeVar("P", bound="BaseModelJSONSerializable")
@@ -57,11 +61,7 @@ class BaseModelJSONSerializable(BaseModel):
         dict[str, Any]
             Serialized model data.
         """
-        if hasattr(self, "model_dump"):
-            data = getattr(self, "model_dump")()
-        else:
-            data = self.__dict__.copy()
-        return self._serialize_fields(_to_jsonable(data))
+        return self.model_dump()
 
     def to_json_file(self, filepath: str | Path) -> str:
         """Write serialized JSON data to a file path.
@@ -76,6 +76,8 @@ class BaseModelJSONSerializable(BaseModel):
         str
             Absolute path to the written file.
         """
+        from .. import check_filepath
+
         target = Path(filepath)
         check_filepath(fullfilepath=str(target))
         with open(target, "w", encoding="utf-8") as handle:
@@ -88,62 +90,135 @@ class BaseModelJSONSerializable(BaseModel):
             )
         return str(target)
 
-    def _serialize_fields(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Customize field serialization.
+    @classmethod
+    def _extract_enum_class(cls, field_type: Any) -> type[Enum] | None:
+        """Extract an Enum class from a field's type annotation.
 
-        Override this method in subclasses to add custom serialization logic.
+        Handles direct Enum types, list[Enum], and optional Enums.
 
         Parameters
         ----------
-        data : dict[str, Any]
-            Pre-serialized data dictionary.
+        field_type : Any
+            Type annotation of a field.
 
         Returns
         -------
-        dict[str, Any]
-            Modified data dictionary.
+        type[Enum] or None
+            Enum class if found, otherwise None.
         """
-        return data
+        origin = get_origin(field_type)
+        args = get_args(field_type)
+
+        if inspect.isclass(field_type) and issubclass(field_type, Enum):
+            return field_type
+        elif (
+            origin is list
+            and args
+            and inspect.isclass(args[0])
+            and issubclass(args[0], Enum)
+        ):
+            return args[0]
+        elif origin is not None:
+            # Handle Union types
+            for arg in args:
+                enum_cls = cls._extract_enum_class(arg)
+                if enum_cls:
+                    return enum_cls
+        return None
 
     @classmethod
-    def _deserialize_fields(cls, data: dict[str, Any]) -> dict[str, Any]:
-        """Customize field deserialization.
+    def _build_enum_field_mapping(cls) -> dict[str, type[Enum]]:
+        """Build a mapping from field names to their Enum classes.
 
-        Override this method in subclasses to add custom deserialization logic.
-
-        Parameters
-        ----------
-        data : dict[str, Any]
-            Raw data dictionary from JSON.
+        Used by from_raw_input to correctly process enum values from
+        raw API responses.
 
         Returns
         -------
-        dict[str, Any]
-            Modified data dictionary.
+        dict[str, type[Enum]]
+            Mapping of field names to Enum types.
         """
-        return data
+        mapping: dict[str, type[Enum]] = {}
+
+        for name, model_field in cls.model_fields.items():
+            field_type = model_field.annotation
+            enum_cls = cls._extract_enum_class(field_type)
+
+            if enum_cls is not None:
+                mapping[name] = enum_cls
+
+        return mapping
 
     @classmethod
     def from_json(cls: type[P], data: dict[str, Any]) -> P:
-        """Create an instance from a JSON-compatible dict.
+        """Construct an instance from a dictionary of raw input data.
+
+        Particularly useful for converting data from OpenAI API tool calls
+        or assistant outputs into validated structure instances. Handles
+        enum value conversion automatically.
 
         Parameters
         ----------
-        data : dict[str, Any]
-            JSON-compatible dictionary containing the instance data.
+        data : dict
+            Raw input data dictionary from API response.
 
         Returns
         -------
-        P
-            New instance of the class.
+        T
+            Validated instance of the structure class.
 
         Examples
         --------
-        >>> json_data = {"name": "test", "value": 42}
-        >>> instance = MyConfig.from_json(json_data)
+        >>> raw_data = {"title": "Test", "score": 0.95}
+        >>> instance = MyStructure.from_raw_input(raw_data)
         """
-        processed_data = cls._deserialize_fields(data)
-        return cls(**processed_data)  # type: ignore[return-value]
+        mapping = cls._build_enum_field_mapping()
+        clean_data = data.copy()
+
+        for field, enum_cls in mapping.items():
+            raw_value = clean_data.get(field)
+
+            if raw_value is None:
+                continue
+
+            # List of enum values
+            if isinstance(raw_value, list):
+                converted = []
+                for v in raw_value:
+                    if isinstance(v, enum_cls):
+                        converted.append(v)
+                    elif isinstance(v, str):
+                        # Check if it's a valid value
+                        if v in enum_cls._value2member_map_:
+                            converted.append(enum_cls(v))
+                        # Check if it's a valid name
+                        elif v in enum_cls.__members__:
+                            converted.append(enum_cls.__members__[v])
+                        else:
+                            log(
+                                f"[{cls.__name__}] Skipping invalid value for '{field}': '{v}' not in {enum_cls.__name__}",
+                                level=logging.WARNING,
+                            )
+                clean_data[field] = converted
+
+            # Single enum value
+            elif (
+                isinstance(raw_value, str) and raw_value in enum_cls._value2member_map_
+            ):
+                clean_data[field] = enum_cls(raw_value)
+
+            elif isinstance(raw_value, enum_cls):
+                # already the correct type
+                continue
+
+            else:
+                log(
+                    message=f"[{cls.__name__}] Invalid value for '{field}': '{raw_value}' not in {enum_cls.__name__}",
+                    level=logging.WARNING,
+                )
+                clean_data[field] = None
+
+        return cls(**clean_data)
 
     @classmethod
     def from_json_file(cls: type[P], filepath: str | Path) -> P:

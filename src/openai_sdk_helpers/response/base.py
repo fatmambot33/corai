@@ -572,7 +572,7 @@ class ResponseBase(Generic[T]):
                     raise RuntimeError(f"Error in tool handler '{tool_name}': {exc}")
 
                 if self._output_structure:
-                    output_dict = self._output_structure.from_raw_input(tool_result)
+                    output_dict = self._output_structure.from_json(tool_result)
                     output_dict.console_print()
                     parsed_result = output_dict
                 else:
@@ -588,7 +588,7 @@ class ResponseBase(Generic[T]):
                     try:
                         output_dict = json.loads(raw_text)
                         if self._output_structure:
-                            return self._output_structure.from_raw_input(output_dict)
+                            return self._output_structure.from_json(output_dict)
                         return output_dict
                     except Exception:
                         print(raw_text)
