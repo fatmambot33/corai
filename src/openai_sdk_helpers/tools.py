@@ -183,11 +183,6 @@ def serialize_tool_result(result: Any, *, tool_spec: "ToolSpec") -> str:
     str
         JSON-formatted string representation of the result.
 
-    Raises
-    ------
-    ValueError
-        If the tool specification is missing an output structure.
-
     Examples
     --------
     >>> from openai_sdk_helpers import ToolSpec
@@ -201,9 +196,6 @@ def serialize_tool_result(result: Any, *, tool_spec: "ToolSpec") -> str:
     >>> serialize_tool_result({"prompt": "hello"}, tool_spec=spec)
     '{"prompt": "hello"}'
     """
-    if tool_spec.output_structure is None:
-        raise ValueError("ToolSpec.output_structure must be set for serialization.")
-
     output_structure = tool_spec.output_structure
     payload = output_structure.model_validate(result).to_json()
     return json.dumps(payload, cls=customJSONEncoder)
@@ -425,8 +417,8 @@ class ToolSpec:
     input_structure : StructureType
         The StructureBase class that defines the tool's input parameter schema.
         Used to generate the OpenAI tool definition.
-    output_structure : StructureType or None, default=None
-        Optional StructureBase class that defines the tool's output schema.
+    output_structure : StructureType
+        StructureBase class that defines the tool's output schema.
         This is for documentation/reference only and is not sent to OpenAI.
         Useful when a tool accepts one type of input but returns a different
         structured output.
@@ -458,7 +450,12 @@ class ToolSpec:
     tool_name: str
     tool_description: str
     input_structure: StructureType
-    output_structure: StructureType | None = None
+    output_structure: StructureType
+
+    def __post_init__(self) -> None:
+        """Validate required ToolSpec fields."""
+        if self.output_structure is None:
+            raise ValueError("ToolSpec.output_structure must be set.")
 
     def serialize_tool_result(self, result: Any) -> str:
         """Serialize tool results into a standardized JSON string.
@@ -477,11 +474,6 @@ class ToolSpec:
         str
             JSON-formatted string representation of the result.
 
-        Raises
-        ------
-        ValueError
-            If the tool specification is missing an output structure.
-
         Examples
         --------
         >>> from openai_sdk_helpers import ToolSpec
@@ -495,9 +487,6 @@ class ToolSpec:
         >>> spec.serialize_tool_result({"prompt": "hello"})
         '{"prompt": "hello"}'
         """
-        if self.output_structure is None:
-            raise ValueError("ToolSpec.output_structure must be set for serialization.")
-
         output_structure = self.output_structure
         payload = output_structure.model_validate(result).to_json()
         return json.dumps(payload, cls=customJSONEncoder)
@@ -561,7 +550,8 @@ def build_tool_definitions(tool_specs: list[ToolSpec]) -> list[dict]:
     ...     ToolSpec(
     ...         tool_name="vector_agent",
     ...         tool_description="Run a vector search workflow",
-    ...         input_structure=PromptStructure
+    ...         input_structure=PromptStructure,
+    ...         output_structure=PromptStructure
     ...     ),
     ... ])
     """

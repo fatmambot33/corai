@@ -44,16 +44,19 @@ def example_multi_tool_config():
     tool_specs = [
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow for the provided prompt.",
         ),
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow for the provided prompt.",
         ),
         ToolSpec(
             input_structure=SummaryStructure,
+            output_structure=SummaryStructure,
             tool_name="summarize",
             tool_description="Generate a comprehensive summary with topic breakdown.",
         ),
@@ -81,11 +84,13 @@ def example_multi_tool_config():
 RESEARCH_TOOLS = [
     ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="web_agent",
         tool_description="Run a web research workflow for the provided prompt.",
     ),
     ToolSpec(
         input_structure=PromptStructure,
+        output_structure=PromptStructure,
         tool_name="vector_agent",
         tool_description="Run a vector search workflow for the provided prompt.",
     ),
@@ -94,11 +99,13 @@ RESEARCH_TOOLS = [
 ANALYSIS_TOOLS = [
     ToolSpec(
         input_structure=SummaryStructure,
+        output_structure=SummaryStructure,
         tool_name="summarize",
         tool_description="Generate a comprehensive summary with topic breakdown.",
     ),
     ToolSpec(
         input_structure=ValidationResultStructure,
+        output_structure=ValidationResultStructure,
         tool_name="validate",
         tool_description="Validate the results and provide pass/fail status.",
     ),
@@ -153,21 +160,25 @@ def example_dynamic_tools():
     TOOL_REGISTRY = {
         "web": ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow.",
         ),
         "vector": ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow.",
         ),
         "summarize": ToolSpec(
             input_structure=SummaryStructure,
+            output_structure=SummaryStructure,
             tool_name="summarize",
             tool_description="Generate summaries.",
         ),
         "validate": ToolSpec(
             input_structure=ValidationResultStructure,
+            output_structure=ValidationResultStructure,
             tool_name="validate",
             tool_description="Validate results.",
         ),
@@ -218,11 +229,13 @@ def example_comparison():
     tool_specs = [
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="web_agent",
             tool_description="Run a web research workflow",
         ),
         ToolSpec(
             input_structure=PromptStructure,
+            output_structure=PromptStructure,
             tool_name="vector_agent",
             tool_description="Run a vector search workflow",
         ),
@@ -278,7 +291,7 @@ def example_different_io_structures():
             input_structure=PromptStructure,
             tool_name="processor",
             tool_description="Process the prompt",
-            # output_structure not specified - same as input
+            output_structure=PromptStructure,
         ),
     ]
 
