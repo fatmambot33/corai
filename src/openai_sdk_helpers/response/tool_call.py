@@ -7,9 +7,6 @@ and robust argument parsing.
 
 from __future__ import annotations
 
-import ast
-import json
-import re
 from dataclasses import dataclass
 
 from openai.types.responses.response_function_tool_call_param import (
