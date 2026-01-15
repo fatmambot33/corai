@@ -13,7 +13,7 @@ from openai_sdk_helpers.tools import (
     unserialize_tool_arguments,
     StructureType,
     ToolSpec,
-    build_tool_definitions,
+    build_tool_definition_list,
     _parse_tool_arguments,
 )
 
@@ -202,7 +202,7 @@ def test_unserialize_tool_arguments_returns_structure():
     assert result.offset == 1
 
 
-# ToolSpec and build_tool_definitions tests
+# ToolSpec and build_tool_definition_list tests
 # ==========================================
 
 
@@ -350,7 +350,7 @@ def test_tool_spec_frozen():
         spec.tool_name = "new_name"  # type: ignore
 
 
-def test_build_tool_definitions_single_tool():
+def test_build_tool_definition_list_single_tool():
     """Test building a single tool definition."""
     specs = [
         ToolSpec(
@@ -361,7 +361,7 @@ def test_build_tool_definitions_single_tool():
         )
     ]
 
-    tools = build_tool_definitions(specs)
+    tools = build_tool_definition_list(specs)
 
     assert isinstance(tools, list)
     assert len(tools) == 1
@@ -374,7 +374,7 @@ def test_build_tool_definitions_single_tool():
     assert tool["strict"] is True
 
 
-def test_build_tool_definitions_multiple_tools():
+def test_build_tool_definition_list_multiple_tools():
     """Test building multiple tool definitions."""
     specs = [
         ToolSpec(
@@ -397,7 +397,7 @@ def test_build_tool_definitions_multiple_tools():
         ),
     ]
 
-    tools = build_tool_definitions(specs)
+    tools = build_tool_definition_list(specs)
 
     assert isinstance(tools, list)
     assert len(tools) == 3
@@ -429,9 +429,9 @@ def test_build_tool_definitions_multiple_tools():
         assert tool["strict"] is True
 
 
-def test_build_tool_definitions_empty_list():
+def test_build_tool_definition_list_empty_list():
     """Test building tool definitions from an empty list."""
-    tools = build_tool_definitions([])
+    tools = build_tool_definition_list([])
 
     assert isinstance(tools, list)
     assert len(tools) == 0
@@ -471,7 +471,7 @@ def test_tool_spec_with_different_structures():
         ),
     ]
 
-    tools = build_tool_definitions(specs)
+    tools = build_tool_definition_list(specs)
 
     assert len(tools) == 3
     assert tools[0]["name"] == "prompt_tool"
@@ -488,7 +488,7 @@ def test_tool_definitions_have_correct_schema():
         tool_description="Test tool",
     )
 
-    tools = build_tool_definitions([spec])
+    tools = build_tool_definition_list([spec])
     tool = tools[0]
 
     # Verify schema structure
@@ -499,7 +499,7 @@ def test_tool_definitions_have_correct_schema():
     assert "limit" in schema["properties"]
 
 
-def test_build_tool_definitions_preserves_order():
+def test_build_tool_definition_list_preserves_order():
     """Test that tool definitions are built in the same order as specs."""
     specs = [
         ToolSpec(
@@ -522,7 +522,7 @@ def test_build_tool_definitions_preserves_order():
         ),
     ]
 
-    tools = build_tool_definitions(specs)
+    tools = build_tool_definition_list(specs)
 
     assert tools[0]["name"] == "tool_a"
     assert tools[1]["name"] == "tool_b"
@@ -568,7 +568,7 @@ def test_tool_spec_with_output_structure():
     assert spec.tool_name == "summarizer"
 
     # The tool definition should still use the input structure
-    tools = build_tool_definitions([spec])
+    tools = build_tool_definition_list([spec])
     tool = tools[0]
 
     # Verify it uses the input structure (PromptStructure) for parameters
@@ -618,7 +618,7 @@ def test_tool_spec_with_different_io_structures():
         ),
     ]
 
-    tools = build_tool_definitions(specs)
+    tools = build_tool_definition_list(specs)
 
     assert len(tools) == 3
     # All should use PromptStructure as input (have "prompt" field)

@@ -6,7 +6,7 @@ from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
 from openai_sdk_helpers.structure.web_search import WebSearchStructure
 from openai_sdk_helpers.structure.prompt import PromptStructure
-from openai_sdk_helpers.tools import ToolSpec, build_tool_definitions
+from openai_sdk_helpers.tools import ToolSpec, build_tool_definition_list
 from openai_sdk_helpers.utils import coerce_jsonable, customJSONEncoder
 from openai_sdk_helpers.environment import DEFAULT_MODEL
 
@@ -27,7 +27,7 @@ class StreamlitWebSearch(ResponseBase[WebSearchStructure]):
         super().__init__(
             name="streamlit_web_search",
             instructions="Perform web searches and generate reports.",
-            tools=build_tool_definitions(
+            tools=build_tool_definition_list(
                 [
                     ToolSpec(
                         input_structure=PromptStructure,

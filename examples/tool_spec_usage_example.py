@@ -1,6 +1,6 @@
 """Example demonstrating ToolSpec usage patterns.
 
-This example shows practical scenarios where ToolSpec and build_tool_definitions
+This example shows practical scenarios where ToolSpec and build_tool_definition_list
 provide value over inline tool definitions:
 1. Multi-tool response configurations
 2. Reusable tool definitions across configurations
@@ -10,7 +10,7 @@ provide value over inline tool definitions:
 from openai_sdk_helpers import (
     ResponseConfiguration,
     ToolSpec,
-    build_tool_definitions,
+    build_tool_definition_list,
 )
 from openai_sdk_helpers.structure import (
     PromptStructure,
@@ -62,7 +62,7 @@ def example_multi_tool_config():
         ),
     ]
 
-    tools = build_tool_definitions(tool_specs)
+    tools = build_tool_definition_list(tool_specs)
 
     configuration = ResponseConfiguration(
         name="multi_agent_assistant",
@@ -120,7 +120,7 @@ def example_reusable_tools():
     research_config = ResponseConfiguration(
         name="research_assistant",
         instructions="You perform research using web and vector search.",
-        tools=build_tool_definitions(RESEARCH_TOOLS),
+        tools=build_tool_definition_list(RESEARCH_TOOLS),
         input_structure=None,
         output_structure=None,
     )
@@ -129,7 +129,7 @@ def example_reusable_tools():
     analysis_config = ResponseConfiguration(
         name="analysis_assistant",
         instructions="You analyze and validate research results.",
-        tools=build_tool_definitions(ANALYSIS_TOOLS),
+        tools=build_tool_definition_list(ANALYSIS_TOOLS),
         input_structure=None,
         output_structure=None,
     )
@@ -138,7 +138,7 @@ def example_reusable_tools():
     full_config = ResponseConfiguration(
         name="full_pipeline_assistant",
         instructions="You handle the full research and analysis pipeline.",
-        tools=build_tool_definitions(RESEARCH_TOOLS + ANALYSIS_TOOLS),
+        tools=build_tool_definition_list(RESEARCH_TOOLS + ANALYSIS_TOOLS),
         input_structure=None,
         output_structure=None,
     )
@@ -190,7 +190,7 @@ def example_dynamic_tools():
         return ResponseConfiguration(
             name=name,
             instructions=f"Assistant with {', '.join(required_tools)} capabilities.",
-            tools=build_tool_definitions(selected_specs),
+            tools=build_tool_definition_list(selected_specs),
             input_structure=None,
             output_structure=None,
         )
@@ -240,7 +240,7 @@ def example_comparison():
             tool_description="Run a vector search workflow",
         ),
     ]
-    toolspec_tools = build_tool_definitions(tool_specs)
+    toolspec_tools = build_tool_definition_list(tool_specs)
 
     # Both produce the same result
     print("Inline approach: tools defined directly in list")
@@ -295,7 +295,7 @@ def example_different_io_structures():
         ),
     ]
 
-    tools = build_tool_definitions(tool_specs)
+    tools = build_tool_definition_list(tool_specs)
 
     print(f"\nBuilt {len(tools)} tools with mixed I/O structures:")
     for i, (spec, tool) in enumerate(zip(tool_specs, tools), 1):
