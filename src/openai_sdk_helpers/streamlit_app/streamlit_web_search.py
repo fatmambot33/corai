@@ -3,7 +3,8 @@
 import json
 from openai_sdk_helpers.agent.search.web import WebAgentSearch
 from openai_sdk_helpers.settings import OpenAISettings
-from openai_sdk_helpers.response.base import ResponseBase, ToolHandlerRegistration
+from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.tools import ToolHandlerRegistration
 from openai_sdk_helpers.structure.web_search import WebSearchStructure
 from openai_sdk_helpers.structure.prompt import PromptStructure
 from openai_sdk_helpers.tools import ToolSpec, build_tool_definition_list

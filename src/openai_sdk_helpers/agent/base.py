@@ -30,13 +30,14 @@ from ..utils import (
     log,
 )
 
-from ..tools import ToolSpec, build_response_tool_handler
+from ..tools import ToolHandlerRegistration, ToolSpec, build_response_tool_handler
 
 from .runner import run_async, run_streamed, run_sync
 
 if TYPE_CHECKING:
     from ..settings import OpenAISettings
-    from ..response.base import ResponseBase, ToolHandler, ToolHandlerRegistration
+    from ..response.base import ResponseBase
+    from ..tools import ToolHandler
 
 
 class AgentConfigurationProtocol(Protocol):
@@ -683,7 +684,7 @@ class AgentBase(DataclassJSONSerializable):
         >>> from openai_sdk_helpers import OpenAISettings
         >>> response = agent.build_response(openai_settings=OpenAISettings.from_env())
         """
-        from ..response.base import ResponseBase, ToolHandler, ToolHandlerRegistration
+        from ..response.base import ResponseBase
         from ..settings import OpenAISettings
 
         if not isinstance(openai_settings, OpenAISettings):

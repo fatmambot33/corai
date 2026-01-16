@@ -5,7 +5,8 @@ from pydantic import Field
 from unittest.mock import Mock, patch
 
 from openai_sdk_helpers.settings import OpenAISettings
-from openai_sdk_helpers.response.base import ResponseBase, ToolHandlerRegistration
+from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.tools import ToolHandlerRegistration
 from openai_sdk_helpers.response.configuration import ResponseConfiguration
 from openai_sdk_helpers.structure.base import StructureBase
 

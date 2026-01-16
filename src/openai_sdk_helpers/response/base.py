@@ -14,7 +14,6 @@ import json
 import logging
 import threading
 import uuid
-from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
@@ -47,7 +46,7 @@ from .messages import ResponseMessage, ResponseMessages
 from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
-from ..tools import ToolSpec, build_response_tool_handler
+from ..tools import ToolHandler, ToolHandlerRegistration, ToolSpec, build_response_tool_handler
 from ..utils import (
     check_filepath,
     coerce_jsonable,
@@ -60,36 +59,7 @@ if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
 
 T = TypeVar("T", bound=StructureBase)
-ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
 RB = TypeVar("RB", bound="ResponseBase[StructureBase]")
-
-
-@dataclass(frozen=True)
-class ToolHandlerRegistration:
-    """Bundle a tool handler with optional ToolSpec metadata.
-
-    Parameters
-    ----------
-    handler : ToolHandler
-        Callable that executes the tool and returns a serializable payload.
-    tool_spec : ToolSpec or None, default None
-        Optional ToolSpec used to parse tool outputs based on the tool name.
-
-    Attributes
-    ----------
-    handler : ToolHandler
-        Callable that executes the tool and returns a serializable payload.
-    tool_spec : ToolSpec or None
-        Optional ToolSpec describing the tool input/output structures.
-
-    Methods
-    -------
-    __init__(handler, tool_spec=None)
-        Initialize the registration with a handler and optional ToolSpec.
-    """
-
-    handler: ToolHandler
-    tool_spec: ToolSpec | None = None
 
 
 class ResponseBase(Generic[T]):

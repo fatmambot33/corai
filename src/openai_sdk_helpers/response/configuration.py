@@ -8,7 +8,8 @@ from typing import Generic, Optional, Sequence, Type, TypeVar
 
 from ..settings import OpenAISettings
 from ..structure.base import StructureBase
-from .base import ResponseBase, ToolHandlerRegistration
+from .base import ResponseBase
+from ..tools import ToolHandlerRegistration
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import RegistryBase
 from ..utils.instructions import resolve_instructions_from_path

@@ -23,6 +23,35 @@ from openai_sdk_helpers.structure.base import StructureBase
 from openai_sdk_helpers.utils import customJSONEncoder
 
 StructureType: TypeAlias = type[StructureBase]
+ToolHandler: TypeAlias = Callable[[Any], str | Any]
+
+
+@dataclass(frozen=True)
+class ToolHandlerRegistration:
+    """Bundle a tool handler with optional ToolSpec metadata.
+
+    Parameters
+    ----------
+    handler : ToolHandler
+        Callable that executes the tool and returns a serializable payload.
+    tool_spec : ToolSpec or None, default None
+        Optional ToolSpec used to parse tool outputs based on the tool name.
+
+    Attributes
+    ----------
+    handler : ToolHandler
+        Callable that executes the tool and returns a serializable payload.
+    tool_spec : ToolSpec or None
+        Optional ToolSpec describing the tool input/output structures.
+
+    Methods
+    -------
+    __init__(handler, tool_spec=None)
+        Initialize the registration with a handler and optional ToolSpec.
+    """
+
+    handler: ToolHandler
+    tool_spec: ToolSpec | None = None
 
 
 def _to_snake_case(name: str) -> str:
@@ -617,6 +646,8 @@ __all__ = [
     "unserialize_tool_arguments",
     "tool_handler_factory",
     "StructureType",
+    "ToolHandler",
+    "ToolHandlerRegistration",
     "ToolSpec",
     "build_tool_definition_list",
     "build_response_tool_handler",
