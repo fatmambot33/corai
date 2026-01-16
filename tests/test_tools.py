@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import cast
+
 import pytest
 from pydantic import ValidationError
 
@@ -178,7 +180,7 @@ def test_tool_spec_requires_output_structure():
     with pytest.raises(ValueError):
         ToolSpec(
             input_structure=BasicInputStructure,
-            output_structure=None,
+            output_structure=cast(StructureType, None),
             tool_name="missing_output",
             tool_description="Missing output structure.",
         )
@@ -586,7 +588,7 @@ def test_tool_spec_rejects_none_output_structure():
     with pytest.raises(ValueError):
         ToolSpec(
             input_structure=PromptStructure,
-            output_structure=None,
+            output_structure=cast(StructureType, None),
             tool_name="test_tool",
             tool_description="Test tool",
         )

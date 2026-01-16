@@ -3,7 +3,7 @@
 import json
 from openai_sdk_helpers.agent.search.web import WebAgentSearch
 from openai_sdk_helpers.settings import OpenAISettings
-from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.response.base import ResponseBase, ToolHandlerRegistration
 from openai_sdk_helpers.structure.web_search import WebSearchStructure
 from openai_sdk_helpers.structure.prompt import PromptStructure
 from openai_sdk_helpers.tools import ToolSpec, build_tool_definition_list
@@ -24,21 +24,23 @@ class StreamlitWebSearch(ResponseBase[WebSearchStructure]):
         settings = OpenAISettings.from_env()
         if not settings.default_model:
             settings = settings.model_copy(update={"default_model": DEFAULT_MODEL})
+        tool_spec = ToolSpec(
+            input_structure=PromptStructure,
+            tool_name="perform_search",
+            tool_description="Tool to perform web searches and generate reports.",
+            output_structure=WebSearchStructure,
+        )
         super().__init__(
             name="streamlit_web_search",
             instructions="Perform web searches and generate reports.",
-            tools=build_tool_definition_list(
-                [
-                    ToolSpec(
-                        input_structure=PromptStructure,
-                        tool_name="perform_search",
-                        tool_description="Tool to perform web searches and generate reports.",
-                        output_structure=WebSearchStructure,
-                    )
-                ]
-            ),
+            tools=build_tool_definition_list([tool_spec]),
             output_structure=WebSearchStructure,
-            tool_handlers={"perform_search": perform_search},
+            tool_handlers={
+                "perform_search": ToolHandlerRegistration(
+                    handler=perform_search,
+                    tool_spec=tool_spec,
+                )
+            },
             openai_settings=settings,
         )
 

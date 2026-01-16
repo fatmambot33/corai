@@ -9,8 +9,6 @@ This example shows how to use:
 """
 
 from pathlib import Path
-from pydantic import BaseModel
-
 from openai_sdk_helpers import (
     # Registry and configuration
     ResponseConfiguration,
@@ -18,6 +16,9 @@ from openai_sdk_helpers import (
     # Tool utilities
     tool_handler_factory,
     serialize_tool_result,
+    ToolSpec,
+    StructureBase,
+    spec_field,
     # Settings and utilities
     build_openai_settings,
     # Plan execution
@@ -79,18 +80,18 @@ def example_response_registry():
 # ===============================
 
 
-class SearchInput(BaseModel):
+class SearchInput(StructureBase):
     """Validated input for search tool."""
 
-    query: str
-    limit: int = 10
+    query: str = spec_field("query", description="Search query")
+    limit: int = spec_field("limit", default=10, description="Result limit")
 
 
-class SearchOutput(BaseModel):
+class SearchOutput(StructureBase):
     """Structured output from search tool."""
 
-    results: list[str]
-    count: int
+    results: list[str] = spec_field("results", description="Search results")
+    count: int = spec_field("count", description="Result count")
 
 
 def search_function(query: str, limit: int = 10) -> SearchOutput:
@@ -106,7 +107,13 @@ def example_tool_handler_factory():
     print("\n=== Example 2: Tool Handler Factory ===")
 
     # Create handler with automatic parsing, validation, and serialization
-    handler = tool_handler_factory(search_function, input_model=SearchInput)
+    tool_spec = ToolSpec(
+        tool_name="search",
+        tool_description="Search for matching results.",
+        input_structure=SearchInput,
+        output_structure=SearchOutput,
+    )
+    handler = tool_handler_factory(search_function, tool_spec=tool_spec)
 
     # Simulate a tool call
     class MockToolCall:
@@ -120,7 +127,7 @@ def example_tool_handler_factory():
 
     # Direct serialization example
     output = SearchOutput(results=["A", "B"], count=2)
-    serialized = serialize_tool_result(output)
+    serialized = serialize_tool_result(output, tool_spec=tool_spec)
     print(f"Serialized output: {serialized}")
 
 

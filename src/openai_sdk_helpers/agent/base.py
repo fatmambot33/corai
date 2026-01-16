@@ -36,7 +36,7 @@ from .runner import run_async, run_streamed, run_sync
 
 if TYPE_CHECKING:
     from ..settings import OpenAISettings
-    from ..response.base import ResponseBase, ToolHandler
+    from ..response.base import ResponseBase, ToolHandler, ToolHandlerRegistration
 
 
 class AgentConfigurationProtocol(Protocol):

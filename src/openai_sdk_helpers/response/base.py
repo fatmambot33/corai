@@ -643,7 +643,7 @@ class ResponseBase(Generic[T]):
                 if tool_spec is not None:
                     output_dict = tool_spec.output_structure.from_json(tool_result)
                     output_dict.console_print()
-                    parsed_result = output_dict
+                    parsed_result = cast(T, output_dict)
                 elif self._output_structure:
                     output_dict = self._output_structure.from_json(tool_result)
                     output_dict.console_print()
