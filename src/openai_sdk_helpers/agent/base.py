@@ -655,7 +655,7 @@ class AgentBase(DataclassJSONSerializable):
         *,
         openai_settings: OpenAISettings,
         data_path: Path | str | None = None,
-        tool_handlers: dict[str, ToolHandler] | None = None,
+        tool_handlers: dict[str, ToolHandler | ToolHandlerRegistration] | None = None,
         system_vector_store: list[str] | None = None,
     ) -> ResponseBase[StructureBase]:
         """Build a ResponseBase instance from this agent configuration.
@@ -667,8 +667,9 @@ class AgentBase(DataclassJSONSerializable):
         data_path : Path, str, or None, default None
             Optional path for storing response artifacts. When None, the
             response uses the default data directory.
-        tool_handlers : dict[str, ToolHandler] or None, default None
-            Optional mapping of tool names to handler callables.
+        tool_handlers : dict[str, ToolHandler or ToolHandlerRegistration] or None, default None
+            Optional mapping of tool names to handler callables. Registrations
+            can include ToolSpec metadata to parse tool outputs by name.
         system_vector_store : list[str] or None, default None
             Optional list of vector store names to attach as system context.
 
@@ -682,7 +683,7 @@ class AgentBase(DataclassJSONSerializable):
         >>> from openai_sdk_helpers import OpenAISettings
         >>> response = agent.build_response(openai_settings=OpenAISettings.from_env())
         """
-        from ..response.base import ResponseBase, ToolHandler
+        from ..response.base import ResponseBase, ToolHandler, ToolHandlerRegistration
         from ..settings import OpenAISettings
 
         if not isinstance(openai_settings, OpenAISettings):
