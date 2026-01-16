@@ -92,9 +92,6 @@ class ToolHandlerRegistration:
     tool_spec: ToolSpec | None = None
 
 
-ToolHandlerEntry = ToolHandler | ToolHandlerRegistration
-
-
 class ResponseBase(Generic[T]):
     """Manage OpenAI API interactions for structured responses.
 
@@ -126,8 +123,8 @@ class ResponseBase(Generic[T]):
         Optional absolute directory path for storing artifacts. If not provided,
         defaults to get_data_path(class_name). Session files are saved as
         data_path / uuid.json.
-    tool_handlers : dict[str, ToolHandler or ToolHandlerRegistration] or None, default None
-        Mapping from tool names to callable handlers. Registrations can include
+    tool_handlers : dict[str, ToolHandlerRegistration] or None, default None
+        Mapping from tool names to handler registrations that include optional
         ToolSpec metadata to parse tool outputs by name. Each handler receives
         a ResponseFunctionToolCall and returns a string or any serializable
         result. Defaults to an empty dict when not provided.
@@ -198,7 +195,7 @@ class ResponseBase(Generic[T]):
         output_structure: type[T] | None,
         system_vector_store: list[str] | None = None,
         data_path: Path | str | None = None,
-        tool_handlers: dict[str, ToolHandlerEntry] | None = None,
+        tool_handlers: dict[str, ToolHandlerRegistration] | None = None,
         openai_settings: OpenAISettings | None = None,
     ) -> None:
         """Initialize a response session with OpenAI configuration.
@@ -226,8 +223,8 @@ class ResponseBase(Generic[T]):
             Optional absolute directory path for storing artifacts. If not provided,
             defaults to get_data_path(class_name). Session files are saved as
             data_path / uuid.json.
-        tool_handlers : dict[str, ToolHandler or ToolHandlerRegistration] or None, default None
-            Mapping from tool names to callable handlers. Registrations can include
+        tool_handlers : dict[str, ToolHandlerRegistration] or None, default None
+            Mapping from tool names to handler registrations that include optional
             ToolSpec metadata to parse tool outputs by name. Each handler receives
             a ResponseFunctionToolCall and returns a string or any serializable
             result. Defaults to an empty dict when not provided.
@@ -259,7 +256,7 @@ class ResponseBase(Generic[T]):
         if openai_settings is None:
             raise ValueError("openai_settings is required")
 
-        self._tool_handlers = self._normalize_tool_handlers(tool_handlers)
+        self._tool_handlers = tool_handlers or {}
         self.uuid = uuid.uuid4()
         self._name = name
 
@@ -751,32 +748,6 @@ class ResponseBase(Generic[T]):
         thread.start()
         thread.join()
         return result
-
-    @staticmethod
-    def _normalize_tool_handlers(
-        tool_handlers: dict[str, ToolHandlerEntry] | None,
-    ) -> dict[str, ToolHandlerRegistration]:
-        """Normalize tool handler entries into ToolHandlerRegistration values.
-
-        Parameters
-        ----------
-        tool_handlers : dict[str, ToolHandler or ToolHandlerRegistration] or None
-            Mapping of tool names to handlers or handler registrations.
-
-        Returns
-        -------
-        dict[str, ToolHandlerRegistration]
-            Mapping of tool names to ToolHandlerRegistration values.
-        """
-        if tool_handlers is None:
-            return {}
-        normalized: dict[str, ToolHandlerRegistration] = {}
-        for name, entry in tool_handlers.items():
-            if isinstance(entry, ToolHandlerRegistration):
-                normalized[name] = entry
-            else:
-                normalized[name] = ToolHandlerRegistration(handler=entry)
-        return normalized
 
     def run_streamed(
         self,

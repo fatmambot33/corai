@@ -8,7 +8,7 @@ from typing import Generic, Optional, Sequence, Type, TypeVar
 
 from ..settings import OpenAISettings
 from ..structure.base import StructureBase
-from .base import ResponseBase, ToolHandlerEntry
+from .base import ResponseBase, ToolHandlerRegistration
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..utils.registry import RegistryBase
 from ..utils.instructions import resolve_instructions_from_path
@@ -222,7 +222,7 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         *,
         openai_settings: OpenAISettings,
         data_path: Optional[Path] = None,
-        tool_handlers: dict[str, ToolHandlerEntry] | None = None,
+        tool_handlers: dict[str, ToolHandlerRegistration] | None = None,
     ) -> ResponseBase[TOut]:
         """Generate a ResponseBase instance based on the configuration.
 
@@ -231,8 +231,8 @@ class ResponseConfiguration(DataclassJSONSerializable, Generic[TIn, TOut]):
         openai_settings : OpenAISettings
             Authentication and model settings applied to the generated
             :class:`ResponseBase`.
-        tool_handlers : dict[str, ToolHandler or ToolHandlerRegistration], optional
-            Mapping of tool names to handler callables. Registrations can include
+        tool_handlers : dict[str, ToolHandlerRegistration], optional
+            Mapping of tool names to handler registrations. Registrations can include
             ToolSpec metadata to parse tool outputs by name. Defaults to an empty
             dictionary when not provided.
 
