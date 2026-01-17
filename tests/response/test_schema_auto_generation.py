@@ -122,9 +122,7 @@ def test_schema_used_only_when_no_tools(openai_settings):
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],
         output_structure=DummyOutputStructure,
-        tool_handlers={
-            "test_tool": ToolHandlerRegistration(handler=lambda x: "{}")
-        },
+        tool_handlers={"test_tool": ToolHandlerRegistration(handler=lambda x: "{}")},
         openai_settings=openai_settings,
     )
 

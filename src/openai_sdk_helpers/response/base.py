@@ -46,7 +46,12 @@ from .messages import ResponseMessage, ResponseMessages
 from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
-from ..tools import ToolHandler, ToolHandlerRegistration, ToolSpec, build_response_tool_handler
+from ..tools import (
+    ToolHandler,
+    ToolHandlerRegistration,
+    ToolSpec,
+    build_response_tool_handler,
+)
 from ..utils import (
     check_filepath,
     coerce_jsonable,
