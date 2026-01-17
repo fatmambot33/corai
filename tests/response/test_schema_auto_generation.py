@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
+from openai_sdk_helpers.tools import ToolHandlerRegistration
 from openai_sdk_helpers.response.configuration import ResponseConfiguration
 from openai_sdk_helpers.structure.base import StructureBase
 
@@ -121,7 +122,7 @@ def test_schema_used_only_when_no_tools(openai_settings):
         instructions="Test instructions",
         tools=[{"type": "function", "name": "test_tool"}],
         output_structure=DummyOutputStructure,
-        tool_handlers={"test_tool": lambda x: "{}"},
+        tool_handlers={"test_tool": ToolHandlerRegistration(handler=lambda x: "{}")},
         openai_settings=openai_settings,
     )
 

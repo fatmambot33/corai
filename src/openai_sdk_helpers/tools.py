@@ -23,6 +23,35 @@ from openai_sdk_helpers.structure.base import StructureBase
 from openai_sdk_helpers.utils import customJSONEncoder
 
 StructureType: TypeAlias = type[StructureBase]
+ToolHandler: TypeAlias = Callable[[Any], str | Any]
+
+
+@dataclass(frozen=True)
+class ToolHandlerRegistration:
+    """Bundle a tool handler with optional ToolSpec metadata.
+
+    Parameters
+    ----------
+    handler : ToolHandler
+        Callable that executes the tool and returns a serializable payload.
+    tool_spec : ToolSpec or None, default None
+        Optional ToolSpec used to parse tool outputs based on the tool name.
+
+    Attributes
+    ----------
+    handler : ToolHandler
+        Callable that executes the tool and returns a serializable payload.
+    tool_spec : ToolSpec or None
+        Optional ToolSpec describing the tool input/output structures.
+
+    Methods
+    -------
+    __init__(handler, tool_spec=None)
+        Initialize the registration with a handler and optional ToolSpec.
+    """
+
+    handler: ToolHandler
+    tool_spec: ToolSpec | None = None
 
 
 def _to_snake_case(name: str) -> str:
@@ -163,73 +192,6 @@ def _parse_tool_arguments(arguments: str, tool_name: str) -> dict:
     return _unwrap_arguments(parsed, tool_name)
 
 
-def serialize_tool_result(result: Any, *, tool_spec: "ToolSpec") -> str:
-    """Serialize tool results into a standardized JSON string.
-
-    Handles structured outputs with consistent JSON formatting. Outputs are
-    validated and serialized through the ToolSpec output structure.
-
-    Parameters
-    ----------
-    result : Any
-        Tool result to serialize. Can be a structure instance or a compatible
-        mapping for validation.
-    tool_spec : ToolSpec
-        Tool specification describing the expected output structure. The output
-        structure validates and serializes the result.
-
-    Returns
-    -------
-    str
-        JSON-formatted string representation of the result.
-
-    Examples
-    --------
-    >>> from openai_sdk_helpers import ToolSpec
-    >>> from openai_sdk_helpers.structure import PromptStructure
-    >>> spec = ToolSpec(
-    ...     tool_name="echo",
-    ...     tool_description="Echo a prompt",
-    ...     input_structure=PromptStructure,
-    ...     output_structure=PromptStructure,
-    ... )
-    >>> serialize_tool_result({"prompt": "hello"}, tool_spec=spec)
-    '{"prompt": "hello"}'
-    """
-    output_structure = tool_spec.output_structure
-    payload = output_structure.model_validate(result).to_json()
-    return json.dumps(payload, cls=customJSONEncoder)
-
-
-def unserialize_tool_arguments(
-    tool_call: Any, *, tool_spec: "ToolSpec"
-) -> StructureBase:
-    """Unserialize tool call arguments into a structured input instance.
-
-    Parameters
-    ----------
-    tool_call : Any
-        Tool call object with 'arguments' and 'name' attributes.
-    tool_spec : ToolSpec
-        Tool specification describing the expected input structure.
-
-    Returns
-    -------
-    StructureBase
-        Validated input structure instance.
-
-    Raises
-    ------
-    ValueError
-        If argument parsing fails.
-    ValidationError
-        If input validation fails.
-    """
-    tool_name = getattr(tool_call, "name", tool_spec.tool_name)
-    parsed_args = _parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
-    return tool_spec.input_structure.from_json(parsed_args)
-
-
 def tool_handler_factory(
     func: Callable[..., Any],
     *,
@@ -242,10 +204,10 @@ def tool_handler_factory(
     repetitive boilerplate for tool implementations.
 
     The returned handler:
-    1. Parses tool_call.arguments using parse_tool_arguments
+    1. Parses tool_call.arguments using ToolSpec.unserialize_tool_arguments
     2. Validates arguments with the input structure
     3. Calls func with structured input (handles both sync and async)
-    4. Serializes the result using serialize_tool_result
+    4. Serializes the result using ToolSpec.serialize_tool_result
 
     Forward-referenced annotations on single-argument tool callables are
     resolved when possible to decide whether to pass the structured input.
@@ -360,7 +322,7 @@ def tool_handler_factory(
         ValidationError
             If input validation fails.
         """
-        validated_input = unserialize_tool_arguments(tool_call, tool_spec=tool_spec)
+        validated_input = tool_spec.unserialize_tool_arguments(tool_call)
 
         # Execute function (sync or async with event loop detection)
         if is_async:
@@ -392,7 +354,7 @@ def tool_handler_factory(
             result = _call_with_input(validated_input)
 
         # Serialize result
-        return serialize_tool_result(result, tool_spec=tool_spec)
+        return tool_spec.serialize_tool_result(result)
 
     return handler
 
@@ -613,10 +575,10 @@ def build_response_tool_handler(
 
 
 __all__ = [
-    "serialize_tool_result",
-    "unserialize_tool_arguments",
     "tool_handler_factory",
     "StructureType",
+    "ToolHandler",
+    "ToolHandlerRegistration",
     "ToolSpec",
     "build_tool_definition_list",
     "build_response_tool_handler",

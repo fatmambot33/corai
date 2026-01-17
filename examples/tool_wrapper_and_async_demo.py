@@ -6,26 +6,35 @@ This example shows how the new features solve the two problems outlined:
 """
 
 import asyncio
-from pydantic import BaseModel
+
+from openai_sdk_helpers import StructureBase, ToolSpec, spec_field
 from openai_sdk_helpers.tools import tool_handler_factory
 
 
 # Define input/output models
-class TargetingInput(BaseModel):
+class TargetingInput(StructureBase):
     """Input parameters for the targeting tool."""
 
-    campaign_id: str
-    audience: str
-    budget: float = 1000.0
+    campaign_id: str = spec_field("campaign_id", description="Campaign identifier")
+    audience: str = spec_field("audience", description="Target audience")
+    budget: float = spec_field(
+        "budget",
+        default=1000.0,
+        description="Budget for targeting recommendations",
+    )
 
 
-class TargetingOutput(BaseModel):
+class TargetingOutput(StructureBase):
     """Output from the targeting tool."""
 
-    campaign_id: str
-    targeting_status: str
-    estimated_reach: int
-    message: str
+    campaign_id: str = spec_field("campaign_id", description="Campaign identifier")
+    targeting_status: str = spec_field(
+        "targeting_status", description="Status of targeting recommendation"
+    )
+    estimated_reach: int = spec_field(
+        "estimated_reach", description="Estimated audience reach"
+    )
+    message: str = spec_field("message", description="Status message")
 
 
 # Example 1: Async tool with automatic wrapper unwrapping
@@ -55,7 +64,13 @@ async def propose_targeting(
 # Create handler - no special async handling needed!
 # Before: Had to implement custom thread/event loop logic
 # After: Just pass async function directly
-async_handler = tool_handler_factory(propose_targeting, input_model=TargetingInput)
+tool_spec = ToolSpec(
+    tool_name="propose_targeting",
+    tool_description="Propose targeting parameters for a campaign.",
+    input_structure=TargetingInput,
+    output_structure=TargetingOutput,
+)
+async_handler = tool_handler_factory(propose_targeting, tool_spec=tool_spec)
 
 
 # Example 2: Handler automatically unwraps payloads
@@ -145,20 +160,40 @@ async def demonstrate_async_support():
         print(f"  Call {i+1}: Success")
 
 
-# Example 3: Sync tool still works as before
+# Example 3: Sync tool still works with ToolSpec
 # ===========================================
-def sync_tool(name: str, value: int) -> dict:
+class SyncInput(StructureBase):
+    """Input parameters for the sync tool."""
+
+    name: str = spec_field("name", description="Name to echo")
+    value: int = spec_field("value", description="Value to double")
+
+
+class SyncOutput(StructureBase):
+    """Output payload for the sync tool."""
+
+    name: str = spec_field("name", description="Echoed name")
+    doubled: int = spec_field("doubled", description="Doubled value")
+
+
+def sync_tool(name: str, value: int) -> SyncOutput:
     """Synchronize tool for comparison."""
-    return {"name": name, "doubled": value * 2}
+    return SyncOutput(name=name, doubled=value * 2)
 
 
-sync_handler = tool_handler_factory(sync_tool)
+sync_tool_spec = ToolSpec(
+    tool_name="sync_tool",
+    tool_description="Double a value and echo the name.",
+    input_structure=SyncInput,
+    output_structure=SyncOutput,
+)
+sync_handler = tool_handler_factory(sync_tool, tool_spec=sync_tool_spec)
 
 
-def demonstrate_backward_compatibility():
-    """Show that sync tools still work as before."""
+def demonstrate_sync_tool_support():
+    """Show that sync tools still work with ToolSpec."""
     print("\n" + "=" * 70)
-    print("Example 3: Backward Compatibility")
+    print("Example 3: Sync Tool Support")
     print("=" * 70)
 
     tool_call = MockToolCall(
@@ -178,7 +213,7 @@ if __name__ == "__main__":
     # Run async example (creates event loop)
     asyncio.run(demonstrate_async_support())
 
-    demonstrate_backward_compatibility()
+    demonstrate_sync_tool_support()
 
     print("\n" + "=" * 70)
     print("Summary")
@@ -187,7 +222,7 @@ if __name__ == "__main__":
         """
 ✓ Wrapper unwrapping: Arguments wrapped by tool name are automatically unwrapped
 ✓ Async support: Async functions work seamlessly with event loop detection
-✓ Backward compatible: Sync tools continue to work as before
+✓ Sync tools: ToolSpec handles input and output validation for sync tools
 ✓ No manual thread handling: Event loop management is automatic
 ✓ Validation still works: Pydantic validation happens after unwrapping
     """

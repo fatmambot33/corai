@@ -70,9 +70,10 @@ from .response import (
     attach_vector_store,
 )
 from .tools import (
-    serialize_tool_result,
     tool_handler_factory,
     StructureType,
+    ToolHandler,
+    ToolHandlerRegistration,
     ToolSpec,
     build_tool_definition_list,
     build_response_tool_handler,
@@ -151,9 +152,10 @@ __all__ = [
     "ResponseRegistry",
     "get_default_registry",
     "attach_vector_store",
-    "serialize_tool_result",
     "tool_handler_factory",
     "StructureType",
+    "ToolHandler",
+    "ToolHandlerRegistration",
     "ToolSpec",
     "build_tool_definition_list",
     "build_response_tool_handler",

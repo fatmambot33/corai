@@ -46,7 +46,12 @@ from .messages import ResponseMessage, ResponseMessages
 from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
-from ..tools import ToolSpec, build_response_tool_handler
+from ..tools import (
+    ToolHandler,
+    ToolHandlerRegistration,
+    ToolSpec,
+    build_response_tool_handler,
+)
 from ..utils import (
     check_filepath,
     coerce_jsonable,
@@ -59,7 +64,6 @@ if TYPE_CHECKING:  # pragma: no cover - only for typing hints
     from openai_sdk_helpers.streamlit_app.configuration import StreamlitAppConfig
 
 T = TypeVar("T", bound=StructureBase)
-ToolHandler = Callable[[ResponseFunctionToolCall], str | Any]
 RB = TypeVar("RB", bound="ResponseBase[StructureBase]")
 
 
@@ -94,8 +98,9 @@ class ResponseBase(Generic[T]):
         Optional absolute directory path for storing artifacts. If not provided,
         defaults to get_data_path(class_name). Session files are saved as
         data_path / uuid.json.
-    tool_handlers : dict[str, ToolHandler] or None, default None
-        Mapping from tool names to callable handlers. Each handler receives
+    tool_handlers : dict[str, ToolHandlerRegistration] or None, default None
+        Mapping from tool names to handler registrations that include optional
+        ToolSpec metadata to parse tool outputs by name. Each handler receives
         a ResponseFunctionToolCall and returns a string or any serializable
         result. Defaults to an empty dict when not provided.
     openai_settings : OpenAISettings or None, default None
@@ -165,7 +170,7 @@ class ResponseBase(Generic[T]):
         output_structure: type[T] | None,
         system_vector_store: list[str] | None = None,
         data_path: Path | str | None = None,
-        tool_handlers: dict[str, ToolHandler] | None = None,
+        tool_handlers: dict[str, ToolHandlerRegistration] | None = None,
         openai_settings: OpenAISettings | None = None,
     ) -> None:
         """Initialize a response session with OpenAI configuration.
@@ -193,8 +198,9 @@ class ResponseBase(Generic[T]):
             Optional absolute directory path for storing artifacts. If not provided,
             defaults to get_data_path(class_name). Session files are saved as
             data_path / uuid.json.
-        tool_handlers : dict[str, ToolHandler] or None, default None
-            Mapping from tool names to callable handlers. Each handler receives
+        tool_handlers : dict[str, ToolHandlerRegistration] or None, default None
+            Mapping from tool names to handler registrations that include optional
+            ToolSpec metadata to parse tool outputs by name. Each handler receives
             a ResponseFunctionToolCall and returns a string or any serializable
             result. Defaults to an empty dict when not provided.
         openai_settings : OpenAISettings or None, default None
@@ -225,9 +231,7 @@ class ResponseBase(Generic[T]):
         if openai_settings is None:
             raise ValueError("openai_settings is required")
 
-        if tool_handlers is None:
-            tool_handlers = {}
-        self._tool_handlers = tool_handlers
+        self._tool_handlers = tool_handlers or {}
         self.uuid = uuid.uuid4()
         self._name = name
 
@@ -397,7 +401,11 @@ class ResponseBase(Generic[T]):
         tool_handler, tool_definition = build_response_tool_handler(
             func, tool_spec=tool_spec
         )
-        self._tool_handlers.update(tool_handler)
+        for name, handler in tool_handler.items():
+            self._tool_handlers[name] = ToolHandlerRegistration(
+                handler=handler,
+                tool_spec=tool_spec,
+            )
         if self._tools is None:
             self._tools = []
         self._tools.append(tool_definition)
@@ -573,14 +581,17 @@ class ResponseBase(Generic[T]):
                 )
 
                 tool_name = response_output.name
-                handler = self._tool_handlers.get(tool_name)
+                registration = self._tool_handlers.get(tool_name)
 
-                if handler is None:
+                if registration is None:
                     log(
                         f"No handler found for tool '{tool_name}'",
                         level=logging.ERROR,
                     )
                     raise ValueError(f"No handler for tool: {tool_name}")
+
+                handler = registration.handler
+                tool_spec = registration.tool_spec
 
                 try:
                     if inspect.iscoroutinefunction(handler):
@@ -604,7 +615,11 @@ class ResponseBase(Generic[T]):
                     )
                     raise RuntimeError(f"Error in tool handler '{tool_name}': {exc}")
 
-                if self._output_structure:
+                if tool_spec is not None:
+                    output_dict = tool_spec.output_structure.from_json(tool_result)
+                    output_dict.console_print()
+                    parsed_result = cast(T, output_dict)
+                elif self._output_structure:
                     output_dict = self._output_structure.from_json(tool_result)
                     output_dict.console_print()
                     parsed_result = output_dict
