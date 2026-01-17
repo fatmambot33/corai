@@ -527,7 +527,9 @@ def build_tool_definition_list(tool_specs: list[ToolSpec]) -> list[dict]:
 
 
 def build_response_tool_handler(
-    func: Callable[..., Any], *, tool_spec: ToolSpec
+    func: Callable[..., Any], 
+    *, 
+    tool_spec: ToolSpec
 ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
     """Build a Responses API tool handler and definition from a ToolSpec.
 

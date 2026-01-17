@@ -23,7 +23,12 @@ from jinja2 import Template
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..structure.base import StructureBase
 from ..structure.prompt import PromptStructure
-
+from ..tools import (
+    StructureType,
+    ToolHandlerRegistration,
+    ToolSpec,
+    build_response_tool_handler,
+)
 
 from ..utils import (
     check_filepath,
@@ -37,7 +42,6 @@ from .runner import run_async, run_streamed, run_sync
 if TYPE_CHECKING:
     from ..settings import OpenAISettings
     from ..response.base import ResponseBase
-    from ..tools import ToolHandler
 
 
 class AgentConfigurationProtocol(Protocol):
@@ -650,6 +654,24 @@ class AgentBase(DataclassJSONSerializable):
             output_structure=output_structure,
         )
         return build_response_tool_handler(_run_agent, tool_spec=tool_spec)
+
+    def as_tool_handler_registration(
+        self,
+    ) -> ToolHandlerRegistration:
+        """Return the agent as a ToolHandlerRegistration for Responses API use.
+
+        Parameters
+        ----------
+        tool_name : str or None, default=None
+            Optional override for the tool name. When None, uses the agent name.
+        """
+        tool_spec = ToolSpec(
+            tool_name=self.name,
+            tool_description=self.description,
+            input_structure=cast(StructureType, self._input_structure),
+            output_structure=cast(StructureType, self._output_structure),
+        )
+        return ToolHandlerRegistration(handler=self.run_sync, tool_spec=tool_spec)
 
     def build_response(
         self,

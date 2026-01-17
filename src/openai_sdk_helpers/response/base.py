@@ -47,7 +47,6 @@ from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
 from ..tools import (
-    ToolHandler,
     ToolHandlerRegistration,
     ToolSpec,
     build_response_tool_handler,
