@@ -10,9 +10,7 @@ import pytest
 from pydantic import ValidationError
 
 from openai_sdk_helpers.tools import (
-    serialize_tool_result,
     tool_handler_factory,
-    unserialize_tool_arguments,
     StructureType,
     ToolSpec,
     build_tool_definition_list,
@@ -187,7 +185,7 @@ def test_tool_spec_requires_output_structure():
 
 
 def test_unserialize_tool_arguments_returns_structure():
-    """Test unserialize_tool_arguments returns a validated structure."""
+    """Test ToolSpec.unserialize_tool_arguments returns a validated structure."""
     spec = ToolSpec(
         input_structure=BasicInputStructure,
         output_structure=BasicOutputStructure,
@@ -196,7 +194,7 @@ def test_unserialize_tool_arguments_returns_structure():
     )
     tool_call = MockToolCall('{"query": "test", "limit": 3, "offset": 1}')
 
-    result = unserialize_tool_arguments(tool_call, tool_spec=spec)
+    result = spec.unserialize_tool_arguments(tool_call)
 
     assert isinstance(result, BasicInputStructure)
     assert result.query == "test"

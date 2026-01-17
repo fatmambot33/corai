@@ -15,7 +15,6 @@ from openai_sdk_helpers import (
     get_default_registry,
     # Tool utilities
     tool_handler_factory,
-    serialize_tool_result,
     ToolSpec,
     StructureBase,
     spec_field,
@@ -127,7 +126,7 @@ def example_tool_handler_factory():
 
     # Direct serialization example
     output = SearchOutput(results=["A", "B"], count=2)
-    serialized = serialize_tool_result(output, tool_spec=tool_spec)
+    serialized = tool_spec.serialize_tool_result(output)
     print(f"Serialized output: {serialized}")
 
 
