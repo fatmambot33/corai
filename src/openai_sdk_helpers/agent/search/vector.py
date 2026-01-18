@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
 from agents import custom_span, gen_trace_id, trace
 from agents.model_settings import ModelSettings
 
 from ...environment import DEFAULT_PROMPT_DIR
-from ...structure.prompt import PromptStructure
 from ...structure.vector_search import (
     VectorSearchItemStructure,
     VectorSearchItemResultStructure,
@@ -18,7 +17,6 @@ from ...structure.vector_search import (
     VectorSearchPlanStructure,
     VectorSearchReportStructure,
 )
-from ...tools import ToolSpec, build_response_tool_handler
 from ...vector_storage import VectorStorage
 from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
@@ -235,7 +233,17 @@ class VectorSearchWriter(SearchWriter[VectorSearchReportStructure]):
     ) -> None:
         """Initialize the writer agent."""
         prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
-        super().__init__(prompt_dir=prompt_directory, default_model=default_model)
+        configuration = AgentConfiguration(
+            name="vector_writer",
+            instructions="Agent instructions",
+            description="Agent that writes a report based on search results.",
+            output_structure=VectorSearchReportStructure,
+        )
+        super().__init__(
+            configuration=configuration,
+            template_path=prompt_directory,
+            default_model=default_model,
+        )
 
     def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the vector writer agent.
@@ -398,48 +406,6 @@ class VectorAgentSearch:
             Completed research output.
         """
         return run_coroutine_agent_sync(self.run_agent(search_query))
-
-    def as_response_tool(
-        self,
-        *,
-        tool_name: str = "vector_search",
-        tool_description: str = "Run the vector search workflow.",
-    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
-        """Return a Responses API tool handler and definition.
-
-        Parameters
-        ----------
-        vector_store_name : str
-            Name of the vector store to use for the response tool.
-        tool_name : str, default="vector_search"
-            Name to use for the response tool.
-        tool_description : str, default="Run the vector search workflow."
-            Description for the response tool.
-
-        Returns
-        -------
-        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
-            Tool handler mapping and tool definition for Responses API usage.
-        """
-        search = VectorAgentSearch(
-            prompt_dir=self._prompt_dir,
-            default_model=self._default_model,
-            vector_store_name=self._vector_store_name,
-            max_concurrent_searches=self._max_concurrent_searches,
-            vector_storage=self._vector_storage,
-            vector_storage_factory=self._vector_storage_factory,
-        )
-
-        def _run_search(prompt: str) -> VectorSearchStructure:
-            return run_coroutine_agent_sync(search.run_agent(search_query=prompt))
-
-        tool_spec = ToolSpec(
-            tool_name=tool_name,
-            tool_description=tool_description,
-            input_structure=PromptStructure,
-            output_structure=VectorSearchStructure,
-        )
-        return build_response_tool_handler(_run_search, tool_spec=tool_spec)
 
 
 __all__ = [

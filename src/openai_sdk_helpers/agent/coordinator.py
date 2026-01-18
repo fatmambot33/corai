@@ -135,7 +135,7 @@ class CoordinatorAgent(AgentBase):
             )
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_dir,
+            template_path=prompt_dir,
             default_model=default_model,
         )
         self._prompt_fn = prompt_fn

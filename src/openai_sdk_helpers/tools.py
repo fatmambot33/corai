@@ -41,17 +41,17 @@ class ToolHandlerRegistration:
     ----------
     handler : ToolHandler
         Callable that executes the tool and returns a serializable payload.
-    tool_spec : ToolSpec or None
-        Optional ToolSpec describing the tool input/output structures.
+    tool_spec : ToolSpec
+        ToolSpec describing the tool input/output structures.
 
     Methods
     -------
-    __init__(handler, tool_spec=None)
-        Initialize the registration with a handler and optional ToolSpec.
+    __init__(handler, tool_spec)
+        Initialize the registration with a handler and ToolSpec.
     """
 
     handler: ToolHandler
-    tool_spec: ToolSpec | None = None
+    tool_spec: ToolSpec
 
 
 def _to_snake_case(name: str) -> str:
@@ -322,7 +322,7 @@ def tool_handler_factory(
         ValidationError
             If input validation fails.
         """
-        validated_input = tool_spec.unserialize_tool_arguments(tool_call)
+        validated_input = tool_spec.unserialize_arguments(tool_call)
 
         # Execute function (sync or async with event loop detection)
         if is_async:
@@ -354,7 +354,7 @@ def tool_handler_factory(
             result = _call_with_input(validated_input)
 
         # Serialize result
-        return tool_spec.serialize_tool_result(result)
+        return tool_spec.serialize_tool_results(result)
 
     return handler
 
@@ -410,7 +410,7 @@ class ToolSpec:
     """
 
     tool_name: str
-    tool_description: str
+    tool_description: str | None
     input_structure: StructureType
     output_structure: StructureType
 
@@ -419,7 +419,7 @@ class ToolSpec:
         if self.output_structure is None:
             raise ValueError("ToolSpec.output_structure must be set.")
 
-    def serialize_tool_result(self, result: Any) -> str:
+    def serialize_tool_results(self, tool_results: Any) -> str:
         """Serialize tool results into a standardized JSON string.
 
         Handles structured outputs with consistent JSON formatting. Outputs are
@@ -450,10 +450,10 @@ class ToolSpec:
         '{"prompt": "hello"}'
         """
         output_structure = self.output_structure
-        payload = output_structure.model_validate(result).to_json()
+        payload = output_structure.model_validate(tool_results).to_json()
         return json.dumps(payload, cls=customJSONEncoder)
 
-    def unserialize_tool_arguments(self, tool_call: Any) -> StructureBase:
+    def unserialize_arguments(self, tool_call: Any) -> StructureBase:
         """Unserialize tool call arguments into a structured input instance.
 
         Parameters
@@ -476,6 +476,39 @@ class ToolSpec:
         tool_name = getattr(tool_call, "name", self.tool_name)
         parsed_args = _parse_tool_arguments(tool_call.arguments, tool_name=tool_name)
         return self.input_structure.from_json(parsed_args)
+
+    def as_tool_definition(self) -> dict:
+        """Generate OpenAI-compatible tool definition from the ToolSpec.
+
+        Uses the input structure to create a tool definition dictionary
+        suitable for inclusion in OpenAI API calls.
+
+        Returns
+        -------
+        dict
+            Tool definition dictionary.
+
+        Examples
+        --------
+        >>> from openai_sdk_helpers import ToolSpec
+        >>> from openai_sdk_helpers.structure import PromptStructure
+        >>> spec = ToolSpec(
+        ...     tool_name="web_agent",
+        ...     tool_description="Run a web research workflow",
+        ...     input_structure=PromptStructure,
+        ...     output_structure=PromptStructure
+        ... )
+        >>> spec.as_tool_definition()
+        {
+            "name": "web_agent",
+            "description": "Run a web research workflow",
+            "parameters": { ... }  # Schema from PromptStructure
+        }
+        """
+        return self.input_structure.response_tool_definition(
+            tool_name=self.tool_name,
+            tool_description=self.tool_description,
+        )
 
 
 def build_tool_definition_list(tool_specs: list[ToolSpec]) -> list[dict]:
@@ -526,54 +559,6 @@ def build_tool_definition_list(tool_specs: list[ToolSpec]) -> list[dict]:
     ]
 
 
-def build_response_tool_handler(
-    func: Callable[..., Any], *, tool_spec: ToolSpec
-) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
-    """Build a Responses API tool handler and definition from a ToolSpec.
-
-    Centralizes tool handler creation so that parsing and serialization are
-    handled consistently via ToolSpec. The returned handler is generated
-    through ``tool_handler_factory`` and the definition is generated from the
-    input structure schema.
-
-    Parameters
-    ----------
-    func : Callable[..., Any]
-        Tool implementation function to wrap with parsing and serialization.
-    tool_spec : ToolSpec
-        Tool specification describing input/output structures and metadata.
-
-    Returns
-    -------
-    tuple[dict[str, Callable[..., Any]], dict[str, Any]]
-        Tool handler mapping and tool definition for Responses API usage.
-
-    Examples
-    --------
-    >>> from openai_sdk_helpers import ToolSpec, build_response_tool_handler
-    >>> from openai_sdk_helpers.structure import PromptStructure
-    >>> def echo(prompt: PromptStructure):
-    ...     return {"prompt": prompt.prompt}
-    >>> handler, definition = build_response_tool_handler(
-    ...     echo,
-    ...     tool_spec=ToolSpec(
-    ...         tool_name="echo",
-    ...         tool_description="Echo a prompt",
-    ...         input_structure=PromptStructure,
-    ...         output_structure=PromptStructure,
-    ...     ),
-    ... )
-    """
-    tool_handler = {
-        tool_spec.tool_name: tool_handler_factory(func, tool_spec=tool_spec)
-    }
-    tool_definition = tool_spec.input_structure.response_tool_definition(
-        tool_spec.tool_name,
-        tool_description=tool_spec.tool_description,
-    )
-    return tool_handler, tool_definition
-
-
 __all__ = [
     "tool_handler_factory",
     "StructureType",
@@ -581,5 +566,4 @@ __all__ = [
     "ToolHandlerRegistration",
     "ToolSpec",
     "build_tool_definition_list",
-    "build_response_tool_handler",
 ]

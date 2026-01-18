@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 from openai_sdk_helpers.settings import OpenAISettings
 from openai_sdk_helpers.response.base import ResponseBase
-from openai_sdk_helpers.tools import ToolHandlerRegistration
+from openai_sdk_helpers.tools import ToolHandler, ToolHandlerRegistration, ToolSpec
 from openai_sdk_helpers.response.configuration import ResponseConfiguration
 from openai_sdk_helpers.structure.base import StructureBase
 
@@ -40,10 +40,18 @@ def test_schema_auto_generated_from_output_structure(openai_settings):
 
 def test_schema_auto_generated_even_with_tools(openai_settings):
     """Test that output_structure is stored even when tools are present."""
+    input_structure = DummyOutputStructure
+    tool_spec = ToolSpec(
+        tool_name="test_tool",
+        tool_description="A test tool",
+        input_structure=input_structure,
+        output_structure=DummyOutputStructure,
+    )
+
     instance = ResponseBase(
         name="test",
         instructions="Test instructions",
-        tools=[{"type": "function", "name": "test_tool"}],
+        tools=[ToolHandlerRegistration(handler=lambda x: "{}", tool_spec=tool_spec)],
         output_structure=DummyOutputStructure,
         tool_handlers={},
         openai_settings=openai_settings,
@@ -105,6 +113,9 @@ def test_schema_used_only_when_no_tools(openai_settings):
         openai_settings=openai_settings,
     )
 
+    # Always set _tools attribute to avoid AttributeError in tests
+    instance._tools = instance.tools  # type: ignore[attr-defined]
+
     with patch.object(instance._client.responses, "create") as mock_create:
         mock_create.return_value = Mock(output=[])
         try:
@@ -120,11 +131,21 @@ def test_schema_used_only_when_no_tools(openai_settings):
     instance_with_tools = ResponseBase(
         name="test_with_tools",
         instructions="Test instructions",
-        tools=[{"type": "function", "name": "test_tool"}],
         output_structure=DummyOutputStructure,
-        tool_handlers={"test_tool": ToolHandlerRegistration(handler=lambda x: "{}")},
+        tools=[
+            ToolHandlerRegistration(
+                handler=lambda x: "{}",
+                tool_spec=ToolSpec(
+                    tool_name="test_tool",
+                    tool_description="A test tool",
+                    input_structure=DummyOutputStructure,
+                    output_structure=DummyOutputStructure,
+                ),
+            )
+        ],
         openai_settings=openai_settings,
     )
+    instance_with_tools._tools = instance_with_tools.tools  # type: ignore[attr-defined]
 
     with patch.object(instance_with_tools._client.responses, "create") as mock_create:
         mock_create.return_value = Mock(output=[])

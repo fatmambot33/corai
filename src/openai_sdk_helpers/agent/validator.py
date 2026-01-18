@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Dict, Optional
 
-from ..environment import DEFAULT_PROMPT_DIR
 from ..structure.validation import ValidationResultStructure
 from .base import AgentBase
 from .configuration import AgentConfiguration
@@ -59,7 +57,6 @@ class ValidatorAgent(AgentBase):
     def __init__(
         self,
         *,
-        prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
         """Initialize the validator agent configuration.
@@ -87,10 +84,8 @@ class ValidatorAgent(AgentBase):
             description="Validate user input and agent output against guardrails.",
             output_structure=ValidationResultStructure,
         )
-        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_directory,
             default_model=default_model,
         )
 

@@ -46,11 +46,7 @@ from .messages import ResponseMessage, ResponseMessages
 from ..settings import OpenAISettings
 from ..structure import StructureBase
 from ..types import OpenAIClient
-from ..tools import (
-    ToolHandlerRegistration,
-    ToolSpec,
-    build_response_tool_handler,
-)
+from ..tools import ToolHandlerRegistration, ToolSpec
 from ..utils import (
     check_filepath,
     coerce_jsonable,
@@ -165,7 +161,7 @@ class ResponseBase(Generic[T]):
         *,
         name: str,
         instructions: str,
-        tools: list | None,
+        tools: list[ToolHandlerRegistration] | None,
         output_structure: type[T] | None,
         system_vector_store: list[str] | None = None,
         data_path: Path | str | None = None,
@@ -248,8 +244,14 @@ class ResponseBase(Generic[T]):
             self._data_path = get_data_path(self.__class__.__name__)
 
         self._instructions = instructions
-        self._tools = tools if tools is not None else []
+        self._tools: list[dict[str, Any]] | None = None
+        if tools is not None:
+            self._tools = [
+                tool_handler.tool_spec.as_tool_definition() for tool_handler in tools
+            ]
+
         self._output_structure = output_structure
+        self._system_vector_store = system_vector_store
         self._openai_settings = openai_settings
 
         if not self._openai_settings.api_key:
@@ -345,7 +347,7 @@ class ResponseBase(Generic[T]):
         return self._instructions
 
     @property
-    def tools(self) -> list | None:
+    def tools(self) -> list[dict[str, Any]] | None:
         """Return the tool definitions for this response.
 
         Returns
@@ -381,7 +383,7 @@ class ResponseBase(Generic[T]):
         func: Callable[..., Any],
         *,
         tool_spec: ToolSpec,
-    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
+    ):
         """Register a tool handler and definition using a ToolSpec.
 
         Parameters
@@ -397,18 +399,10 @@ class ResponseBase(Generic[T]):
         tuple[dict[str, Callable[..., Any]], dict[str, Any]]
             Tool handler mapping and tool definition created from the ToolSpec.
         """
-        tool_handler, tool_definition = build_response_tool_handler(
-            func, tool_spec=tool_spec
+        self._tool_handlers[tool_spec.tool_name] = ToolHandlerRegistration(
+            handler=func,
+            tool_spec=tool_spec,
         )
-        for name, handler in tool_handler.items():
-            self._tool_handlers[name] = ToolHandlerRegistration(
-                handler=handler,
-                tool_spec=tool_spec,
-            )
-        if self._tools is None:
-            self._tools = []
-        self._tools.append(tool_definition)
-        return tool_handler, tool_definition
 
     def _build_input(
         self,

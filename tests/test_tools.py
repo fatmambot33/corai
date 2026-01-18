@@ -194,7 +194,7 @@ def test_unserialize_tool_arguments_returns_structure():
     )
     tool_call = MockToolCall('{"query": "test", "limit": 3, "offset": 1}')
 
-    result = spec.unserialize_tool_arguments(tool_call)
+    result = spec.unserialize_arguments(tool_call)
 
     assert isinstance(result, BasicInputStructure)
     assert result.query == "test"

@@ -329,7 +329,6 @@ class AgentConfiguration(DataclassJSONSerializable):
         return AgentBase(
             configuration=self,
             run_context_wrapper=run_context_wrapper,
-            prompt_dir=prompt_dir,
             default_model=default_model,
         )
 

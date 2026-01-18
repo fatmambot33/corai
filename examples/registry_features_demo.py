@@ -126,7 +126,7 @@ def example_tool_handler_factory():
 
     # Direct serialization example
     output = SearchOutput(results=["A", "B"], count=2)
-    serialized = tool_spec.serialize_tool_result(output)
+    serialized = tool_spec.serialize_tool_results(output)
     print(f"Serialized output: {serialized}")
 
 

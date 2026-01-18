@@ -73,13 +73,16 @@ def attach_vector_store(
             raise ValueError(f"Vector store '{store}' not found.")
         if match not in resolved_ids:
             resolved_ids.append(match)
-
-    file_search_tool = next(
-        (tool for tool in response._tools if tool.get("type") == "file_search"),
-        None,
-    )
+    file_search_tool = None
+    if response._tools is not None:
+        file_search_tool = next(
+            (tool for tool in response._tools if tool.get("type") == "file_search"),
+            None,
+        )
 
     if file_search_tool is None:
+        if response._tools is None:
+            response._tools = []
         response._tools.append(
             {"type": "file_search", "vector_store_ids": resolved_ids}
         )

@@ -71,7 +71,6 @@ class SearchPlanner(AgentBase, Generic[PlanType]):
         configuration = self._configure_agent()
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_dir,
             default_model=default_model,
         )
 
@@ -171,7 +170,7 @@ class SearchToolAgent(AgentBase, Generic[ItemType, ResultType, PlanType]):
         configuration = self._configure_agent()
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_dir,
+            template_path=prompt_dir,
             default_model=default_model,
         )
 
@@ -275,39 +274,6 @@ class SearchWriter(AgentBase, Generic[ReportType]):
     ...         )
     >>> writer = MyWriter(default_model="gpt-4o-mini")
     """
-
-    def __init__(
-        self,
-        prompt_dir: Optional[Path] = None,
-        default_model: Optional[str] = None,
-    ) -> None:
-        """Initialize the writer agent."""
-        configuration = self._configure_agent()
-        super().__init__(
-            configuration=configuration,
-            prompt_dir=prompt_dir,
-            default_model=default_model,
-        )
-
-    @abstractmethod
-    def _configure_agent(self) -> AgentConfiguration:
-        """Return configuration for this writer.
-
-        Returns
-        -------
-        AgentConfiguration
-            Configuration with name, description, and output_structure set.
-
-        Examples
-        --------
-        >>> configuration = AgentConfiguration(
-        ...     name="web_writer",
-        ...     description="Write web search report",
-        ...     output_structure=WebSearchReportStructure,
-        ... )
-        >>> return configuration
-        """
-        pass
 
     async def run_agent(
         self,

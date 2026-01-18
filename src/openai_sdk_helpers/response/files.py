@@ -151,6 +151,8 @@ def _upload_to_vector_store(
             model=response._model,
         )
         user_vector_storage = cast(Any, response._user_vector_storage)
+        if response._tools is None:
+            response._tools = []
         if not any(tool.get("type") == "file_search" for tool in response._tools):
             response._tools.append(
                 {

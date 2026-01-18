@@ -277,7 +277,9 @@ class StructureBase(BaseModelJSONSerializable):
         return assistant_format(cls)
 
     @classmethod
-    def response_tool_definition(cls, tool_name: str, *, tool_description: str) -> dict:
+    def response_tool_definition(
+        cls, tool_name: str, *, tool_description: str | None
+    ) -> dict:
         """Build a chat completion tool definition for this structure.
 
         Creates a function tool definition compatible with the chat

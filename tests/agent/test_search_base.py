@@ -226,14 +226,30 @@ class TestSearchWriterClass:
     @pytest.mark.asyncio
     async def test_writer_initialization(self) -> None:
         """Test writer agent initialization."""
-        writer = TestSearchWriter(default_model="gpt-4o-mini")
+        configuration = AgentConfiguration(
+            name="test_writer",
+            instructions="Test instructions",
+            description="Test writer",
+            output_structure=MockReportStructure,
+        )
+        writer = TestSearchWriter(
+            configuration=configuration, default_model="gpt-4o-mini"
+        )
         assert writer.name == "test_writer"
         assert writer._output_structure == MockReportStructure
 
     @pytest.mark.asyncio
     async def test_writer_run_agent(self) -> None:
         """Test writer run_agent passes correct context."""
-        writer = TestSearchWriter(default_model="gpt-4o-mini")
+        configuration = AgentConfiguration(
+            name="test_writer",
+            instructions="Test instructions",
+            description="Test writer",
+            output_structure=MockReportStructure,
+        )
+        writer = TestSearchWriter(
+            configuration=configuration, default_model="gpt-4o-mini"
+        )
         mock_report = MockReportStructure(report="final report")
         results = [
             MockResultStructure(text="r1"),
@@ -257,7 +273,15 @@ class TestSearchWriterClass:
     @pytest.mark.asyncio
     async def test_writer_context_contains_search_results(self) -> None:
         """Test that writer passes search results in context."""
-        writer = TestSearchWriter(default_model="gpt-4o-mini")
+        configuration = AgentConfiguration(
+            name="test_writer",
+            instructions="Test instructions",
+            description="Test writer",
+            output_structure=MockReportStructure,
+        )
+        writer = TestSearchWriter(
+            configuration=configuration, default_model="gpt-4o-mini"
+        )
         results = [
             MockResultStructure(text="result 1"),
             MockResultStructure(text="result 2"),
@@ -289,7 +313,15 @@ class TestSearchAgentInheritance:
 
     def test_writer_type_parameters(self) -> None:
         """Test that writer type parameters work correctly."""
-        writer = TestSearchWriter(default_model="gpt-4o-mini")
+        configuration = AgentConfiguration(
+            name="test_writer",
+            instructions="Test instructions",
+            description="Test writer",
+            output_structure=MockReportStructure,
+        )
+        writer = TestSearchWriter(
+            configuration=configuration, default_model="gpt-4o-mini"
+        )
         assert writer._output_structure == MockReportStructure
 
 
@@ -335,7 +367,15 @@ class TestSearchAgentErrorHandling:
     @pytest.mark.asyncio
     async def test_writer_handles_list_result_types(self) -> None:
         """Test writer gracefully handles list of result types."""
-        writer = TestSearchWriter(default_model="gpt-4o-mini")
+        configuration = AgentConfiguration(
+            name="test_writer",
+            instructions="Test instructions",
+            description="Test writer",
+            output_structure=MockReportStructure,
+        )
+        writer = TestSearchWriter(
+            configuration=configuration, default_model="gpt-4o-mini"
+        )
 
         # List of results
         results = [

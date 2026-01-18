@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Protocol, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, cast
 import uuid
 
 from agents import (
@@ -22,12 +21,10 @@ from jinja2 import Template
 
 from ..utils.json.data_class import DataclassJSONSerializable
 from ..structure.base import StructureBase
-from ..structure.prompt import PromptStructure
 from ..tools import (
     StructureType,
     ToolHandlerRegistration,
     ToolSpec,
-    build_response_tool_handler,
 )
 
 from ..utils import (
@@ -35,7 +32,7 @@ from ..utils import (
     log,
 )
 
-from ..tools import ToolHandlerRegistration, ToolSpec, build_response_tool_handler
+from ..tools import ToolHandlerRegistration, ToolSpec
 
 from .runner import run_async, run_streamed, run_sync
 
@@ -60,15 +57,6 @@ class AgentConfigurationProtocol(Protocol):
     @property
     def model(self) -> Optional[str]:
         """Model identifier."""
-        ...
-
-    @property
-    def template_path(self) -> Optional[str | Path]:
-        """Template path."""
-        ...
-
-    def resolve_prompt_path(self, prompt_dir: Path | None = None) -> Path | None:
-        """Resolve the prompt template path."""
         ...
 
     @property
@@ -208,8 +196,8 @@ class AgentBase(DataclassJSONSerializable):
         *,
         configuration: AgentConfigurationProtocol,
         run_context_wrapper: Optional[RunContextWrapper[Dict[str, Any]]] = None,
+        template_path: Path | str | None = None,
         data_path: Path | str | None = None,
-        prompt_dir: Optional[Path] = None,
         default_model: Optional[str] = None,
     ) -> None:
         """Initialize the AgentBase using a configuration object.
@@ -220,7 +208,7 @@ class AgentBase(DataclassJSONSerializable):
             Configuration describing this agent.
         run_context_wrapper : RunContextWrapper or None, default=None
             Optional wrapper providing runtime context for prompt rendering.
-        prompt_dir : Path or None, default=None
+        template_path : Path or None, default=None
             Optional directory holding prompt templates. Used when
             ``configuration.template_path`` is not provided or is relative. If
             ``configuration.template_path`` is an absolute path, this parameter is
@@ -228,31 +216,27 @@ class AgentBase(DataclassJSONSerializable):
         default_model : str or None, default=None
             Optional fallback model identifier if the configuration does not supply one.
         """
-        name = configuration.name
-        description = configuration.description or ""
-        model = configuration.model or default_model
-        if not model:
-            raise ValueError("Model is required to construct the agent.")
-
-        prompt_path = configuration.resolve_prompt_path(prompt_dir)
+        self._configuration = configuration
+        self.uuid = uuid.uuid4()
+        self._model = configuration.model or default_model
+        if self._model is None:
+            raise ValueError(
+                f"Model must be specified in configuration or as default_model for agent '{configuration.name}'."
+            )
 
         # Build template from file or fall back to instructions
-        if prompt_path is None:
+        if template_path is None:
             instructions_text = configuration.instructions_text
             self._template = Template(instructions_text)
             self._instructions = instructions_text
-        elif prompt_path.exists():
-            self._template = Template(prompt_path.read_text(encoding="utf-8"))
-            self._instructions = None
         else:
-            raise FileNotFoundError(
-                f"Prompt template for agent '{name}' not found at {prompt_path}."
-            )
-
-        self._name = name
-        self.uuid = uuid.uuid4()
-        self.description = description
-        self.model = model
+            template_path = Path(template_path)
+            if not template_path.exists():
+                raise FileNotFoundError(
+                    f"Template for agent '{self._configuration.name}' not found at {template_path}."
+                )
+            self._template = Template(template_path.read_text(encoding="utf-8"))
+            self._instructions = None
 
         # Resolve data_path with class name appended
         class_name = self.__class__.__name__
@@ -342,7 +326,29 @@ class AgentBase(DataclassJSONSerializable):
         str
             Name used to identify the agent.
         """
-        return self._name
+        return self._configuration.name
+
+    @property
+    def description(self) -> Optional[str]:
+        """Return the description of this agent.
+
+        Returns
+        -------
+        str or None
+            Description of the agent's purpose.
+        """
+        return self._configuration.description
+
+    @property
+    def model(self) -> str:
+        """Return the model identifier for this agent.
+
+        Returns
+        -------
+        str
+            Model identifier used by the agent.
+        """
+        return self._model  # pyright: ignore[reportReturnType]
 
     @property
     def instructions_text(self) -> str:
@@ -353,9 +359,7 @@ class AgentBase(DataclassJSONSerializable):
         str
             Rendered instructions text using the current run context.
         """
-        if self._instructions is not None:
-            return self._instructions
-        return self._build_prompt_from_jinja()
+        return self._configuration.instructions_text
 
     @property
     def tools(self) -> Optional[list]:
@@ -366,7 +370,7 @@ class AgentBase(DataclassJSONSerializable):
         list or None
             Tool definitions configured for the agent.
         """
-        return self._tools
+        return self._configuration.tools
 
     @property
     def output_structure(self) -> Optional[type[StructureBase]]:
@@ -377,7 +381,7 @@ class AgentBase(DataclassJSONSerializable):
         type[StructureBase] or None
             Output type used to cast responses.
         """
-        return self._output_structure
+        return self._configuration.output_structure
 
     @property
     def model_settings(self) -> Optional[ModelSettings]:
@@ -443,14 +447,14 @@ class AgentBase(DataclassJSONSerializable):
             Initialized agent ready for execution.
         """
         agent_config: Dict[str, Any] = {
-            "name": self._name,
-            "instructions": self._build_prompt_from_jinja() or ".",
-            "model": self.model,
+            "name": self._configuration.name,
+            "instructions": self._configuration.instructions_text or ".",
+            "model": self._model,
         }
-        if self._output_structure:
-            agent_config["output_type"] = self._output_structure
-        if self._tools:
-            agent_config["tools"] = self._tools
+        if self._configuration.output_structure:
+            agent_config["output_type"] = self._configuration.output_structure
+        if self._configuration.tools:
+            agent_config["tools"] = self._configuration.tools
         if self._model_settings:
             agent_config["model_settings"] = self._model_settings
         if self._handoffs:
@@ -591,69 +595,10 @@ class AgentBase(DataclassJSONSerializable):
         """
         agent = self.get_agent()
         tool_obj: Tool = agent.as_tool(
-            tool_name=self._name, tool_description=self.description
+            tool_name=self._configuration.name,
+            tool_description=self._configuration.description,
         )
         return tool_obj
-
-    def as_response_tool(
-        self,
-        *,
-        tool_name: str | None = None,
-        tool_description: str | None = None,
-    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
-        """Return response tool handler and definition for Responses API use.
-
-        The returned handler serializes tool output as JSON using
-        ``build_response_tool_handler`` and ``ToolSpec`` so downstream response flows
-        can rely on a consistent payload format.
-
-        Parameters
-        ----------
-        tool_name : str or None, default=None
-            Optional override for the tool name. When None, uses the agent name.
-        tool_description : str or None, default=None
-            Optional override for the tool description. When None, uses the
-            agent description.
-
-        Returns
-        -------
-        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
-            Tool handler mapping and tool definition for Responses API usage.
-
-        Examples
-        --------
-        >>> tool_handler, tool_definition = agent.as_response_tool()
-        >>> response = ResponseBase(
-        ...     name="agent_tool",
-        ...     instructions="Use the agent tool when needed.",
-        ...     tools=[tool_definition],
-        ...     output_structure=None,
-        ...     tool_handlers=tool_handler,
-        ...     openai_settings=settings,
-        ... )
-        >>> response.run_sync("Invoke the agent tool")  # doctest: +SKIP
-        """
-
-        def _run_agent(**kwargs: Any) -> Any:
-            prompt = kwargs.get("prompt")
-            if prompt is None:
-                if len(kwargs) == 1:
-                    prompt = next(iter(kwargs.values()))
-                else:
-                    prompt = json.dumps(kwargs)
-            return self.run_sync(str(prompt))
-
-        name = tool_name or self.name
-        description = tool_description or self.description
-        input_structure = self._input_structure or PromptStructure
-        output_structure = self.output_structure or input_structure
-        tool_spec = ToolSpec(
-            tool_name=name,
-            tool_description=description,
-            input_structure=input_structure,
-            output_structure=output_structure,
-        )
-        return build_response_tool_handler(_run_agent, tool_spec=tool_spec)
 
     def as_tool_handler_registration(
         self,
@@ -668,8 +613,8 @@ class AgentBase(DataclassJSONSerializable):
         tool_spec = ToolSpec(
             tool_name=self.name,
             tool_description=self.description,
-            input_structure=cast(StructureType, self._input_structure),
-            output_structure=cast(StructureType, self._output_structure),
+            input_structure=cast(StructureType, self._configuration.input_structure),
+            output_structure=cast(StructureType, self._configuration.output_structure),
         )
         return ToolHandlerRegistration(handler=self.run_sync, tool_spec=tool_spec)
 
@@ -715,8 +660,8 @@ class AgentBase(DataclassJSONSerializable):
         tools = self._normalize_response_tools(self.tools)
 
         return ResponseBase(
-            name=self.name,
-            instructions=self.instructions_text,
+            name=self._configuration.name,
+            instructions=self._configuration.instructions_text,
             tools=tools,
             output_structure=self.output_structure,
             system_vector_store=system_vector_store,
@@ -812,7 +757,7 @@ class AgentBase(DataclassJSONSerializable):
         str
             String representation including agent name and model.
         """
-        return f"<AgentBase name={self._name!r} model={self.model!r}>"
+        return f"<AgentBase name={self.name!r} model={self.model!r}>"
 
     def save(self, filepath: str | Path | None = None) -> None:
         """Serialize the message history to a JSON file.
@@ -831,7 +776,7 @@ class AgentBase(DataclassJSONSerializable):
             target = Path(filepath)
         else:
             filename = f"{str(self.uuid).lower()}.json"
-            target = self._data_path / self._name / filename
+            target = self._data_path / self.name / filename
 
         checked = check_filepath(filepath=target)
         self.to_json_file(filepath=checked)

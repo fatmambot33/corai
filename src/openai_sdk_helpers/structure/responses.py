@@ -92,7 +92,7 @@ def assistant_format(structure: type[StructureBase]) -> dict:
 def response_tool_definition(
     structure: type[StructureBase],
     tool_name: str,
-    tool_description: str,
+    tool_description: str | None,
 ) -> dict:
     """Build a tool definition for OpenAI chat completions.
 
@@ -105,7 +105,7 @@ def response_tool_definition(
         Structure class that defines the tool schema.
     tool_name : str
         Name of the function tool.
-    tool_description : str
+    tool_description : str | None
         Description of what the function tool does.
 
     Returns

@@ -88,12 +88,11 @@ class TranslatorAgent(AgentBase):
             name="translator",
             instructions="Agent instructions",
             description="Translate text into the requested language.",
+            template_path=prompt_dir or DEFAULT_PROMPT_DIR,
             output_structure=TranslationStructure,
         )
-        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_directory,
             default_model=default_model,
         )
 

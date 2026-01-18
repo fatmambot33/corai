@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from agents import custom_span, gen_trace_id, trace
 from agents.model_settings import ModelSettings
 from agents.tool import WebSearchTool
 
 from ...structure.prompt import PromptStructure
+
 from ...structure.web_search import (
     WebSearchItemStructure,
     WebSearchItemResultStructure,
@@ -17,10 +18,10 @@ from ...structure.web_search import (
     WebSearchPlanStructure,
     WebSearchReportStructure,
 )
-from ...tools import ToolSpec, build_response_tool_handler
 from ..configuration import AgentConfiguration
 from ..utils import run_coroutine_agent_sync
 from .base import SearchPlanner, SearchToolAgent, SearchWriter
+from ...tools import ToolSpec, ToolHandlerRegistration
 
 MAX_CONCURRENT_SEARCHES = 10
 
@@ -210,7 +211,17 @@ class WebAgentWriter(SearchWriter[WebSearchReportStructure]):
         self, prompt_dir: Optional[Path] = None, default_model: Optional[str] = None
     ) -> None:
         """Initialize the writer agent."""
-        super().__init__(prompt_dir=prompt_dir, default_model=default_model)
+        configuration = AgentConfiguration(
+            name="web_writer",
+            instructions="Agent instructions",
+            description="Agent that writes a report based on web search results.",
+            output_structure=WebSearchReportStructure,
+        )
+        super().__init__(
+            configuration=configuration,
+            template_path=prompt_dir,
+            default_model=default_model,
+        )
 
     def _configure_agent(self) -> AgentConfiguration:
         """Return configuration for the web writer agent.
@@ -320,37 +331,33 @@ class WebAgentSearch:
         """
         return run_coroutine_agent_sync(self.run_agent_async(search_query))
 
-    def as_response_tool(
-        self,
-        *,
-        tool_name: str = "web_search",
-        tool_description: str = "Run the web search workflow.",
-    ) -> tuple[dict[str, Callable[..., Any]], dict[str, Any]]:
-        """Return a Responses API tool handler and definition.
+    def as_tool_registration(
+        self, tool_name: str, tool_description: str
+    ) -> ToolHandlerRegistration:
+        """Build a Responses API tool definition and handler for the web search agent.
 
         Parameters
         ----------
-        tool_name : str, default="web_search"
-            Name to use for the response tool.
-        tool_description : str, default="Run the web search workflow."
-            Description for the response tool.
+        tool_name : str
+            Name of the tool.
+        tool_description : str
+            Description of the tool.
 
         Returns
         -------
-        tuple[dict[str, Callable[..., Any]], dict[str, Any]]
-            Tool handler mapping and tool definition for Responses API usage.
+        ToolHandlerRegistration
+            Tool definition and handler for the Responses API.
         """
-
-        def _run_search(prompt: str) -> WebSearchStructure:
-            return run_coroutine_agent_sync(self.run_agent_async(search_query=prompt))
-
         tool_spec = ToolSpec(
+            input_structure=PromptStructure,
             tool_name=tool_name,
             tool_description=tool_description,
-            input_structure=PromptStructure,
             output_structure=WebSearchStructure,
         )
-        return build_response_tool_handler(_run_search, tool_spec=tool_spec)
+        return ToolHandlerRegistration(
+            handler=self.run_agent_sync,
+            tool_spec=tool_spec,
+        )
 
 
 __all__ = [

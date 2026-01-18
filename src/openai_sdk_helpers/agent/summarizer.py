@@ -59,9 +59,8 @@ class SummarizerAgent(AgentBase):
     def __init__(
         self,
         *,
-        prompt_dir: Optional[Path] = None,
+        template_path: Optional[Path] = None,
         default_model: Optional[str] = None,
-        output_structure: Type[StructureBase] = SummaryStructure,
     ) -> None:
         """Initialize the summarizer agent configuration.
 
@@ -72,8 +71,6 @@ class SummarizerAgent(AgentBase):
             packaged ``prompt`` directory when not provided.
         default_model : str or None, default=None
             Fallback model identifier when not specified elsewhere.
-        output_structure : type[StructureBase], default=SummaryStructure
-            Type describing the expected summary output.
 
         Raises
         ------
@@ -88,12 +85,12 @@ class SummarizerAgent(AgentBase):
             name="summarizer",
             instructions="Agent instructions",
             description="Summarize passages into concise findings.",
-            output_structure=output_structure,
+            template_path=template_path,
+            output_structure=SummaryStructure,
         )
-        prompt_directory = prompt_dir or DEFAULT_PROMPT_DIR
+
         super().__init__(
             configuration=configuration,
-            prompt_dir=prompt_directory,
             default_model=default_model,
         )
 

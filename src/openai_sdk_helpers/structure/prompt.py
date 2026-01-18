@@ -41,3 +41,19 @@ class PromptStructure(StructureBase):
             "Generate a summary of the latest news in AI.",
         ],
     )
+
+    @staticmethod
+    def from_str(prompt_str: str) -> PromptStructure:
+        """Create a PromptStructure instance from a simple string.
+
+        Parameters
+        ----------
+        prompt_str : str
+            The prompt text to use for the OpenAI API request.
+
+        Returns
+        -------
+        PromptStructure
+            An instance of PromptStructure with the provided prompt text.
+        """
+        return PromptStructure(prompt=prompt_str)

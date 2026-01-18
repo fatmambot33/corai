@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from openai_sdk_helpers.agent.base import AgentBase
+from openai_sdk_helpers.agent.configuration import AgentConfiguration
 from openai_sdk_helpers.structure import SummaryStructure
 from openai_sdk_helpers.response.base import ResponseBase
 
@@ -21,13 +22,18 @@ class _StubAgentBase(AgentBase):
     def __init__(self) -> None:
         # Bypass the parent initializer by setting the required attributes.
         # This is intentional for testing - we don't want full agent setup.
+        configuration = AgentConfiguration(
+            name="stub",
+            instructions="Test instructions",
+            model="model",
+            description="",
+            tools=None,
+            output_structure=SummaryStructure,
+            template_path=None,
+        )
+        self._configuration = configuration
         self._output_structure = SummaryStructure
         self._run_context_wrapper = None
-        self._name = "stub"
-        self.description = ""
-        self.model = "model"
-        self._tools = None
-        self._model_settings = None
         self._handoffs = None
         self._input_guardrails = None
         self._output_guardrails = None

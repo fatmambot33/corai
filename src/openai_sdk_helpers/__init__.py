@@ -76,7 +76,6 @@ from .tools import (
     ToolHandlerRegistration,
     ToolSpec,
     build_tool_definition_list,
-    build_response_tool_handler,
 )
 from .settings import build_openai_settings
 from .utils.output_validation import (
@@ -158,7 +157,6 @@ __all__ = [
     "ToolHandlerRegistration",
     "ToolSpec",
     "build_tool_definition_list",
-    "build_response_tool_handler",
     "build_openai_settings",
     "create_plan",
     "execute_task",
